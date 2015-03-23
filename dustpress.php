@@ -151,6 +151,16 @@ class DustPress {
 
 			// Add createInstance to right action hook
 			add_action( 'shutdown', array( $this, 'createInstance' ) );
+
+			// Add admin menu
+			add_action( 'admin_menu', array($this, 'pluginMenu') );
+
+			// If admin and debug is set to true, enqueue JSON printing.
+			if( current_user_can( 'manage_options') ) {
+				wp_enqueue_script( "pretty-json", __DIR__ .'/js/pretty-json-min.js', null, null, true );
+				wp_enqueue_script( "dustpress", __DIR__ .'/js/dustpress.js', null, null, true );
+			}
+
 			return;
 		}
 		else {
@@ -170,6 +180,42 @@ class DustPress {
 				$this->getData();
 			}
 		}
+	}
+
+	public function pluginMenu() {
+		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', 'dustPressOptions');
+	}
+
+	public function dustPressOptions() {
+		if( !current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+
+		if( isset($_POST['dustpress_hidden_send']) && $_POST['dustpress_hidden_send'] == 1 ) {
+			$debug = $_POST['debug'];
+
+			update_option('debug', $debug);
+
+			echo '<div class="updated"><p>Settings saved.</p></div>';
+		}
+
+		$debug_val = get_option('debug');
+		
+		echo '<div class="wrap">';
+		echo '<h2>DustPress Options</h2>';
+?>
+		<form name="form1" method="post" action="">
+			<input type="hidden" name="dustpress_hidden_send" value="1"/>
+
+			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug<?php echo $debug_val ? ' selected="selected"' : ''; ?>"/></p>
+
+			<p class="submit">
+				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
+			</p>
+		</form>
+<?php
+
+		echo '</div>';
 	}
 
 	/*
