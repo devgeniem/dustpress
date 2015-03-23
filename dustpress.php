@@ -190,6 +190,8 @@ class DustPress {
 
 		$template = $this->getTemplateFilename();
 
+		if($template == "default")
+			die("You haven't declared any model classes.");
 		if(class_exists($template))
 			new $template($dustpress);
 	}
