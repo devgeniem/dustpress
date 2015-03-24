@@ -28,14 +28,45 @@ class Post {
 	*  @param	$id (int)
 	*  @param	$metaKeys (array/string)
 	*  @param	$single (boolean)
-	*  @return	$metaType (string)
+	*  @param	$metaType (string)
+	*
+	*  $return  post object as an associative array with meta data
 	*/
 	public function getPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
 		global $post;
 
 		$this->post = get_post( $id, 'ARRAY_A' );
 		if ( is_array( $this->post ) ) {
-			$this->post['meta'] = getPostMeta( $id, $metaKeys, $single, $metaType );
+			$this->getPostMeta( $this->post, $id, $metaKeys, $single, $metaType );
+		}
+
+		return $this->post;
+	}
+
+	/*
+	*  getAcfPost
+	*
+	*  This function will query single post and its meta.
+	*  Meta data is handled the same way as in getPost.
+	*
+	*  @type	function
+	*  @date	20/3/2015
+	*  @since	0.0.1
+	*
+	*  @param	$id (int)
+	*  @param	$metaKeys (array/string)
+	*  @param	$single (boolean)
+	*  @param	$metaType (string)
+	*
+	*  $return  post object as an associative array with acf fields and meta data
+	*/
+	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
+
+		$this->post = get_post( $id, 'ARRAY_A' );
+		
+		if ( is_array( $this->post ) ) {
+			$this->post['fields'] = get_fields( $id );
+			$this->getPostMeta( $this->post, $id, $metaKeys, $single, $metaType );
 		}
 
 		return $this->post;
@@ -54,48 +85,27 @@ class Post {
 	*
 	*  @param	$id (int)
 	*  @param	$metaKeys (array/string)	
-	*  @return	$metaType (string)
+	*  @param	$metaType (string)
+	*
+	*  @return	array of posts as an associative array with meta data
 	*/
 	public function getPosts( $args, $metaKeys = NULL, $metaType = 'post' ) {
 
-		$this->posts = get_posts( $args );
+		$temps = get_posts( $args );
+
+		foreach ($temps as $temp) {
+			$this->posts[] = (array) $temp;
+		}
 		
 		// get meta for posts
 		if ( count( $this->posts ) ) {
-			$this->posts['meta'] = $this->getMetaForPosts( $this->posts, $metaKeys, $metaType );
+			$this->getMetaForPosts( $this->posts, $metaKeys, $metaType );
 			
 			wp_reset_postdata();
 			return $this->posts;
 		}	
 		else
 			return false;
-	}
-
-	/*
-	*  getAcfPost
-	*
-	*  This function will query single post and its meta.
-	*  Meta data is handled the same way as in getPost.
-	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$id (int)
-	*  @param	$metaKeys (array/string)
-	*  @param	$single (boolean)
-	*  @return	$metaType (string)
-	*/
-	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
-
-		$this->post = get_post( $id, 'ARRAY_A' );
-		
-		if ( is_array( $this->post ) ) {
-			$this->post['fields'] = get_fields( $id );
-			$this->post['meta']	= $this->getPostMeta( $id, $metaKeys, $single, $metaType );
-		}
-
-		return $this->post;
 	}
 
 	/*
@@ -111,17 +121,24 @@ class Post {
 	*
 	*  @param	$id (int)
 	*  @param	$metaKeys (array/string)	
-	*  @return	$metaType (string)
+	*  @param	$metaType (string)
+	*
+	*  @return	array of posts as an associative array with acf fields and meta data
 	*/
 	public function getAcfPosts( $args, $metaKeys = NULL, $metaType = 'post' ) {
 
-		$this->posts = get_posts( $args );
+		$temps = get_posts( $args );
+
+		foreach ($temps as $temp) {
+			$this->posts[] = (array) $temp;
+		}
 		
 		if ( count( $this->posts ) ) {
 			// loop through posts and get all acf fields
-			foreach ($this->posts as $post) {
-				$post->fields = get_fields( $post->ID );
+			foreach ( $this->posts as &$p ) {								
+				$p['fields'] = get_fields( $p['ID'] );								
 			}
+
 			$this->getMetaForPosts( $this->posts, $metaKeys, $metaType );
 
 			wp_reset_postdata();
@@ -137,7 +154,7 @@ class Post {
 	 * Private functions
 	 *
 	 */
-	private function getPostMeta( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
+	private function getPostMeta( &$post, $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
 		$meta = array();
 
 		if ($metaKeys === 'all') {
@@ -149,22 +166,22 @@ class Post {
 			}
 		}
 
-		return $meta;
+		$post['meta'] = $meta;
 	}
 
 	private function getMetaForPosts( &$posts, $metaKeys = NULL, $metaType = 'post' ) {
 		if ($metaKeys === 'all') {
 			// loop through posts and get the meta values
 			foreach ($posts as $post) {				
-				$post->meta = get_metadata( $metaType, $post->ID );				
+				$post['meta'] = get_metadata( $metaType, $post->ID );				
 			}				
 		}
 		elseif (is_array($metaKeys)) {
 			// loop through selected meta keys
 			foreach ($metaKeys as $key) {
 				// loop through posts and get the meta values
-				foreach ($posts as $post) {					
-					$post->meta[$key] = get_metadata( $metaType, $post->ID, $key, $single = false);	
+				foreach ($posts as &$post) {					
+					$post['meta'][$key] = get_metadata( $metaType, $post->ID, $key, $single = false);	
 				}	
 			}
 

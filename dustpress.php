@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.1
+Version: 0.0.2
 */
 
 class DustPress {
@@ -25,6 +25,19 @@ class DustPress {
 	// Block's name
 	public $blockname;
 
+	/*
+	*  __construct
+	*
+	*  Constructor for DustPress. Takes possible parent instance as parameter and stores it, if needed. Can and should be
+	*  extended by subclasses.
+	*
+	*  @type	function
+	*  @date	19/3/2015
+	*  @since	0.0.1
+	*
+	*  @param	parent (object)
+	*  @return	N/A
+	*/
 	public function __construct($parent = null) {
 		if("DustPress" === get_class($this)) {
 			// Autoload DustPHP classes
@@ -57,26 +70,7 @@ class DustPress {
 			    }
 			});
 
-			/* Autoload DustPress classes
-			spl_autoload_register(function ($class) {
-
-			    // base directory for the namespace prefix
-			    $base_dir = __DIR__ . '/classes/';
-
-			    // get the relative class name
-			    $relative_class = substr($class, $len);
-
-			    // replace the namespace prefix with the base directory, replace namespace
-			    // separators with directory separators in the relative class name, append
-			    // with .php
-			    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-			    // if the file exists, require it
-			    if (file_exists($file)) {
-			        require $file;
-			    }
-			}); */
-
+			// Autoload DustPress classes
 			spl_autoload_register( function($class) {
 				$paths = array(
 					__DIR__ . '/classes/',
@@ -98,48 +92,6 @@ class DustPress {
 				}
 			});
 
-			/* Autoload all models we have
-			spl_autoload_register(function ($class) {
-
-			    // base directory for the namespace prefix
-			    $base_dir = get_template_directory() .'/models/';
-
-			    // get the relative class name
-			    $relative_class = substr($class, $len);
-
-			    // replace the namespace prefix with the base directory, replace namespace
-			    // separators with directory separators in the relative class name, append
-			    // with .php
-			    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-			    // if the file exists, require it
-			    if (file_exists($file)) {
-			    	echo $file ."<br/>";
-			        require $file;
-			    }
-			});
-
-			// Autoload all helper classes we have
-			spl_autoload_register(function ($class) {
-
-			    // base directory for the namespace prefix
-			    $base_dir = get_template_directory() .'/models/shared/';
-
-			    // get the relative class name
-			    $relative_class = substr($class, $len);
-
-			    // replace the namespace prefix with the base directory, replace namespace
-			    // separators with directory separators in the relative class name, append
-			    // with .php
-			    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-			    // if the file exists, require it
-			    if (file_exists($file)) {
-			    	echo $file ."<br/>";
-			        require $file;
-			    }
-			}); */
-
 			// Create Dust instance
 			$this->dust = new Dust\Dust();
 
@@ -149,17 +101,15 @@ class DustPress {
 			// Create classes array
 			$this->classes = array();
 
-			// Add createInstance to right action hook
-			add_action( 'shutdown', array( $this, 'createInstance' ) );
+			// Add createInstance to right action hook if we are not on the admin side
+			if(!is_admin())
+				add_action( 'shutdown', array( $this, 'createInstance' ) );
 
 			// Add admin menu
 			add_action( 'admin_menu', array($this, 'pluginMenu') );
 
-			// If admin and debug is set to true, enqueue JSON printing.
-			if( current_user_can( 'manage_options') ) {
-				wp_enqueue_script( "pretty-json", __DIR__ .'/js/pretty-json-min.js', null, null, true );
-				wp_enqueue_script( "dustpress", __DIR__ .'/js/dustpress.js', null, null, true );
-			}
+			// Add admin stuff
+			add_action( 'plugins_loaded', array($this, 'adminStuff') );
 
 			return;
 		}
@@ -182,11 +132,62 @@ class DustPress {
 		}
 	}
 
-	public function pluginMenu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', 'dustPressOptions');
+	/*
+	*  adminStuff
+	*
+	*  This function sets JavaScripts and styles for admin debug feature.
+	*
+	*  @type	function
+	*  @date	23/3/2015
+	*  @since	0.0.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	public function adminStuff() {
+		global $current_user;
+
+		get_currentuserinfo();
+
+		// If admin and debug is set to true, enqueue JSON printing
+		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			wp_enqueue_script( 'jquery' );
+			wp_enqueue_script( "jquery_jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, false );
+			wp_enqueue_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, false );
+
+			wp_enqueue_style( "jquery_jsonview_styles", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
+		}
 	}
 
-	public function dustPressOptions() {
+	/*
+	*  pluginMenu
+	*
+	*  This function creates the menu item for DustPress options in admin side.
+	*
+	*  @type	function
+	*  @date	23/3/2015
+	*  @since	0.0.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	public function pluginMenu() {
+		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', array( $this, 'dustpressoptions') );
+	}
+
+	/*
+	*  dustpressoptions
+	*
+	*  This function creates the options page functionality in admin side.
+	*
+	*  @type	function
+	*  @date	23/3/2015
+	*  @since	0.0.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	public function dustpressoptions() {
 		if( !current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 		}
@@ -194,12 +195,17 @@ class DustPress {
 		if( isset($_POST['dustpress_hidden_send']) && $_POST['dustpress_hidden_send'] == 1 ) {
 			$debug = $_POST['debug'];
 
-			update_option('debug', $debug);
+			update_option('dustpress_debug', $debug);
 
 			echo '<div class="updated"><p>Settings saved.</p></div>';
 		}
 
-		$debug_val = get_option('debug');
+		$debug_val = get_option('dustpress_debug');
+
+		if($debug_val)
+			$string = " checked=\"checked\"";
+		else
+			$string = "";
 		
 		echo '<div class="wrap">';
 		echo '<h2>DustPress Options</h2>';
@@ -207,7 +213,7 @@ class DustPress {
 		<form name="form1" method="post" action="">
 			<input type="hidden" name="dustpress_hidden_send" value="1"/>
 
-			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug<?php echo $debug_val ? ' selected="selected"' : ''; ?>"/></p>
+			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug"<?php echo $string; ?>/></p>
 
 			<p class="submit">
 				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
@@ -234,10 +240,12 @@ class DustPress {
 		global $post;
 		global $dustpress;
 
+		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
 
-		if($template == "default")
-			die("You haven't declared any model classes.");
+		// If class exists with the template's name, create new instance with it.
+		// We do not throw error if the class does not exist, to ensure that you can still create
+		// templates in traditional style if needed.
 		if(class_exists($template))
 			new $template($dustpress);
 	}
@@ -259,11 +267,14 @@ class DustPress {
 
 		$className = get_class($this);
 
-		$methods = $this->getClassMethods($className);
-
+		// Create a place to store the wanted data in the global data structure.
 		if(!isset($dustpress->data[$className])) $dustpress->data[$className] = new \StdClass();
 		if(!isset($dustpress->data[$className]->Content)) $dustpress->data[$className]->Content = new \StdClass();
 
+		// Fetch all methods from given class.
+		$methods = $this->getClassMethods($className);
+
+		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach($methods as $method) {
 			if(strpos($method, "bind") !== false) {
 				call_user_func( array($this, $method) );
@@ -291,6 +302,7 @@ class DustPress {
 		// If no data attribute given, take contents from object data collection
 		if($data == -1) $data = $dustpress->data;
 
+		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
 			$template = $this->getTemplate($partial);
 		}
@@ -302,11 +314,16 @@ class DustPress {
 			$error = true;
 		}
 
+		// Ensure we have a DustPHP instance.
 		if(isset($this->dust)) $dust = $this->dust;
 		else $dust = $this->parent->dust;
 
-		//var_dump($data);
+		// Create debug data if wanted.
+		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			$jsondata = json_encode($data);
+		}
 
+		// Create output with wanted format.
 		switch ($type) {
 			case 'html':
 				if($error) {
@@ -330,6 +347,32 @@ class DustPress {
 				break;
 		}
 
+		// If logged in and debug option set true in admin side, show the debugging pane.
+		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			$string = '
+				<script>
+				jQuery(document).ready(function() {
+					var jsondata = '. $jsondata .';
+
+					var div = "<div class=\"jsonview_debug\"></div>";
+
+					jQuery(div).appendTo(".jsonview_data_debug");
+
+					jQuery(".jsonview_debug").jsonView(jsondata);
+
+					jQuery(".jsonview_open_debug").click(function() {
+						jQuery(".jsonview_debug").slideToggle();
+					});
+				});
+				</script>
+				<div class="jsonview_data_debug">
+					<button class="jsonview_open_debug">Show/Hide data debug</button>
+				</div>
+				</body>';
+
+			$output = str_replace("</body>",$string,$output);
+
+		}
 		if ($echo)
 			echo $output;
 		else
@@ -501,6 +544,7 @@ class DustPress {
 
 		// if no template set, return default
 		if(!$pageTemplate && $type = get_post_type()) {
+			if($type == "post") $type = "single";
 			return $type;
 		}
 		else if(!$pageTemplate) return "default";
@@ -573,6 +617,9 @@ class DustPress {
 			if(isset($dustpress->data[$module])) {
 				$dustpress->data[$module]->{$key} = $data;
 			}
+		}
+		else if($key == "Content") {
+			$dustpress->data[$module]->Content = (object)array_merge((array)$dustpress->data[$module]->Content, (array)$data);
 		}
 		else {
 			if(isset($dustpress->data[$module])) {
@@ -678,6 +725,5 @@ class DustPress {
 	}
 }
 
-// Create an instance of the plugin if we are on the public side
-if(!is_admin())
-	$dustpress = new DustPress();
+// Create an instance of the plugin
+$dustpress = new DustPress();
