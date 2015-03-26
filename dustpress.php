@@ -633,6 +633,7 @@ class DustPress {
 				return $dustpress->args->{$name};
 			else
 				return null;
+		}
 		else {
 			$module = $this->getClass();
 
