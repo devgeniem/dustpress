@@ -12,7 +12,7 @@ class Post {
 
 	private $post;
 	private $posts;
-
+	
 	/*
 	*  getPost
 	*

@@ -36,7 +36,7 @@
 .jquery-jsonview .property-toggle-button{font-size:11px;text-decoration:none;font-weight:bold;position:absolute;left:-17px;width:15px;height:15px;color:#c99;}
 .jquery-jsonview .list-toggle-button{font-size:11px;text-decoration:none;font-weight:bold;position:absolute;left:-25px;top:15px;display:block;position:relative;width:15px;height:15px;color:#c99;}
 .jquery-jsonview .property-toggle-button:hover{#c03;}
-.jsonview_debug{margin-top: 10px;overflow:hide;border: 2px solid red; backgrond-color: #ffffff; padding: 15px; position:relative;display: none;}
+.jsonview_debug{margin-top: 10px;overflow:hide;border: 2px solid red; padding: 15px; background-color: #ffffff; position:relative;display: none;}
 .jsonview_debug:after{display: table; content:""; clear:both;}
 .jsonview_debug:before{position:absolute;top: 0;right: 0;content: "Debug data";background-color: red; color: #ffffff;padding: 4px;}
 .jsonview_open_debug{color:white;background-color:red;border-radius:5px;}

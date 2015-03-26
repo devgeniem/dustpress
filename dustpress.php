@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.2
+Version: 0.0.3
 */
 
 class DustPress {
@@ -152,6 +152,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
+
 	public function adminStuff() {
 		global $current_user;
 
@@ -160,10 +161,11 @@ class DustPress {
 		// If admin and debug is set to true, enqueue JSON printing
 		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			wp_enqueue_script( 'jquery' );
-			wp_enqueue_script( "jquery_jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, false );
+
+			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', null, null, false );
 			wp_enqueue_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, false );
 
-			wp_enqueue_style( "jquery_jsonview_styles", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
+			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
 		}
 	}
 
@@ -179,6 +181,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
+
 	public function pluginMenu() {
 		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', array( $this, 'dustpressoptions') );
 	}
@@ -195,6 +198,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
+
 	public function dustpressoptions() {
 		if( !current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
@@ -250,6 +254,9 @@ class DustPress {
 
 		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
+
+		if($template == "default")
+			die("You haven't declared any model classes.");
 
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
@@ -364,6 +371,13 @@ class DustPress {
 
 					var div = "<div class=\"jsonview_debug\"></div>";
 
+					$(div).appendTo(".jsonview_data_debug");
+
+					$(".jsonview_debug").jsonView(jsondata);
+
+					$(".jsonview_open_debug").click(function() {
+						$(".jsonview_debug").slideToggle();
+
 					jQuery(div).appendTo(".jsonview_data_debug");
 
 					jQuery(".jsonview_debug").jsonView(jsondata);
@@ -379,8 +393,8 @@ class DustPress {
 				</body>';
 
 			$output = str_replace("</body>",$string,$output);
-
 		}
+
 		if ($echo)
 			echo $output;
 		else
@@ -768,5 +782,5 @@ class DustPress {
 	}
 }
 
-// Create an instance of the plugin
+// Create an instance of the plugin if we are on the public side
 $dustpress = new DustPress();
