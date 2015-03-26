@@ -25,6 +25,9 @@ class DustPress {
 	// Block's name
 	public $blockname;
 
+	// Possible arguments from external caller
+	public $args;
+
 	/*
 	*  __construct
 	*
@@ -38,7 +41,7 @@ class DustPress {
 	*  @param	parent (object)
 	*  @return	N/A
 	*/
-	public function __construct($parent = null) {
+	public function __construct($parent = null, $args = null) {
 		if("DustPress" === get_class($this)) {
 			// Autoload DustPHP classes
 			spl_autoload_register(function ($class) {
@@ -100,6 +103,11 @@ class DustPress {
 
 			// Create classes array
 			$this->classes = array();
+
+			if(is_array($args))
+				$this->args = $args;
+			else
+				$this->args = array();
 
 			// Add createInstance to right action hook if we are not on the admin side
 			if(!is_admin())
@@ -577,14 +585,49 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function bindSub($name) {
+	public function bindSub($name, $args = null) {
 		global $dustpress;
 
 		if($this->isWanted($name)) {
 			$dustpress->classes[$name] = new $name();
 
+			if(is_array($args))
+				$dustpress->args->{$name} = $args;
+
 			if(!isset($dustpress->data[$name])) $dustpress->data[$name] = new \StdClass();
 		}
+	}
+
+	/*
+	*  getArgs
+	*
+	*  This function gets the arguments for wanted name or, if we don't give a name, we get
+	*  args for current module.
+	*
+	*  @type	function
+	*  @date	26/3/2015
+	*  @since	0.0.3
+	*
+	*  @param	$name (string)
+	*  @return	args (array)
+	*/
+	public function getArgs($name = null) {
+		global $dustpress;
+
+		if($name) {
+			if(isset($dustpress->args->{$name}))
+				return $dustpress->args->{$name};
+			else
+				return null;
+		else {
+			$module = $this->getClass();
+
+			if(isset($dustpress->args{$name}))
+				return $dustpress->args->{$module};
+			else
+				return null;
+		}
+
 	}
 
 	/*
