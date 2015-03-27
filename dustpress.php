@@ -22,11 +22,14 @@ class DustPress {
 	// Possible parent
 	public $parent;
 
-	// Block's name
-	public $blockname;
-
 	// Possible arguments from external caller
 	public $args;
+
+	// Possible partial name
+	public $partial;
+
+	// Do we want to render
+	public $donotrender;
 
 	/*
 	*  __construct
@@ -78,19 +81,23 @@ class DustPress {
 				$paths = array(
 					__DIR__ . '/classes/',
 					get_template_directory() . '/models',
-					get_template_directory() . '/models/shared'		
 				);
 
 				$filename = strtolower($class) .".php";
 
 				foreach($paths as $path) {
-					foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $file) {
-						if(strpos($file,$filename)) {
-							if(is_readable($file)) {
-								require_once($file);
-								return;
+					if(is_readable($path)) {
+						foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $file) {
+							if(strpos($file,$filename)) {
+								if(is_readable($file)) {
+									require_once($file);
+									return;
+								}
 							}
 						}
+					}
+					else {
+						die("DustPress error: Your theme does not have required directory ". $path);
 					}
 				}
 			});
@@ -132,7 +139,11 @@ class DustPress {
 
 				$this->getData();
 
-				$this->render(strtolower($template));
+				if(!($partial = $this->getPartial()))
+					$partial = strtolower($template);
+
+				if(!$this->getRenderStatus)
+					$this->render($partial);
 			}
 			else {
 				$this->getData();
@@ -323,7 +334,7 @@ class DustPress {
 		}
 		catch(Exception $e) {
 			$data = array(
-				'dustPressError' => $e->getMessage()				
+				'dustPressError' => "DustPress error: ". $e->getMessage()				
 			);
 			$template = $this->getErrorTemplate();
 			$error = true;
@@ -349,7 +360,7 @@ class DustPress {
 						$compiled = $dust->compileFile($template);
 					}
 					catch(Exception $e) {
-						die($e->getMessage());
+						die("DustPress error: ". $e->getMessage());
 					}
 				}								 
 				$output = $dust->renderTemplate($compiled, $data);				
@@ -436,16 +447,22 @@ class DustPress {
 	*  @return	$template (string)
 	*/
 	private function getTemplate($partial) {
+		// Check if we have received an absolute path.
 		if (file_exists($partial))
 			return $partial;
 		else {
-			$template = get_template_directory() . '/partials/' . $partial . '.dust';
-			if (file_exists($template)) {
-				return $template;
+			$templatefile =  $partial . '.dust';
+			$templatepath = get_template_directory() . '/partials/';
+			foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templatepath)) as $file) {
+				if(strpos($file,$templatefile) !== false) {
+					if(is_readable($file)) {
+						return $templatepath . $templatefile;
+					}
+				}
 			}
-			else {
-				throw new Exception("Error loading template file: " . $template, 1);
-			}
+			
+			// If we could not find such template.
+			throw new Exception("Error loading template file: " . $template, 1);
 		}
 	}
 
@@ -747,6 +764,35 @@ class DustPress {
 		else
 			return false;
 		
+	}
+
+	public function getPartial() {
+		global $dustpress;
+
+		if(isset($dustpress->partial))
+			return $dustpress->partial;
+		else
+			return false;
+	}
+
+	public function setPartial($partial) {
+		global $dustpress;
+
+		if($partial) {
+			$dustpress->partial = $partial;
+		}
+	}
+
+	public function getRenderStatus() {
+		global $dustpress;
+
+		return $dustpress->donotrender;
+	}
+
+	public function doNotRender() {
+		global $dustpress;
+
+		$dustpress->donotrender = true;
 	}
 
 	/*
