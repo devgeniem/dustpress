@@ -11,7 +11,7 @@ A WordPress plugin for writing template files with Dust templating engine and se
 # Usage
 
 The basics of using DustPress are very simple. Unlike traditional WordPress theme development, DustPress relies on MVVM,
-or Model View ViewModel architecture, where fetching data and showing it to the user are separated in different modules.
+or Model View ViewModel architecture, where fetching data and displaying it to the user are separated in different modules.
 
 ## File naming and locations
 

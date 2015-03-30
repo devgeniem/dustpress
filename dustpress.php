@@ -266,9 +266,6 @@ class DustPress {
 		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
 
-		if($template == "default")
-			die("You haven't declared any model classes.");
-
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
@@ -302,7 +299,7 @@ class DustPress {
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach($methods as $method) {
-			if(strpos($method, "bind") !== false) {
+			if(strpos($method, "bind") === 0) {
 				call_user_func( array($this, $method) );
 			}
 		}
@@ -509,11 +506,13 @@ class DustPress {
 		// Insert wp_head() to collection
 		ob_start();
 		wp_head();
+		echo '<script>var template_url = '. $WP['template_url'] .';</script>';
 		$WP["head"] = ob_get_clean();
 
 		ob_start();
 		wp_footer();
 		$WP["footer"] = ob_get_clean();
+
 
 		// Insert user info to collection
 
@@ -580,6 +579,9 @@ class DustPress {
 		global $post;
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
+
+		if(is_404())
+			return "error404";
 
 		// if no template set, return default
 		if(!$pageTemplate && $type = get_post_type()) {
@@ -739,7 +741,7 @@ class DustPress {
 			$function = $backtrace[2]["function"];
 
 			// strip out extra or get to get the block
-			$function = str_replace("bind","",$function);
+			$function = preg_replace("/^bind/","",$function);
 			return $function;
 		}
 		else

@@ -8,7 +8,7 @@
  *  data and acf fields with single function call.
  * 
  */
-class Post {
+class DustPressHelper {
 
 	private $post;
 	private $posts;
@@ -60,12 +60,17 @@ class Post {
 	*
 	*  $return  post object as an associative array with acf fields and meta data
 	*/
-	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
+	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post', $wholeFields = false ) {
 
 		$this->post = get_post( $id, 'ARRAY_A' );
 		
 		if ( is_array( $this->post ) ) {
 			$this->post['fields'] = get_fields( $id );
+			if($wholeFields) {
+				foreach($this->post['fields'] as $name => &$field) {
+					$field = get_field_object($name, $id, true);
+				}
+			}
 			$this->getPostMeta( $this->post, $id, $metaKeys, $single, $metaType );
 		}
 
@@ -125,7 +130,7 @@ class Post {
 	*
 	*  @return	array of posts as an associative array with acf fields and meta data
 	*/
-	public function getAcfPosts( $args, $metaKeys = NULL, $metaType = 'post' ) {
+	public function getAcfPosts( $args, $metaKeys = NULL, $metaType = 'post', $wholeFields = false ) {
 
 		$temps = get_posts( $args );
 
@@ -136,7 +141,12 @@ class Post {
 		if ( count( $this->posts ) ) {
 			// loop through posts and get all acf fields
 			foreach ( $this->posts as &$p ) {								
-				$p['fields'] = get_fields( $p['ID'] );								
+				$p['fields'] = get_fields( $p['ID'] );
+				if($wholeFields) {
+					foreach($p['fields'] as $name => &$field) {
+						$field = get_field_object($name, $p['ID'], true);
+					}
+				}
 			}
 
 			$this->getMetaForPosts( $this->posts, $metaKeys, $metaType );
