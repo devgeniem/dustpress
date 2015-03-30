@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.3
+Version: 0.0.4
 */
 
 class DustPress {
@@ -104,6 +104,17 @@ class DustPress {
 
 			// Create Dust instance
 			$this->dust = new Dust\Dust();
+
+			// Find and include possible Dust helpers under the theme
+			$helper_path = get_template_directory() . '/helpers';
+
+			if(is_readable($helper_path)) {
+				foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($helper_path, RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+					if(is_readable($file)) {
+						require_once($file);
+					}
+				}
+			}
 
 			// Create data collection
 			$this->data = array();
@@ -266,6 +277,9 @@ class DustPress {
 		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
 
+		if($template == "default")
+			die("You haven't declared any model classes.");
+
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
@@ -299,7 +313,7 @@ class DustPress {
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach($methods as $method) {
-			if(strpos($method, "bind") === 0) {
+			if(strpos($method, "bind") !== false) {
 				call_user_func( array($this, $method) );
 			}
 		}
@@ -345,6 +359,8 @@ class DustPress {
 		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$jsondata = json_encode($data);
 		}
+
+		//var_dump($data);
 
 		// Create output with wanted format.
 		switch ($type) {
@@ -506,13 +522,11 @@ class DustPress {
 		// Insert wp_head() to collection
 		ob_start();
 		wp_head();
-		echo '<script>var template_url = '. $WP['template_url'] .';</script>';
 		$WP["head"] = ob_get_clean();
 
 		ob_start();
 		wp_footer();
 		$WP["footer"] = ob_get_clean();
-
 
 		// Insert user info to collection
 
@@ -579,9 +593,6 @@ class DustPress {
 		global $post;
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
-
-		if(is_404())
-			return "error404";
 
 		// if no template set, return default
 		if(!$pageTemplate && $type = get_post_type()) {
@@ -741,7 +752,7 @@ class DustPress {
 			$function = $backtrace[2]["function"];
 
 			// strip out extra or get to get the block
-			$function = preg_replace("/^bind/","",$function);
+			$function = str_replace("bind","",$function);
 			return $function;
 		}
 		else
