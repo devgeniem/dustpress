@@ -57,24 +57,38 @@ class DustPressHelper {
 	*  @param	$metaKeys (array/string)
 	*  @param	$single (boolean)
 	*  @param	$metaType (string)
+	*  @param 	$wholeFields (boolean)
+	*  @param 	$recursive (boolean)
 	*
 	*  $return  post object as an associative array with acf fields and meta data
 	*/
-	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post', $wholeFields = false ) {
+	public function getAcfPost( $id, $metaKeys = NULL, $single = false, $metaType = 'post', $wholeFields = false, $recursive = false ) {
 
-		$this->post = get_post( $id, 'ARRAY_A' );
+		$acfpost = get_post( $id, 'ARRAY_A' );
 		
-		if ( is_array( $this->post ) ) {
-			$this->post['fields'] = get_fields( $id );
-			if($wholeFields) {
-				foreach($this->post['fields'] as $name => &$field) {
+		if ( is_array( $acfpost ) ) {
+			$acfpost['fields'] = get_fields( $id );
+
+			// Get fields with relational post data as whole acf object
+			if ( $recursive ) {
+				foreach ($acfpost['fields'] as &$field) {
+					if ( is_array($field) && is_object($field[0]) ) {
+						for ($i=0; $i < count($field); $i++) { 
+							$field[$i] = $this->getAcfPost( $field[$i]->ID, $metaKeys, $single, $metaType, $wholeFields, $recursive );
+						}
+					}
+				}
+				
+			}
+			elseif ( $wholeFields ) {
+				foreach($acfpost['fields'] as $name => &$field) {
 					$field = get_field_object($name, $id, true);
 				}
 			}
-			$this->getPostMeta( $this->post, $id, $metaKeys, $single, $metaType );
+			$this->getPostMeta( $acfpost, $id, $metaKeys, $single, $metaType );
 		}
 
-		return $this->post;
+		return $acfpost;
 	}
 
 	/*
