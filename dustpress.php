@@ -105,13 +105,18 @@ class DustPress {
 			// Create Dust instance
 			$this->dust = new Dust\Dust();
 
-			// Find and include possible Dust helpers under the theme
-			$helper_path = get_template_directory() . '/helpers';
+			// Find and include Dust helpers both from DustPress and under the theme
+			$paths = array(
+				__DIR__ . '/helpers',
+				get_template_directory() . '/helpers'
+			);
 
-			if(is_readable($helper_path)) {
-				foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($helper_path, RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
-					if(is_readable($file)) {
-						require_once($file);
+			foreach($paths as $path) {
+				if(is_readable($path)) {
+					foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+						if(is_readable($file)) {
+							require_once($file);
+						}
 					}
 				}
 			}
