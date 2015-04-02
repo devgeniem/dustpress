@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.4
+Version: 0.0.6
 */
 
 class DustPress {
@@ -30,6 +30,9 @@ class DustPress {
 
 	// Do we want to render
 	public $donotrender;
+
+	// Possible post body is stored hiere
+	public $body;
 
 	/*
 	*  __construct
@@ -155,11 +158,31 @@ class DustPress {
 
 				$this->getData();
 
-				if(!($partial = $this->getPartial()))
-					$partial = strtolower($template);
+				if($accepts = $this->getPostBody()) === true) {
+					if(!($partial = $this->getPartial()))
+						$partial = strtolower($template);
 
-				if(!$this->getRenderStatus)
-					$this->render($partial);
+					if(!$this->getRenderStatus)
+						$this->render($partial);
+				}
+				else {
+					$response = array();
+
+					foreach($accepts as $accept) {
+						if(isset($dustpress->data[$accept->function])) {
+							if(isset($accept->dp_partial)) {
+								$response[$accept->function] = $dustpress->render($accept->dp_partial, $dustpress->data, "html", false);
+							}
+							else if(!isset($accept->dp_type) && ($accept->dp_type == "json")) {
+								$response[$accept->function] = $dustpress->data[$accept->function];
+							}
+						}
+					}
+
+					echo json_encode($response);
+					return;
+				}
+
 			}
 			else {
 				$this->getData();
@@ -281,9 +304,6 @@ class DustPress {
 
 		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
-
-		if($template == "default")
-			die("You haven't declared any model classes.");
 
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
@@ -449,7 +469,77 @@ class DustPress {
 	*  @return	true/false (boolean)
 	*/
 	public function isWanted($partial) {
-		return true;
+		global $dustpress;
+
+		if(($accepts = $this->getPostBody()) === true) {
+			return true;
+		}
+
+		foreach($accepts as $accept) {
+			if($partial == $accept->function)
+				return true;
+		}
+
+		return false;
+	}
+
+	/*
+	*  getPostBody
+	*
+	*  This function gets the possible settings json from post body and assigns the data
+	*  to appropriate places. It returns either an array containing data for which functions'
+	*  data to include in the response or boolean "true" if we are not in an ajax request.
+	*
+	*  @type	function
+	*  @date	02/04/2015
+	*  @since	0.0.6
+	*
+	*  @param	N/A
+	*  @return	mixed
+	*/
+	private function getPostBody() {
+		global $dustpress;
+
+		if(isset($dustpress->body))
+			$body = $dustpress->body;
+		else {
+			$dustpress->body = stream_get_contents(STDIN);
+			$body = $dustpress->body;
+		}
+
+		$accepts = array();
+
+		try($json = json_decode($body)) {
+			if($json["ajax"] === true) {
+				$accepts[] = "Content";
+			}
+
+			foreach($json as $container) {
+				if(isset($container->function)) {
+					$temp = new StdClass();
+					$temp->function = $container->function;
+
+					if(isset($container->args->dp_type)) {
+						$temp->type = $container->args->dp_type;
+					}
+
+					if(isset($container->args->dp_partial)) {
+						$temp->partial = $container->args->dp_partial;
+					}
+
+					$accepts[] = $temp;
+
+					if(isset($container->args)) {
+						$dustpress->args->{$container->function} = $container->args;
+					}
+				}
+			}
+		}
+		catch(Exception $e) {
+			return true;
+		}
+
+		return $accepts;
 	}
 
 	/*
@@ -523,15 +613,6 @@ class DustPress {
 		foreach($infos as $info) {
 			$WP[$info] = get_bloginfo($info);
 		}
-
-		// Insert wp_head() to collection
-		ob_start();
-		wp_head();
-		$WP["head"] = ob_get_clean();
-
-		ob_start();
-		wp_footer();
-		$WP["footer"] = ob_get_clean();
 
 		// Insert user info to collection
 
@@ -677,7 +758,6 @@ class DustPress {
 			else
 				return null;
 		}
-
 	}
 
 	/*
