@@ -158,7 +158,7 @@ class DustPress {
 
 				$this->getData();
 
-				if($accepts = $this->getPostBody()) === true) {
+				if($this->getPostBody() === true) {
 					if(!($partial = $this->getPartial()))
 						$partial = strtolower($template);
 
@@ -166,6 +166,8 @@ class DustPress {
 						$this->render($partial);
 				}
 				else {
+					$accepts = $this->getPostBody();
+
 					$response = array();
 
 					foreach($accepts as $accept) {
@@ -503,36 +505,43 @@ class DustPress {
 		if(isset($dustpress->body))
 			$body = $dustpress->body;
 		else {
-			$dustpress->body = stream_get_contents(STDIN);
+			$dustpress->body = file_get_contents('php://input');
 			$body = $dustpress->body;
 		}
 
 		$accepts = array();
 
-		try($json = json_decode($body)) {
+		try {
+			$json = json_decode($body);
+
 			if($json["ajax"] === true) {
 				$accepts[] = "Content";
 			}
 
-			foreach($json as $container) {
-				if(isset($container->function)) {
-					$temp = new StdClass();
-					$temp->function = $container->function;
+			if(count($json) > 0) {
+				foreach($json as $container) {
+					if(isset($container->function)) {
+						$temp = new StdClass();
+						$temp->function = $container->function;
 
-					if(isset($container->args->dp_type)) {
-						$temp->type = $container->args->dp_type;
-					}
+						if(isset($container->args->dp_type)) {
+							$temp->type = $container->args->dp_type;
+						}
 
-					if(isset($container->args->dp_partial)) {
-						$temp->partial = $container->args->dp_partial;
-					}
+						if(isset($container->args->dp_partial)) {
+							$temp->partial = $container->args->dp_partial;
+						}
 
-					$accepts[] = $temp;
+						$accepts[] = $temp;
 
-					if(isset($container->args)) {
-						$dustpress->args->{$container->function} = $container->args;
+						if(isset($container->args)) {
+							$dustpress->args->{$container->function} = $container->args;
+						}
 					}
 				}
+			}
+			else {
+				return true;
 			}
 		}
 		catch(Exception $e) {
