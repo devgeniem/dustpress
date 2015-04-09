@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.6
+Version: 0.0.7
 */
 
 class DustPress {
@@ -94,7 +94,6 @@ class DustPress {
 							if(strpos($file,$filename)) {
 								if(is_readable($file)) {
 									require_once($file);
-									return;
 								}
 							}
 						}
@@ -108,10 +107,9 @@ class DustPress {
 			// Create Dust instance
 			$this->dust = new Dust\Dust();
 
-			// Find and include Dust helpers both from DustPress and under the theme
+			// Find and include Dust helpers from DustPress plugin
 			$paths = array(
 				__DIR__ . '/helpers',
-				get_template_directory() . '/helpers'
 			);
 
 			foreach($paths as $path) {
@@ -136,7 +134,7 @@ class DustPress {
 				$this->args = array();
 
 			// Add createInstance to right action hook if we are not on the admin side
-			if(!is_admin())
+			if(!is_admin() && !$this->isLoginPage())
 				add_action( 'shutdown', array( $this, 'createInstance' ) );
 
 			// Add admin menu
@@ -387,6 +385,8 @@ class DustPress {
 			$jsondata = json_encode($data);
 		}
 
+		$dust->helpers = apply_filters('dustpress/helpers', $dust->helpers);
+
 		//var_dump($data);
 
 		// Create output with wanted format.
@@ -569,11 +569,18 @@ class DustPress {
 			return $partial;
 		else {
 			$templatefile =  $partial . '.dust';
-			$templatepath = get_template_directory() . '/partials/';
-			foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templatepath)) as $file) {
-				if(strpos($file,$templatefile) !== false) {
-					if(is_readable($file)) {
-						return $templatepath . $templatefile;
+			$templatepaths = array(get_template_directory() . '/partials/');
+
+			$templatepaths = array_reverse(apply_filters('dustpress/partials', $templatepaths));
+
+			foreach($templatepaths as $templatepath) {
+				if(is_readable($templatepath)) {
+					foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templatepath)) as $file) {
+						if(strpos($file,$templatefile) !== false) {
+							if(is_readable($file)) {
+								return $templatepath . $templatefile;
+							}
+						}
 					}
 				}
 			}
@@ -694,7 +701,7 @@ class DustPress {
 			if($type == "post") $type = "single";
 			return $type;
 		}
-		else if(!$pageTemplate) return "default";
+		else if(!$pageTemplate) return "page";
 		
 		$array = explode("/",$pageTemplate);
 
@@ -706,6 +713,8 @@ class DustPress {
 		// strip out page-, single-
 		$filename = str_replace("page-","",$filename);
 		$filename = str_replace("single-","",$filename);
+
+		if($filename == "default") $filename = "page";
 
 		return $filename;
 	}
@@ -873,6 +882,18 @@ class DustPress {
 		
 	}
 
+	/*
+	*  getPartial
+	*
+	*  This function returns the desired partial, if the developer has wished to do so. Otherwise return false.
+	*
+	*  @type	function
+	*  @date	1/4/2015
+	*  @since	0.0.6
+	*
+	*  @param	N/A
+	*  @return	mixed
+	*/
 	public function getPartial() {
 		global $dustpress;
 
@@ -882,6 +903,18 @@ class DustPress {
 			return false;
 	}
 
+	/*
+	*  setPartial
+	*
+	*  This function lets the developer to set the partial to be used to render a page.
+	*
+	*  @type	function
+	*  @date	1/4/2015
+	*  @since	0.0.6
+	*
+	*  @param	$partial (string)
+	*  @return	N/A
+	*/
 	public function setPartial($partial) {
 		global $dustpress;
 
@@ -890,12 +923,36 @@ class DustPress {
 		}
 	}
 
+	/*
+	*  getRenderStatus
+	*
+	*  This function returns true/false whether we want to render (by default) or not.
+	*
+	*  @type	function
+	*  @date	1/4/2015
+	*  @since	0.0.6
+	*
+	*  @param	N/A
+	*  @return	true/false (boolean)
+	*/
 	public function getRenderStatus() {
 		global $dustpress;
 
 		return $dustpress->donotrender;
 	}
 
+	/*
+	*  doNotRender
+	*
+	*  The developer can call this function if he wishes to not render the view automatically.
+	*
+	*  @type	function
+	*  @date	1/4/2015
+	*  @since	0.0.6
+	*
+	*  @param	N/A
+	*  @return	NY/A
+	*/
 	public function doNotRender() {
 		global $dustpress;
 
@@ -933,6 +990,22 @@ class DustPress {
 	        }
 	    }
 	    return false;
+	}
+
+	/*
+	*  isLoginPage
+	*
+	*  Returns true if we are on login or register page.
+	*
+	*  @type	function
+	*  @date	9/4/2015
+	*  @since	0.0.7
+	*
+	*  @param	N/A
+	*  @return	true/false (boolean)
+	*/
+	public function isLoginPage() {
+	    return in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-register.php'));
 	}
 }
 
