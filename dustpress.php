@@ -740,7 +740,7 @@ class DustPress {
 			$dustpress->classes[$name] = new $name();
 
 			if(is_array($args))
-				$dustpress->args->{$name} = $args;
+				$dustpress->args[$name] = $args;
 
 			if(!isset($dustpress->data[$name])) $dustpress->data[$name] = new \StdClass();
 		}
@@ -763,15 +763,15 @@ class DustPress {
 		global $dustpress;
 
 		if($name) {
-			if(isset($dustpress->args->{$name}))
-				return $dustpress->args->{$name};
+			if(isset($dustpress->args[$name]))
+				return $dustpress->args[$name];
 			else
 				return null;
 		}
 		else {
 			$module = $this->getClass();
 
-			if(isset($dustpress->args{$name}))
+			if(isset($dustpress->args{$module}))
 				return $dustpress->args->{$module};
 			else
 				return null;
