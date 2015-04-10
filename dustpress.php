@@ -8,6 +8,9 @@ Author URI: http://www.geniem.com
 Version: 0.0.7
 */
 
+// Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
+require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+
 class DustPress {
 
 	// Instance of DustPHP
@@ -48,6 +51,12 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct($parent = null, $args = null) {
+		if(!$this->isInstallationCompatible()) {
+			deactivate_plugins( plugin_basename( __FILE__ ) );
+
+			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
+		}
+
 		if("DustPress" === get_class($this)) {
 			// Autoload DustPHP classes
 			spl_autoload_register(function ($class) {
@@ -233,7 +242,7 @@ class DustPress {
 	*/
 
 	public function pluginMenu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', array( $this, 'dustpressoptions') );
+		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', array( $this, 'dustpressOptions') );
 	}
 
 	/*
@@ -249,7 +258,7 @@ class DustPress {
 	*  @return	N/A
 	*/
 
-	public function dustpressoptions() {
+	public function dustpressOptions() {
 		if( !current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 		}
@@ -358,11 +367,45 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function render($partial, $data = -1, $type = 'html', $echo = true) {
+	public function render($partial, $data = -1, $type = 'default', $echo = true) {
 		global $dustpress;
+
+		if("default" == $type && !get_option('dustpress_default_format')) {
+			$type = "html";
+		}
+		else if("default" == $type && get_option('dustpress_default_format')) {
+			$type = get_option('dustpress_default_format');
+		}
+
+		$types = array(
+			"html" => function($data, $partial, $dust) {
+				try {
+					$compiled = $dust->compileFile($partial);
+				}
+				catch(Exception $e) {
+					die("DustPress error: ". $e->getMessage());
+				}
+
+				return $dust->renderTemplate($compiled, $data);		
+			},
+			"json" => function($data, $partial, $dust) {
+				try {
+					$output = json_encode($data);
+				}
+				catch(Exception $e) {
+					die("JSON encode error: ". $e->getMessage());
+				}
+
+				return $output;
+			}
+		);
+
+		$types = apply_filters('dustpress/output', $types);
 
 		// If no data attribute given, take contents from object data collection
 		if($data == -1) $data = $dustpress->data;
+
+		$data = apply_filters('dustpress/data', $data);
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
@@ -390,28 +433,7 @@ class DustPress {
 		//var_dump($data);
 
 		// Create output with wanted format.
-		switch ($type) {
-			case 'html':
-				if($error) {
-					$compiled = $dust->compile($data);
-				}
-				else {
-					try {
-						$compiled = $dust->compileFile($template);
-					}
-					catch(Exception $e) {
-						die("DustPress error: ". $e->getMessage());
-					}
-				}								 
-				$output = $dust->renderTemplate($compiled, $data);				
-				break;
-			case 'json':
-				$output = json_encode($data);							
-				break;
-			default:
-				$output = 'Template type does not exist.';
-				break;
-		}
+		$output = call_user_func_array($types[$type], array($data, $template, $dust));
 
 		// If logged in and debug option set true in admin side, show the debugging pane.
 		if( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
@@ -1006,6 +1028,31 @@ class DustPress {
 	*/
 	public function isLoginPage() {
 	    return in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-register.php'));
+	}
+
+	/*
+	*  isInstallationCompatible
+	*
+	*  This function returns true if the WordPress configuration is suitable for DustPress.
+	*
+	*  @type	function
+	*  @date	9/4/2015
+	*  @since	0.0.7
+	*
+	*  @param	N/A
+	*  @return	true/false (boolean)
+	*/
+	private function isInstallationCompatible() {
+		if(!is_readable(get_template_directory() .'/models')) {
+			error_log(get_template_directory() .'/models was not found.');
+			return false;
+		}
+		if(!is_readable(get_template_directory() .'/partials')) {
+			error_log(get_template_directory() .'/partials was not found.');
+			return false;
+		}
+
+		return true;
 	}
 }
 
