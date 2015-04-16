@@ -32,7 +32,7 @@ class DustPress {
 	public $partial;
 
 	// Do we want to render
-	public $donotrender;
+	public $do_not_render;
 
 	// Possible post body is stored hiere
 	public $body;
@@ -51,7 +51,7 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct($parent = null, $args = null) {
-		if(!$this->isInstallationCompatible()) {
+		if(!$this->is_installation_compatible()) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
 
 			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
@@ -145,20 +145,20 @@ class DustPress {
 			else
 				$this->args = array();
 
-			// Add createInstance to right action hook if we are not on the admin side
-			if(!is_admin() && !$this->isLoginPage())
-				add_action( 'shutdown', array( $this, 'createInstance' ) );
+			// Add create_instance to right action hook if we are not on the admin side
+			if(!is_admin() && !$this->is_login_page())
+				add_action( 'shutdown', array( $this, 'create_instance' ) );
 
 			// Add admin menu
-			add_action( 'admin_menu', array($this, 'pluginMenu') );
+			add_action( 'admin_menu', array($this, 'plugin_menu') );
 
 			// Add admin stuff
-			add_action( 'plugins_loaded', array($this, 'adminStuff') );
+			add_action( 'plugins_loaded', array($this, 'admin_stuff') );
 
 			return;
 		}
 		else {
-			$template = $this->getTemplateFileName();
+			$template = $this->get_template_filename();
 
 			if($parent)
 				$this->parent = $parent;
@@ -167,20 +167,20 @@ class DustPress {
 				$template = "archive". $template;
 
 			if(strtolower($template) == strtolower(get_class($this))) {
-				$this->populateDataCollection();
+				$this->populate_data_collection();
 
-				$this->getData();
+				$this->get_data();
 
-				if($this->getPostBody() === true) {
+				if($this->get_post_body() === true) {
 
-					if(!($partial = $this->getPartial()))
+					if(!($partial = $this->get_partial()))
 						$partial = strtolower($template);
 
-					if(!$this->getRenderStatus)
+					if(!$this->get_render_status)
 						$this->render($partial);
 				}
 				else {
-					$accepts = $this->getPostBody();
+					$accepts = $this->get_post_body();
 
 					$response = array();
 
@@ -201,13 +201,13 @@ class DustPress {
 
 			}
 			else {
-				$this->getData();
+				$this->get_data();
 			}
 		}
 	}
 
 	/*
-	*  adminStuff
+	*  admin_stuff
 	*
 	*  This function sets JavaScripts and styles for admin debug feature.
 	*
@@ -219,7 +219,7 @@ class DustPress {
 	*  @return	N/A
 	*/
 
-	public function adminStuff() {
+	public function admin_stuff() {
 		global $current_user;
 
 		get_currentuserinfo();
@@ -236,7 +236,7 @@ class DustPress {
 	}
 
 	/*
-	*  pluginMenu
+	*  plugin_menu
 	*
 	*  This function creates the menu item for DustPress options in admin side.
 	*
@@ -248,12 +248,12 @@ class DustPress {
 	*  @return	N/A
 	*/
 
-	public function pluginMenu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustpressoptions', array( $this, 'dustpressOptions') );
+	public function plugin_menu() {
+		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
 	}
 
 	/*
-	*  dustpressoptions
+	*  dustPress_options
 	*
 	*  This function creates the options page functionality in admin side.
 	*
@@ -265,7 +265,7 @@ class DustPress {
 	*  @return	N/A
 	*/
 
-	public function dustpressOptions() {
+	public function dustPress_options() {
 		if( !current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 		}
@@ -303,7 +303,7 @@ class DustPress {
 	}
 
 	/*
-	*  createInstance
+	*  create_instance
 	*
 	*  This function creates the instance of the main model that is defined by the WordPress template
 	*
@@ -314,12 +314,12 @@ class DustPress {
 	*  @param   N/A
 	*  @return	N/A
 	*/
-	public function createInstance() {
+	public function create_instance() {
 		global $post;
 		global $dustpress;
 
 		// Get current template name tidied up a bit.
-		$template = $this->getTemplateFilename();
+		$template = $this->get_template_filename();
 
 		if(is_archive())
 			$template = "archive". $template;
@@ -333,7 +333,7 @@ class DustPress {
 	}
 
 	/*
-	*  getData
+	*  get_data
 	*
 	*  This function gets the data from models and binds it to the global data structure
 	*
@@ -344,7 +344,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
-	public function getData() {
+	public function get_data() {
 		global $dustpress;
 
 		$className = get_class($this);
@@ -354,7 +354,7 @@ class DustPress {
 		if(!isset($dustpress->data[$className]->Content)) $dustpress->data[$className]->Content = new \StdClass();
 
 		// Fetch all methods from given class.
-		$methods = $this->getClassMethods($className);
+		$methods = $this->get_class_methods($className);
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach($methods as $method) {
@@ -420,13 +420,13 @@ class DustPress {
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
-			$template = $this->getTemplate($partial);
+			$template = $this->get_template($partial);
 		}
 		catch(Exception $e) {
 			$data = array(
 				'dustPressError' => "DustPress error: ". $e->getMessage()				
 			);
-			$template = $this->getErrorTemplate();
+			$template = $this->get_error_template();
 			$error = true;
 		}
 
@@ -494,7 +494,7 @@ class DustPress {
 	}
 
 	/*
-	*  isWanted
+	*  is_wanted
 	*
 	*  This function checks if certain partial is wanted into output
 	*
@@ -505,10 +505,10 @@ class DustPress {
 	*  @param	$partial (string)
 	*  @return	true/false (boolean)
 	*/
-	public function isWanted($partial) {
+	public function is_wanted($partial) {
 		global $dustpress;
 
-		if(($accepts = $this->getPostBody()) === true) {
+		if(($accepts = $this->get_post_body()) === true) {
 			return true;
 		}
 
@@ -521,7 +521,7 @@ class DustPress {
 	}
 
 	/*
-	*  getPostBody
+	*  get_post_body
 	*
 	*  This function gets the possible settings json from post body and assigns the data
 	*  to appropriate places. It returns either an array containing data for which functions'
@@ -534,7 +534,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	mixed
 	*/
-	private function getPostBody() {
+	private function get_post_body() {
 		global $dustpress;
 
 		if(isset($dustpress->body))
@@ -587,7 +587,7 @@ class DustPress {
 	}
 
 	/*
-	*  getTemplate
+	*  get_template
 	*
 	*  This function checks whether the given partial exists and returns the contents of the file as a string
 	*
@@ -598,7 +598,7 @@ class DustPress {
 	*  @param	$partial (string)
 	*  @return	$template (string)
 	*/
-	private function getTemplate($partial) {
+	private function get_template($partial) {
 		// Check if we have received an absolute path.
 		if (file_exists($partial))
 			return $partial;
@@ -633,7 +633,7 @@ class DustPress {
 	}
 
 	/*
-	*  getErrorTemplate
+	*  get_error_template
 	*
 	*  This function returns simple error template
 	*
@@ -644,12 +644,12 @@ class DustPress {
 	*  @param	N/A
 	*  @return	$template (string)
 	*/
-	private function getErrorTemplate() {
+	private function get_error_template() {
 		return '<p class="dustpress-error">{dustPressError}</p>';
 	}
 
 	/*
-	*  populateDataCollection
+	*  populate_data_collection
 	*
 	*  This function populates the data collection with essential data
 	*
@@ -660,7 +660,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
-	private function populateDataCollection() {
+	private function populate_data_collection() {
 		global $dustpress;
 
 		$WP = array();
@@ -698,7 +698,7 @@ class DustPress {
 	}
 
 	/*
-	*  getClassMethods
+	*  get_class_methods
 	*
 	*  This function returns all public methods from given class. Only class' own methods, no inherited.
 	*
@@ -709,7 +709,7 @@ class DustPress {
 	*  @param	$className (string)
 	*  @return	$methods (array)
 	*/
-	private function getClassMethods($className) {
+	private function get_class_methods($className) {
 		$rc = new \ReflectionClass($className);
 		$rmpu = $rc->getMethods(\ReflectionMethod::IS_PUBLIC);
 
@@ -722,7 +722,7 @@ class DustPress {
 	}
 
 	/*
-	*  getTemplateFileName
+	*  get_template_filename
 	*
 	*  This function gets current template's filename and returns without extension or WP-template prefixes such as page- or single-.
 	*
@@ -733,7 +733,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	$filename (string)
 	*/
-	private function getTemplateFileName() {
+	private function get_template_filename() {
 		global $post;
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
@@ -774,7 +774,7 @@ class DustPress {
 	}
 
 	/*
-	*  bindSub
+	*  bind_sub
 	*
 	*  This function checks if a bound submodel is wanted to run and if it is, runs it.
 	*
@@ -787,10 +787,10 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function bindSub($name, $args = null) {
+	public function bind_sub($name, $args = null) {
 		global $dustpress;
 
-		if($this->isWanted($name)) {
+		if($this->is_wanted($name)) {
 			$dustpress->classes[$name] = new $name();
 
 			if(is_array($args))
@@ -801,7 +801,7 @@ class DustPress {
 	}
 
 	/*
-	*  getArgs
+	*  get_args
 	*
 	*  This function gets the arguments for wanted name or, if we don't give a name, we get
 	*  args for current module.
@@ -813,7 +813,7 @@ class DustPress {
 	*  @param	$name (string)
 	*  @return	args (array)
 	*/
-	public function getArgs($name = null) {
+	public function get_args($name = null) {
 		global $dustpress;
 
 		if($name) {
@@ -823,7 +823,7 @@ class DustPress {
 				return null;
 		}
 		else {
-			$module = $this->getClass();
+			$module = $this->get_class();
 
 			if(isset($dustpress->args{$name}))
 				return $dustpress->args->{$module};
@@ -833,7 +833,7 @@ class DustPress {
 	}
 
 	/*
-	*  bindData
+	*  bind_data
 	*
 	*  This function binds the data from the models to the global data structure.
 	*  It could take a key to bind the data in, but as default creates the key from
@@ -847,18 +847,18 @@ class DustPress {
 	*  @param	$key (string)
 	*  @return	true/false (boolean)
 	*/
-	public function bindData($data, $key = null) {
+	public function bind_data($data, $key = null) {
 		global $dustpress;
 
 		$temp = array();
 
-		$module = $this->getClass();
+		$module = $this->get_class();
 
 		if(!$key) {
-			$key = $this->getPreviousFunction();
+			$key = $this->get_previous_function();
 		}
 
-		if($this->isSubModule() || ($key == "__")) {
+		if($this->is_sub_module() || ($key == "__")) {
 			if(isset($dustpress->data[$module])) {
 				$dustpress->data[$module]->{$key} = $data;
 			}
@@ -874,7 +874,7 @@ class DustPress {
 	}
 
 	/*
-	*  getClass
+	*  get_class
 	*
 	*  This function is a static proxy for PHP function get_called_class() to know from which
 	*  class a certain possibly inherited function is run.
@@ -886,12 +886,12 @@ class DustPress {
 	*  @param	$data (N/A)
 	*  @return	$classname (string)
 	*/
-	public static function getClass() {
+	public static function get_class() {
 		return get_called_class();
 	}
 
 	/*
-	*  getPreviousFunction
+	*  get_previous_function
 	*
 	*  This function returns the function where current function was called.
 	*
@@ -902,7 +902,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	$function (string)
 	*/
-	public function getPreviousFunction() {
+	public function get_previous_function() {
 		$backtrace = debug_backtrace();
 
 		if(isset($backtrace[2])) {
@@ -917,7 +917,7 @@ class DustPress {
 	}
 
 	/*
-	*  isSubModule
+	*  is_sub_module
 	*
 	*  This function returns true if current function is from a submodule.
 	*
@@ -928,8 +928,8 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
-	public function isSubModule() {
-		if($this->array_search_recursive("bindSub", debug_backtrace()))
+	public function is_sub_module() {
+		if($this->array_search_recursive("bind_sub", debug_backtrace()))
 			return true;
 		else
 			return false;
@@ -937,7 +937,7 @@ class DustPress {
 	}
 
 	/*
-	*  getPartial
+	*  get_partial
 	*
 	*  This function returns the desired partial, if the developer has wished to do so. Otherwise return false.
 	*
@@ -948,7 +948,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	mixed
 	*/
-	public function getPartial() {
+	public function get_partial() {
 		global $dustpress;
 
 		if(isset($dustpress->partial))
@@ -958,7 +958,7 @@ class DustPress {
 	}
 
 	/*
-	*  setPartial
+	*  set_partial
 	*
 	*  This function lets the developer to set the partial to be used to render a page.
 	*
@@ -969,7 +969,7 @@ class DustPress {
 	*  @param	$partial (string)
 	*  @return	N/A
 	*/
-	public function setPartial($partial) {
+	public function set_partial($partial) {
 		global $dustpress;
 
 		if($partial) {
@@ -978,7 +978,7 @@ class DustPress {
 	}
 
 	/*
-	*  getRenderStatus
+	*  get_render_status
 	*
 	*  This function returns true/false whether we want to render (by default) or not.
 	*
@@ -989,14 +989,14 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
-	public function getRenderStatus() {
+	public function get_render_status() {
 		global $dustpress;
 
-		return $dustpress->donotrender;
+		return $dustpress->do_not_render;
 	}
 
 	/*
-	*  doNotRender
+	*  do_not_render
 	*
 	*  The developer can call this function if he wishes to not render the view automatically.
 	*
@@ -1007,10 +1007,10 @@ class DustPress {
 	*  @param	N/A
 	*  @return	NY/A
 	*/
-	public function doNotRender() {
+	public function do_not_render() {
 		global $dustpress;
 
-		$dustpress->donotrender = true;
+		$dustpress->do_not_render = true;
 	}
 
 	/*
@@ -1047,7 +1047,7 @@ class DustPress {
 	}
 
 	/*
-	*  isLoginPage
+	*  is_login_page
 	*
 	*  Returns true if we are on login or register page.
 	*
@@ -1058,12 +1058,12 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
-	public function isLoginPage() {
+	public function is_login_page() {
 	    return in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-register.php'));
 	}
 
 	/*
-	*  isInstallationCompatible
+	*  is_installation_compatible
 	*
 	*  This function returns true if the WordPress configuration is suitable for DustPress.
 	*
@@ -1074,7 +1074,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
-	private function isInstallationCompatible() {
+	private function is_installation_compatible() {
 		if(!is_readable(get_template_directory() .'/models')) {
 			error_log(get_template_directory() .'/models was not found.');
 			return false;
