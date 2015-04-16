@@ -882,7 +882,7 @@ class DustPress {
 			}
 		}
 		else if ( $key == "Content" ) {
-			$dustpress->data[$module]->Content = (object) array_merge  (array) $dustpress->data[$module]->Content, (array) $data );
+			$dustpress->data[$module]->Content = (object) array_merge( (array) $dustpress->data[$module]->Content, (array) $data );
 		}
 		else {
 			if ( isset( $dustpress->data[$module] ) ) {
