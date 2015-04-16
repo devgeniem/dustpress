@@ -1,9 +1,9 @@
 <?php
-$this->dust->helpers['content'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params) {
+$this->dust->helpers['content'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
 	global $dustpress;
 	
-	if($params->data) {
-		$output = apply_filters('the_content', $params->data);
+	if ( $params->data ) {
+		$output = apply_filters( 'the_content', $params->data );
 	}
 	else {
 		ob_start();
@@ -11,5 +11,5 @@ $this->dust->helpers['content'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\E
 		$output = ob_get_clean();
 	}
 
-	return $chunk->write($output);
+	return $chunk->write( $output );
 };
