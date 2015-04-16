@@ -16,7 +16,7 @@ class DustPress {
 	// Instance of DustPHP
 	private $dust;
 
-	// Instances of other classes
+	// Instances of other classesƒ
 	public $classes;
 
 	// Data collection
@@ -96,6 +96,8 @@ class DustPress {
 				);
 
 				$class = str_replace( "archive", "archive-", $class );
+				$class = str_replace( "category", "category-", $class );
+				$class = str_replace( "taxonomy", "taxonomy-", $class );
 				$class = str_replace( "error404", "404", $class );
 				
 				$filename = strtolower( $class ) .".php";
@@ -163,11 +165,19 @@ class DustPress {
 		else {
 			$template = $this->get_template_filename();
 
-			if ( $parent )
+			if ( $parent ) {
 				$this->parent = $parent;
+			}
 
-			if ( is_archive() )
+			if ( is_tax() ) {
+				$template = "taxonomy". $template;
+			}
+			else if ( is_category() ) {
+				$template = "category". $template;
+			}
+			else if ( is_archive() ) {
 				$template = "archive". $template;
+			}
 
 			if ( strtolower( $template ) == strtolower( get_class( $this ) ) ) {
 				$this->populate_data_collection();
@@ -324,8 +334,15 @@ class DustPress {
 		// Get current template name tidied up a bit.
 		$template = $this->get_template_filename();
 
-		if ( is_archive() )
+		if ( is_tax() ) {
+			$template = "taxonomy". $template;
+		}
+		else if ( is_category() ) {
+			$template = "category". $template;
+		}
+		else if ( is_archive() ) {
 			$template = "archive". $template;
+		}
 
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
@@ -616,7 +633,13 @@ class DustPress {
 		if ( file_exists( $partial ) )
 			return $partial;
 		else {
-			if ( is_archive() ) {
+			if ( is_category() ) {
+				$partial = str_replace( "category", "category-", $partial );
+			}
+			else if ( is_tax() ) {
+				$partial = str_replace( "taxonomy", "taxonomy-", $partial );	
+			}
+			else if ( is_archive() ) {
 				$partial = str_replace( "archive", "archive-", $partial );
 			}
 			if ( is_404() ) {
@@ -751,7 +774,17 @@ class DustPress {
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		if ( is_archive() ) {
+		if ( is_category() ) {
+			$cat = get_category( get_query_var('cat') );
+
+			return $cat->slug;
+		}
+		else if ( is_tax() ) {
+			$id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $id, get_query_var('taxonomy') );
+			return $term->slug;
+		}
+		else if ( is_archive() ) {
 			$post_types = get_post_types();
 			foreach ( $post_types as $type ) {
 				if ( is_post_type_archive( $type ) ) {
