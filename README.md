@@ -58,7 +58,7 @@ Template name: Frontpage
 */
 
 class Frontpage extends DustPress {
-	//
+  //
 }
 ?>
 ```
@@ -73,8 +73,8 @@ If you write a method that has a name starting with the word `bind`, DustPress e
 the data is being gathered. All other functions are considered as helper functions and should be executed in the
 code.
 
-Within the `bind` methods there are two special cases, `bindContent()` and `bindSub()`. We'll explain them later
-in detail. `bindData()` is also a reserved name that can't be used as a method.
+Within the `bind` methods there are two special cases, `bind_Content()` and `bind_sub()`. We'll explain them later
+in detail. `bind_data()` is also a reserved name that can't be used as a method.
 
 ### Binding the data
 
@@ -109,7 +109,7 @@ object(stdClass)#1 (1) {
 
 Recurring elements like headers or footers should be created as submodels that can be included in any page.
 Submodels have their own classes and are located in their own files inside the models/ directory. They are
-attached to the main model with the aforementioned `bindSub()` method. The frontpage model could look like
+attached to the main model with the aforementioned `bind_sub()` method. The frontpage model could look like
 this:
 
 ```
@@ -120,33 +120,33 @@ Template name: Frontpage
 
 class Frontpage extends DustPress {
 
-	public function bindSubmodels() {
-		$this->bindSub("Header");
-		$this->bindSub("Sidebar");
-		$this->bindSub("Footer");
-	}
+  public function bind_Submodels() {
+    $this->bind_sub("Header");
+    $this->bind_sub("Sidebar");
+    $this->bind_sub("Footer");
+  }
 }
 ?>
 ```
 
 This code fetches all three models and binds their data to the global data hierarchy under corresponding
-object. `bindSubmodels` is just an example name, the `bindSub` function calls can be anywhere in the model
+object. `bind_Submodels` is just an example name, the `bind_sub` function calls can be anywhere in the model
 and run inside an if block etc.
 
-`bindSub()` can also take a second parameter, an array of arguments to pass to the submodel. It is then
-accessible in the submodel globally by calling `getArgs()`.
+`bind_sub()` can also take a second parameter, an array of arguments to pass to the submodel. It is then
+accessible in the submodel globally by calling `get_args()`.
 
-#### bindData()
+#### bind_data()
 
-The actual passing of the data to inside the methods happens via `bindData()` method. It takes the data as a
+The actual passing of the data to inside the methods happens via `bind_data()` method. It takes the data as a
 parameter and pushes it to the global data object under current model's branch of the tree. It goes under
 `Content` object and in a container named after the method.
 
 ```
-public function bindSomeData() {
-	$data = "This is data.";
+public function bind_SomeData() {
+  $data = "This is data.";
 
-	$this->bindData($data);
+  $this->bind_data($data);
 }
 ```
 
@@ -175,10 +175,10 @@ object(stdClass)#1 (1) {
 ```
 
 If you for some reason want to bind the data with another name than the method's name, you can pass the name to
-the `bindData()` method as the second parameter. This way you can also have data named 'Sub' or 'Data' which are
+the `bind_data()` method as the second parameter. This way you can also have data named 'Sub' or 'Data' which are
 otherwise reserved names for plugin's methods.
 
-You can also bind data straight to the root of the Content-object with `bindContent()` method. It doesn't create
+You can also bind data straight to the root of the Content-object with `bind_Content()` method. It doesn't create
 a Content->Content structure but rather merges the data straight inside the Content block.
 
 #### Reserved model names
@@ -191,16 +191,14 @@ WP is reserved for the essential WordPress data that is accessible in any templa
 the root of the data object with the key `WP` and it contains all the fields that WordPress native `get_bloginfo()`
 would return.
 
-`wp_head()` and `wp_footer()` functions' contents are also stored in WP->head and WP-footer respectively. They should
-be inserted in the corresponding places in your template file with the Dust's |s flag that suppresses the auto-escaping
-functionality.
-
-```
-{WP.head|s}
-```
-
 It also contains information about the current user in WP->user and a true/false boolean if the user is logged in
 in WP->loggedin.
+
+`wp_head()` and `wp_footer()` functions' contents are available for use in helpers {@wphead /} and {@wpfooter /} respectively. They should be inserted in the corresponding places in your template file.
+
+```
+{@wphead /}
+```
 
 ## Dust templates
 
@@ -211,18 +209,18 @@ in the template. As for our previous example model, very simplified template cou
 
 ```
 {#Frontpage}
-	{">shared/header" /}
+  {">shared/header" /}
 
-	{#Content}
-		<h1>{WP.name}</h1>
-		<h2>{WP.description}</h2>
+  {#Content}
+    <h1>{WP.name}</h1>
+    <h2>{WP.description}</h2>
 
-		<p>{SomeData}</p>
-	{/Content}
+    <p>{SomeData}</p>
+  {/Content}
 
-	{">shared/sidebar" /}
+  {">shared/sidebar" /}
 
-	{">shared/footer" /}
+  {">shared/footer" /}
 {/Frontpage}
 ```
 
@@ -233,7 +231,7 @@ This template includes header.dust, sidebar.dust and footer.dust templates from 
 ### DoNotRender
 
 If you do not want the DustPress to render the page automatically but want to do it yourself, you can call
-`$this->doNotRender()` anywhere in your model or submodels. In that case DustPress populates the data object, but leaves the
+`$this->do_not_render()` anywhere in your model or submodels. In that case DustPress populates the data object, but leaves the
 rendering for the developer.
 
 DustPress render function is declared public and is thus usable anywhere. It takes the partial (either as a complete
