@@ -920,7 +920,7 @@ class DustPress {
 			$key = $this->get_previous_function();
 		}
 
-		if ( $this->is_sub_module() || ($key == "__") ) {
+		if ( $this->is_sub_module() ) {
 			if ( isset( $dustpress->data[$module] ) ) {
 				$dustpress->data[$module]->{$key} = $data;
 			}
@@ -1105,7 +1105,7 @@ class DustPress {
 	            } else {
 	                $indexes = array();
 	            }
-	        } else if ( $value == $needle ) {
+	        } else if ( $value === $needle ) {
 	            $indexes[] = $key;
 	            return true;
 	        }
