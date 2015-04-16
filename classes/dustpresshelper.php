@@ -88,6 +88,9 @@ class DustPressHelper {
 			$this->getPostMeta( $acfpost, $id, $metaKeys, $single, $metaType );
 		}
 
+		$acfpost['permalink'] = get_permalink($id);
+
+
 		return $acfpost;
 	}
 
@@ -156,6 +159,7 @@ class DustPressHelper {
 			// loop through posts and get all acf fields
 			foreach ( $this->posts as &$p ) {								
 				$p['fields'] = get_fields( $p['ID'] );
+				$p['permalink'] = get_permalink( $p['ID'] );
 				if($wholeFields) {
 					foreach($p['fields'] as $name => &$field) {
 						$field = get_field_object($name, $p['ID'], true);

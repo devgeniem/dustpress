@@ -95,6 +95,8 @@ class DustPress {
 					get_template_directory() . '/models',
 				);
 
+				$class = strtolower($class);
+
 				$class = str_replace( "archive", "archive-", $class );
 				$class = str_replace( "category", "category-", $class );
 				$class = str_replace( "taxonomy", "taxonomy-", $class );
@@ -189,8 +191,9 @@ class DustPress {
 					if ( ! ( $partial = $this->get_partial() ) )
 						$partial = strtolower( $template );
 
-					if ( ! $this->get_render_status )
+					if ( ! $this->get_render_status ) {
 						$this->render( $partial );
+					}
 				}
 				else {
 					$accepts = $this->get_post_body();
@@ -465,9 +468,11 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		//echo "<!--";
-		//var_dump($data);
-		//echo "-->";
+		if(apply_filters( 'dustpress/showdebug', array())) {
+			echo "<!--";
+			var_dump($data);
+			echo "-->";
+		}
 
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
@@ -647,6 +652,7 @@ class DustPress {
 			}
 
 			$templatefile =  $partial . '.dust';
+
 			$templatepaths = array( get_template_directory() . '/partials/' );
 
 			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
@@ -779,10 +785,15 @@ class DustPress {
 
 			return $cat->slug;
 		}
-		else if ( is_tax() ) {
+		if ( is_tax() ) {
 			$id = get_queried_object()->term_id;
 			$term = get_term_by( "id", $id, get_query_var('taxonomy') );
-			return $term->slug;
+			if ( class_exists("Taxonomy". $term->slug) ) {
+				return $term->slug;
+			}
+			else if( class_exists( "Taxonomy". get_query_var('taxonomy') ) ) {
+				return get_query_var('taxonomy');
+			}
 		}
 		else if ( is_archive() ) {
 			$post_types = get_post_types();
@@ -914,7 +925,7 @@ class DustPress {
 				$dustpress->data[$module]->{$key} = $data;
 			}
 		}
-		else if ( $key == "Content" ) {
+		else if ( strtolower( $key ) == "content" ) {
 			$dustpress->data[$module]->Content = (object) array_merge( (array) $dustpress->data[$module]->Content, (array) $data );
 		}
 		else {
