@@ -468,7 +468,7 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		if( apply_filters( 'dustpress/show_debug' ) || ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) ) {
+		if( apply_filters( 'dustpress/show_debug', false ) || ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) ) {
 			echo "<!--";
 			var_dump($data);
 			echo "-->";
@@ -734,6 +734,8 @@ class DustPress {
 
 		// Insert admin ajax url
 		$WP["admin_ajax_url"] = admin_url( 'admin-ajax.php' );
+
+		$WP["permalink"] = get_permalink();
 
 		// Push array to collection
 		$dustpress->data["WP"] = $WP;
