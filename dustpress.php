@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.7
+Version: 0.0.8
 */
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
@@ -95,7 +95,10 @@ class DustPress {
 					get_template_directory() . '/models',
 				);
 
-				$filename = strtolower($class) .".php";
+				$class = str_replace( "archive", "archive-",$class );
+				$class = str_replace( "error404", "404",$class );
+				
+				$filename = strtolower( $class ) .".php";
 
 				foreach($paths as $path) {
 					if(is_readable($path)) {
@@ -160,12 +163,16 @@ class DustPress {
 			if($parent)
 				$this->parent = $parent;
 
+			if(is_archive())
+				$template = "archive". $template;
+
 			if(strtolower($template) == strtolower(get_class($this))) {
 				$this->populateDataCollection();
 
 				$this->getData();
 
 				if($this->getPostBody() === true) {
+
 					if(!($partial = $this->getPartial()))
 						$partial = strtolower($template);
 
@@ -314,11 +321,15 @@ class DustPress {
 		// Get current template name tidied up a bit.
 		$template = $this->getTemplateFilename();
 
+		if(is_archive())
+			$template = "archive". $template;
+
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
-		if(class_exists($template))
+		if(class_exists($template)) {
 			new $template($dustpress);
+		}
 	}
 
 	/*
@@ -430,7 +441,9 @@ class DustPress {
 
 		$dust->helpers = apply_filters('dustpress/helpers', $dust->helpers);
 
+		//echo "<!--";
 		//var_dump($data);
+		//echo "-->";
 
 		// Create output with wanted format.
 		$output = call_user_func_array($types[$type], array($data, $template, $dust));
@@ -590,6 +603,13 @@ class DustPress {
 		if (file_exists($partial))
 			return $partial;
 		else {
+			if( is_archive() ) {
+				$partial = str_replace( "archive", "archive-", $partial );
+			}
+			if( is_404() ) {
+				$partial = "404";
+			}
+
 			$templatefile =  $partial . '.dust';
 			$templatepaths = array(get_template_directory() . '/partials/');
 
@@ -718,12 +738,24 @@ class DustPress {
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		// if no template set, return default
-		if(!$pageTemplate && $type = get_post_type()) {
-			if($type == "post") $type = "single";
-			return $type;
+		if(is_archive()) {
+			$post_types = get_post_types();
+			foreach($post_types as $type) {
+				if(is_post_type_archive($type))
+					return $type;
+			}
 		}
-		else if(!$pageTemplate) return "page";
+		else if(is_404()) {
+			return "error404";
+		}
+		else {
+			// if no template set, return default
+			if(!$pageTemplate && $type = get_post_type()) {
+				if($type == "post") $type = "single";
+				return $type;
+			}
+			else if(!$pageTemplate) return "page";
+		}
 		
 		$array = explode("/",$pageTemplate);
 
@@ -762,7 +794,7 @@ class DustPress {
 			$dustpress->classes[$name] = new $name();
 
 			if(is_array($args))
-				$dustpress->args[$name] = $args;
+				$dustpress->args->{$name} = $args;
 
 			if(!isset($dustpress->data[$name])) $dustpress->data[$name] = new \StdClass();
 		}
@@ -785,15 +817,15 @@ class DustPress {
 		global $dustpress;
 
 		if($name) {
-			if(isset($dustpress->args[$name]))
-				return $dustpress->args[$name];
+			if(isset($dustpress->args->{$name}))
+				return $dustpress->args->{$name};
 			else
 				return null;
 		}
 		else {
 			$module = $this->getClass();
 
-			if(isset($dustpress->args{$module}))
+			if(isset($dustpress->args{$name}))
 				return $dustpress->args->{$module};
 			else
 				return null;
