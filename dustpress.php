@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.8
+Version: 0.0.9
 */
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
@@ -468,7 +468,7 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		if(apply_filters( 'dustpress/showdebug', array())) {
+		if( apply_filters( 'dustpress/show_debug' ) || ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) ) {
 			echo "<!--";
 			var_dump($data);
 			echo "-->";
@@ -477,7 +477,7 @@ class DustPress {
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
 
-		// If logged in and debug option set true in admin side, show the debugging pane.
+		/* If logged in and debug option set true in admin side, show the debugging pane.
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$string = '
 				<script>
@@ -508,7 +508,7 @@ class DustPress {
 				</body>';
 
 			$output = str_replace( "</body>", $string, $output );
-		}
+		} */
 
 		if ( $echo ) {
 			echo $output;
