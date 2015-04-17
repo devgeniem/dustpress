@@ -469,7 +469,6 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		// If logged in and debug option set true in admin side, show the debugging pane.
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
@@ -716,6 +715,8 @@ class DustPress {
 
 		// Insert admin ajax url
 		$WP["admin_ajax_url"] = admin_url( 'admin-ajax.php' );
+
+		$WP["permalink"] = get_permalink();
 
 		// Push array to collection
 		$dustpress->data["WP"] = $WP;
