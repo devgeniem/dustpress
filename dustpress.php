@@ -53,7 +53,7 @@ class DustPress {
 	public function __construct( $parent = null, $args = null ) {
 		if ( ! $this->is_installation_compatible() ) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
-
+		
 			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
 		}
 
@@ -242,12 +242,13 @@ class DustPress {
 
 		// If admin and debug is set to true, enqueue JSON printing
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );
+			wp_enqueue_script( 'jquery' );			
+			
+			// Just register the dustpress and enqueue later, if needed
+			wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
-			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', null, null, false );
-			wp_enqueue_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, false );
-
-			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
+			// Register the debugger script
+			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );						
 		}
 	}
 
@@ -468,47 +469,28 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		if( apply_filters( 'dustpress/show_debug' ) || ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) ) {
-			echo "<!--";
-			var_dump($data);
-			echo "-->";
+		// If logged in and debug option set true in admin side, show the debugging pane.
+		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			
+			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
+
+			// Localize the script with new data
+			$data_array = array(
+				'jsondata' => $jsondata,				
+			);
+			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
+			
+			// jsonView jQuery - plugin
+			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
+			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, true );
+
+			// Enqueued script with localized data.
+			wp_enqueue_script( 'dustpress_debugger' );
+
 		}
 
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
-
-		/* If logged in and debug option set true in admin side, show the debugging pane.
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			$string = '
-				<script>
-				jQuery(document).ready(function() {
-					var jsondata = '. $jsondata .';
-
-					var div = "<div class=\"jsonview_debug\"></div>";
-
-					$(div).appendTo(".jsonview_data_debug");
-
-					$(".jsonview_debug").jsonView(jsondata);
-
-					$(".jsonview_open_debug").click(function() {
-						$(".jsonview_debug").slideToggle();
-
-					jQuery(div).appendTo(".jsonview_data_debug");
-
-					jQuery(".jsonview_debug").jsonView(jsondata);
-
-					jQuery(".jsonview_open_debug").click(function() {
-						jQuery(".jsonview_debug").slideToggle();
-					});
-				});
-				</script>
-				<div class="jsonview_data_debug">
-					<button class="jsonview_open_debug">Show/Hide data debug</button>
-				</div>
-				</body>';
-
-			$output = str_replace( "</body>", $string, $output );
-		} */
 
 		if ( $echo ) {
 			echo $output;
@@ -920,13 +902,13 @@ class DustPress {
 			$key = $this->get_previous_function();
 		}
 
-		if ( $this->is_sub_module() || ($key == "__") ) {
+		if ( strtolower( $key ) == "content" ) {
+			$dustpress->data[$module]->Content = (object) array_merge( (array) $dustpress->data[$module]->Content, (array) $data );
+		}
+		else if ( $this->is_sub_module() ) {
 			if ( isset( $dustpress->data[$module] ) ) {
 				$dustpress->data[$module]->{$key} = $data;
 			}
-		}
-		else if ( strtolower( $key ) == "content" ) {
-			$dustpress->data[$module]->Content = (object) array_merge( (array) $dustpress->data[$module]->Content, (array) $data );
 		}
 		else {
 			if ( isset( $dustpress->data[$module] ) ) {
@@ -1105,7 +1087,7 @@ class DustPress {
 	            } else {
 	                $indexes = array();
 	            }
-	        } else if ( $value == $needle ) {
+	        } else if ( $value === $needle ) {
 	            $indexes[] = $key;
 	            return true;
 	        }
@@ -1153,6 +1135,7 @@ class DustPress {
 
 		return true;
 	}
+
 }
 
 // Create an instance of the plugin if we are on the public side

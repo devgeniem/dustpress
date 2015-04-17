@@ -20,15 +20,15 @@
  *  </script></head><body></body></html>
 */
 
-(function(){
-	var $ = jQuery;
+(function($){
 	
 	// the JQUERY plguin.
 	$.fn.jsonView=function(jsonData){
 		var $this = $(this);
 		var treeHTML  = "<div class=\"jquery-jsonview\">"+json2markup(jsonData)+"</div>";
 		return $this.html(treeHTML);
-	}		
+	}
+
 	// the ACTUAL plugin
 	var json2markup = function(json,lvl){
 		var markup = [],lvl = (lvl+1)||0;
@@ -70,7 +70,7 @@
 	}
 	
 	/** folder, un-folder array */
-	$('.list-toggle-button').live('click', function(e){
+	$(document).on('click', '.list-toggle-button', function(e){
 		e.preventDefault();e.stopPropagation();
 		var $this = $(this);
 		if(!$this.data('li')){
@@ -96,7 +96,7 @@
 	});
 	
 	// only register this once... will work everywhere
-	$('.property-toggle-button').live('click',function(e){
+	$(document).on('click', '.property-toggle-button', function(e){
 		e.preventDefault();e.stopPropagation();
 		var $this = $(this);
 		// first time acces this element, store relationships 			
@@ -119,4 +119,4 @@
 			});
 		} 
 	});
-})();
+})(jQuery);
