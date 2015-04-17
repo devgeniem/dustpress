@@ -469,6 +469,7 @@ class DustPress {
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
+		// Load debugger
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
