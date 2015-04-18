@@ -113,10 +113,11 @@ class DustPressHelper {
 	*/
 	public function getPosts( $args, $metaKeys = NULL, $metaType = 'post' ) {
 
-		$temps = get_posts( $args );
+		$this->posts = get_posts( $args );
 
-		foreach ($temps as $temp) {
-			$this->posts[] = (array) $temp;
+		// cast post object to associative arrays
+		foreach ($this->posts as &$temp) {
+			$temp = (array) $temp;
 		}
 		
 		// get meta for posts
@@ -149,12 +150,13 @@ class DustPressHelper {
 	*/
 	public function getAcfPosts( $args, $metaKeys = NULL, $metaType = 'post', $wholeFields = false ) {
 
-		$temps = get_posts( $args );
+		$this->posts = get_posts( $args );
 
-		foreach ($temps as $temp) {
-			$this->posts[] = (array) $temp;
+		// cast post object to associative arrays
+		foreach ($this->posts as &$temp) {
+			$temp = (array) $temp;
 		}
-		
+
 		if ( count( $this->posts ) ) {
 			// loop through posts and get all acf fields
 			foreach ( $this->posts as &$p ) {								
