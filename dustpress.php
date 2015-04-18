@@ -31,6 +31,9 @@ class DustPress {
 	// Possible partial name
 	public $partial;
 
+	// Are we on the main instance?
+	public $main;
+
 	// Do we want to render
 	public $do_not_render;
 
@@ -50,7 +53,7 @@ class DustPress {
 	*  @param	parent (object)
 	*  @return	N/A
 	*/
-	public function __construct( $parent = null, $args = null ) {
+	public function __construct( $parent = null, $args = null, $is_main = false ) {
 		if ( ! $this->is_installation_compatible() ) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
 		
@@ -144,12 +147,7 @@ class DustPress {
 			// Create classes array
 			$this->classes = array();
 
-			if ( is_array( $args ) ) {
-				$this->args = $args;
-			}
-			else {
-				$this->args = array();
-			}
+			$this->args = new StdClass();
 
 			// Add create_instance to right action hook if we are not on the admin side
 			if ( ! is_admin() && ! $this->is_login_page() ) {
@@ -165,10 +163,21 @@ class DustPress {
 			return;
 		}
 		else {
+			global $dustpress;
+
 			$template = $this->get_template_filename();
+
+			if ( is_array( $args ) ) {
+				$class = $this->get_class();
+				$dustpress->args->{$class} = $args;
+			}
 
 			if ( $parent ) {
 				$this->parent = $parent;
+			}
+
+			if ( $is_main ) {
+				$this->main = $is_main;
 			}
 
 			if ( is_tax() ) {
@@ -352,7 +361,7 @@ class DustPress {
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
 		if ( class_exists ( $template ) ) {
-			new $template( $dustpress );
+			new $template( $dustpress, null, true );
 		}
 	}
 
@@ -462,15 +471,11 @@ class DustPress {
 			$dust = $this->parent->dust;
 		}
 
-		// Create debug data if wanted.
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			$jsondata = json_encode( $data );
-		}
-
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-		// Load debugger
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+		// Create debug data if wanted and only if we are on the main instance.
+		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			$jsondata = json_encode( $data );
 			
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
@@ -869,7 +874,7 @@ class DustPress {
 		else {
 			$module = $this->get_class();
 
-			if ( isset( $dustpress->args{$name} ) ) {
+			if ( isset( $dustpress->args->{$module} ) ) {
 				return $dustpress->args->{$module};
 			}
 			else {
