@@ -444,7 +444,7 @@ class DustPress {
 			}
 		);
 
-		$types = apply_filters( 'dustpress/output', $types );
+		$types = apply_filters( 'dustpress/formats', $types );
 
 		// If no data attribute given, take contents from object data collection
 		if ( $data == -1 ) $data = $dustpress->data;
@@ -496,6 +496,8 @@ class DustPress {
 
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
+
+		$output = apply_filters( 'dustpress/output', $output, $this->main );
 
 		if ( $echo ) {
 			echo $output;
@@ -1145,5 +1147,8 @@ class DustPress {
 
 }
 
-// Create an instance of the plugin if we are on the public side
-$dustpress = new DustPress();
+// Create an instance of the plugin after checking a few things
+	// Contact Form 7 Ajax call filter
+	if ( !( isset( $_POST['_wpcf7_is_ajax_call'] ) || isset( $_GET['_wpcf7_is_ajax_call'] ) ) ) {
+		$dustpress = new DustPress();
+	}
