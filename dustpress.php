@@ -150,7 +150,7 @@ class DustPress {
 			$this->args = new StdClass();
 
 			// Add create_instance to right action hook if we are not on the admin side
-			if ( ! is_admin() && ! $this->is_login_page() ) {
+			if ( ! is_admin() && ! $this->is_login_page() && ! defined("DOING_AJAX") ) {
 				add_action( 'shutdown', array( $this, 'create_instance' ) );
 			}
 
