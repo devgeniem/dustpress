@@ -736,36 +736,47 @@ class DustPress {
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		$array = explode( "/", $pageTemplate );
+		if ( $pageTemplate ) {
+			$array = explode( "/", $pageTemplate );
 
-		$template = array_pop( $array );
+			$template = array_pop( $array );
 
-		// strip out .php
-		$template = str_replace( ".php", "", $template );
+			// strip out .php
+			$template = str_replace( ".php", "", $template );
 
-		// strip out page-, single-
-		$template = str_replace( "page-", "", $template );
-		$template = str_replace( "single-", "", $template );
+			// strip out page-, single-
+			$template = str_replace( "page-", "", $template );
+			$template = str_replace( "single-", "", $template );
 
-		if ( $template == "default" ) $template = "page";
+			if ( $template == "default" ) $template = "page";
+		}
 
-		$type = get_post_type();
-		$cat = get_category( get_query_var('cat') );
+		if ( is_single() ) {
+			$type = get_post_type();
+		}
+
+		if ( is_category() ) {
+			$cat = get_category( get_query_var('cat') );
+		}
 
 		if ( is_tag() ) {
 			$term_id = get_queried_object()->term_id;
 			$term = get_term_by( "id", $term_id, "post_tag" );
 		}
-		else if ( is_tax() ) {
+		
+		if ( is_tax() ) {
 			$term_id = get_queried_object()->term_id;
 			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
 		}
 
-		$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		if ( is_author() ) {
+			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+		}
 
-		$mime_type = get_post_mime_type( get_the_ID() );
 
-		$post_types = get_post_types();
+		if ( is_attachment() ) {
+			$mime_type = get_post_mime_type( get_the_ID() );
+		}
 
 		$hierarchy = [
 			"is_home" => [
@@ -859,7 +870,9 @@ class DustPress {
 				"Single"
 			],
 			"is_archive" => [
-				function() use ( $post_types ) {
+				function() {
+					$post_types = get_post_types();
+
 					foreach ( $post_types as $type ) {
 						if ( is_post_type_archive( $type ) ) {
 							if( class_exists( "Archive" . ucfirst( $type ) ) ) {
