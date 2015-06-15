@@ -463,7 +463,7 @@ class DustPress {
 			);
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
 			
-			// jsonView jQuery - plugin
+			// jsonView jQuery plugin
 			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
 			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, true );
 
@@ -478,7 +478,12 @@ class DustPress {
 		$output = apply_filters( 'dustpress/output', $output, $this->main );
 
 		if ( $echo ) {
-			echo $output;
+			if ( empty ( strlen( $output ) ) ) {
+				echo "DustPress warning: empty output.";
+			}
+			else {
+				echo $output;
+			}
 		}
 		else {
 			return $output;
