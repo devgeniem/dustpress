@@ -54,10 +54,9 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		if ( ! $this->is_installation_compatible() ) {
-			deactivate_plugins( plugin_basename( __FILE__ ) );
-		
-			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
+		if ( ! $this->is_installation_compatible() ) {		
+			add_action( "admin_notices", array( $this, "required") );
+			return;
 		}
 
 		if ("DustPress" === get_class( $this ) ) {
@@ -339,7 +338,11 @@ class DustPress {
 			new $template( $dustpress, null, true );
 		}
 		else {
-			die("DustPress error: model \"" . $template . "\" is not found.");
+			$debugs = array();
+
+			$errors = $this->get_template_filename( $debugs );
+
+			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
 		}
 	}
 
@@ -401,6 +404,7 @@ class DustPress {
 
 		$types = array(
 			"html" => function( $data, $partial, $dust ) {
+
 				try {
 					$compiled = $dust->compileFile( $partial );
 				}
@@ -427,6 +431,8 @@ class DustPress {
 		// If no data attribute given, take contents from object data collection
 		if ( $data == -1 ) $data = $dustpress->data;
 
+		// Make sure that 
+
 		$data = apply_filters( 'dustpress/data', $data );
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
@@ -434,11 +440,7 @@ class DustPress {
 			$template = $this->get_template( $partial );
 		}
 		catch ( Exception $e ) {
-			$data = array(
-				'dustPressError' => "DustPress error: ". $e->getMessage()				
-			);
-			$template = $this->get_error_template();
-			$error = true;
+			die( "DustPress error: ". $e->getMessage() );
 		}
 
 		// Ensure we have a DustPHP instance.
@@ -629,7 +631,9 @@ class DustPress {
 			}
 			
 			// If we could not find such template.
-			throw new Exception( "Error loading template file: " . $template, 1 );
+			throw new Exception( "Error loading template file: " . $partial, 1 );
+
+			return false;
 		}
 	}
 
@@ -736,7 +740,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	$filename (string)
 	*/
-	private function get_template_filename() {
+	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
@@ -904,11 +908,15 @@ class DustPress {
 			if ( true === call_user_func ( $level ) ) {
 				foreach( $keys as $key => $value ) {
 					if ( is_integer( $key ) ) {
-						if( is_string( $value ) && class_exists( $value ) ) {
-							return $value;
+						if ( is_string( $value ) ) {
+							$debugs[] = $value;
+							if ( class_exists( $value ) ) {
+								return $value;
+							}
 						}
 						else if ( is_callable( $value ) ) {
 							$value = call_user_func( $value );
+							$debugs[] = $value;
 							if( is_string( $value ) && class_exists( $value ) ) {
 								return $value;
 							}
@@ -917,9 +925,13 @@ class DustPress {
 					else if ( is_string( $key ) ) {
 						if ( class_exists( $key ) ) {
 							if( is_string( $value ) ) {
-								return $value;
+								$debugs[] = $value;
+								if ( class_exists( $value ) ) {
+									return $value;
+								}
 							}
 							else if ( is_callable( $value ) ) {
+								$debugs[] = $value;
 								return call_user_func( $value );
 							}
 						}
@@ -927,9 +939,13 @@ class DustPress {
 					else if ( true === $key or is_callable( $key ) ) {
 						if ( true === call_user_func( $key ) ) {
 							if( is_string( $value ) ) {
-								return $value;
+								$debugs[] = $value;
+								if ( class_exists( $value ) ) {
+									return $value;
+								}
 							}
 							else if ( is_callable( $value ) ) {
+								$debugs[] = $value;
 								return call_user_func( $value );
 							}
 						}
@@ -938,6 +954,7 @@ class DustPress {
 			}
 		}
 
+		$debugs[] = "Index";
 		return "Index";
 	}
 
@@ -1255,15 +1272,31 @@ class DustPress {
 	*/
 	private function is_installation_compatible() {
 		if ( ! is_readable( get_template_directory() .'/models' ) ) {
-			error_log( get_template_directory() .'/models was not found.' );
 			return false;
 		}
 		if ( ! is_readable(get_template_directory() .'/partials' ) ) {
-			error_log( get_template_directory() .'/partials was not found.');
 			return false;
 		}
 
 		return true;
+	}
+
+	/*
+	*  required
+	*
+	*  This function prints out admin notice for missing folders on the theme file.
+	*
+	*  @type	function
+	*  @date	15/6/2015
+	*  @since	0.1.0
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	public function required() {
+		echo "<div class=\"update-nag\">
+			<p>DustPress requires directories named models and partials under the activated theme. Otherwise it won't work.</p>
+		</div>	";
 	}
 
 	/*
