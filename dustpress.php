@@ -40,6 +40,9 @@ class DustPress {
 	// Possible post body is stored hiere
 	public $body;
 
+	// Possible errors to disable
+	private $errors;
+
 	/*
 	*  __construct
 	*
@@ -54,7 +57,9 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		if ( ! $this->is_installation_compatible() ) {		
+		$this->errors = $this->is_installation_compatible();
+
+		if ( $this->errors !== false ) {	
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
@@ -160,6 +165,8 @@ class DustPress {
 			global $dustpress;
 
 			$template = $this->get_template_filename();
+
+			$template = apply_filters( "dustpress/template", $template );
 
 			if ( is_array( $args ) ) {
 				$class = $this->get_class();
@@ -328,8 +335,11 @@ class DustPress {
 		global $post;
 		global $dustpress;
 
+		// Initialize an array for debugging.
+		$debugs = array();
+
 		// Get current template name tidied up a bit.
-		$template = $this->get_template_filename();
+		$template = $this->get_template_filename( $debugs );
 
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
@@ -338,10 +348,6 @@ class DustPress {
 			new $template( $dustpress, null, true );
 		}
 		else {
-			$debugs = array();
-
-			$errors = $this->get_template_filename( $debugs );
-
 			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
 		}
 	}
@@ -370,10 +376,21 @@ class DustPress {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $className );
 
+		foreach( $methods as &$method ) {
+			$method = array( $this, $method );
+		}
+
+		$methods = apply_filters( "dustpress/methods", $methods, $className );
+
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach( $methods as $method ) {
-			if ( strpos( $method, "bind" ) !== false ) {
-				call_user_func( array( $this, $method ) );
+			if ( is_array( $method ) ) {
+				if ( strpos( $method[0], "bind" ) !== false ) {
+					call_user_func( $method );
+				}
+			}
+			else if ( is_callable( $method ) ) {
+				call_user_func( $method );
 			}
 		}
 	}
@@ -431,8 +448,6 @@ class DustPress {
 		// If no data attribute given, take contents from object data collection
 		if ( $data == -1 ) $data = $dustpress->data;
 
-		// Make sure that 
-
 		$data = apply_filters( 'dustpress/data', $data );
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
@@ -461,7 +476,7 @@ class DustPress {
 
 			// Localize the script with new data
 			$data_array = array(
-				'jsondata' => $jsondata,				
+				'jsondata' => $jsondata
 			);
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
 			
@@ -687,6 +702,7 @@ class DustPress {
 		else {
 			$WP["loggedin"] = true;
 			$WP["user"] = $currentuser->data;
+			$WP["user"]->roles = $currentuser->roles;
 			unset( $WP["user"]->user_pass );
 		}
 
@@ -1044,6 +1060,12 @@ class DustPress {
 		if ( ! $module ) {
 			$module = $this->get_class();
 		}
+		else {
+			// If we don't yet have them, create a place to store the wanted data in the
+			// global data structure.
+			if ( ! isset( $dustpress->data[ $module ] ) ) $dustpress->data[ $module ] = new \StdClass();
+			if ( ! isset( $dustpress->data[ $module ]->Content ) ) $dustpress->data[ $module ]->Content = new \StdClass();
+		}
 
 		if ( ! $key ) {
 			$key = $this->get_previous_function();
@@ -1272,13 +1294,16 @@ class DustPress {
 	*/
 	private function is_installation_compatible() {
 		if ( ! is_readable( get_template_directory() .'/models' ) ) {
-			return false;
+			return "models";
 		}
 		if ( ! is_readable(get_template_directory() .'/partials' ) ) {
-			return false;
+			return "partials";
+		}
+		if ( ! defined("PHP_VERSION_ID") or PHP_VERSION_ID < 50300 ) {
+			return "phpversion";
 		}
 
-		return true;
+		return false;
 	}
 
 	/*
@@ -1294,9 +1319,17 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function required() {
-		echo "<div class=\"update-nag\">
-			<p>DustPress requires directories named models and partials under the activated theme. Otherwise it won't work.</p>
-		</div>	";
+		$errors = [
+			"models" => "Directory named \"models\" is required under the activated theme's directory.",
+			"partials" => "Directory named \"partials\" is required under the activated theme's directory.",
+			"phpversion" => "Your version of PHP is too old. DustPress requires at least version 5.3 to function properly."
+		];
+
+		echo "<div class=\"update-nag\"><p><b>DustPress errors:</b></p>";
+		foreach( $this->errors as $error ) {
+			echo "<p>". $errors[$error] ."</p>";
+		}
+		echo "</div>";
 	}
 
 	/*
