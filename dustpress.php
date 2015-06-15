@@ -859,7 +859,7 @@ class DustPress {
 				"Single"
 			],
 			"is_archive" => [
-				true => function() use ( $post_types ) {
+				function() use ( $post_types ) {
 					foreach ( $post_types as $type ) {
 						if ( is_post_type_archive( $type ) ) {
 							if( class_exists( "Archive" . ucfirst( $type ) ) ) {
