@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.9
+Version: 0.1.0
 */
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
@@ -98,12 +98,7 @@ class DustPress {
 					get_template_directory() . '/models',
 				);
 
-				$class = strtolower($class);
-
-				$class = str_replace( "archive", "archive-", $class );
-				$class = str_replace( "category", "category-", $class );
-				$class = str_replace( "taxonomy", "taxonomy-", $class );
-				$class = str_replace( "error404", "404", $class );
+				$class = $this->camelcase_to_dashed( $class, "-" );
 				
 				$filename = strtolower( $class ) .".php";
 
@@ -180,16 +175,6 @@ class DustPress {
 				$this->main = $is_main;
 			}
 
-			if ( is_tax() ) {
-				$template = "taxonomy". $template;
-			}
-			else if ( is_category() ) {
-				$template = "category". $template;
-			}
-			else if ( is_archive() ) {
-				$template = "archive". $template;
-			}
-
 			if ( strtolower( $template ) == strtolower( get_class( $this ) ) ) {
 				$this->populate_data_collection();
 
@@ -198,7 +183,7 @@ class DustPress {
 				if ( $this->get_post_body() === true ) {
 
 					if ( ! ( $partial = $this->get_partial() ) )
-						$partial = strtolower( $template );
+						$partial = strtolower( $this->camelcase_to_dashed( $template ) );
 
 					if ( ! $this->get_render_status ) {
 						$this->render( $partial );
@@ -347,21 +332,14 @@ class DustPress {
 		// Get current template name tidied up a bit.
 		$template = $this->get_template_filename();
 
-		if ( is_tax() ) {
-			$template = "taxonomy". $template;
-		}
-		else if ( is_category() ) {
-			$template = "category". $template;
-		}
-		else if ( is_archive() ) {
-			$template = "archive". $template;
-		}
-
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
 		if ( class_exists ( $template ) ) {
 			new $template( $dustpress, null, true );
+		}
+		else {
+			die("DustPress error: model \"" . $template . "\" is not found.");
 		}
 	}
 
@@ -627,19 +605,6 @@ class DustPress {
 		if ( file_exists( $partial ) )
 			return $partial;
 		else {
-			if ( is_category() ) {
-				$partial = str_replace( "category", "category-", $partial );
-			}
-			else if ( is_tax() ) {
-				$partial = str_replace( "taxonomy", "taxonomy-", $partial );	
-			}
-			else if ( is_archive() ) {
-				$partial = str_replace( "archive", "archive-", $partial );
-			}
-			if ( is_404() ) {
-				$partial = "404";
-			}
-
 			$templatefile =  $partial . '.dust';
 
 			$templatepaths = array( get_template_directory() . '/partials/' );
@@ -771,55 +736,191 @@ class DustPress {
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		if ( is_category() ) {
-			$cat = get_category( get_query_var('cat') );
+		$array = explode( "/", $pageTemplate );
 
-			return $cat->slug;
+		$template = array_pop( $array );
+
+		// strip out .php
+		$template = str_replace( ".php", "", $template );
+
+		// strip out page-, single-
+		$template = str_replace( "page-", "", $template );
+		$template = str_replace( "single-", "", $template );
+
+		if ( $template == "default" ) $template = "page";
+
+		$type = get_post_type();
+		$cat = get_category( get_query_var('cat') );
+
+		if ( is_tag() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, "post_tag" );
 		}
-		if ( is_tax() ) {
-			$id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $id, get_query_var('taxonomy') );
-			if ( class_exists("Taxonomy". $term->slug) ) {
-				return $term->slug;
-			}
-			else if( class_exists( "Taxonomy". get_query_var('taxonomy') ) ) {
-				return get_query_var('taxonomy');
-			}
+		else if ( is_tax() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
 		}
-		else if ( is_archive() ) {
-			$post_types = get_post_types();
-			foreach ( $post_types as $type ) {
-				if ( is_post_type_archive( $type ) ) {
-					return $type;
+
+		$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+
+		$mime_type = get_post_mime_type( get_the_ID() );
+
+		$post_types = get_post_types();
+
+		$hierarchy = [
+			"is_home" => [
+				"HomePage"
+			],
+			"is_page" => [
+				"Page" . ucfirst( $template ),
+				"Page" . ucfirst( $post->post_name ),
+				"Page" . $post->ID,
+				"Page"
+			],
+			"is_category" => [
+				"Category" . ucfirst( $cat->slug ),
+				"Category" . $cat->term_id,
+				"Category",
+				"Archive"
+			],
+			"is_tag" => [
+				"Tag" . ucfirst( $term->slug ),
+				"Tag",
+				"Archive"
+			],
+			"is_tax" => [
+				"Taxonomy" . ucfirst( get_query_var('taxonomy') ) . ucfirst($term->slug),
+				"Taxonomy" . ucfirst( get_query_var('taxonomy') ),
+				"Taxonomy",
+				"Archive"
+			],
+			"is_author" => [
+				"Author" . ucfirst( $author->user_nicename ),
+				"Author" . $author->ID,
+				"Author",
+				"Archive"
+			],
+			"is_search" => [
+				"Search"
+			],
+			"is_404" => [
+				"Error404"
+			],
+			"is_attachment" => [
+				function() use ( $mime_type ) {
+					if ( preg_match( "/^image/", $mime_type ) && class_exists("Image") ) {
+						return "Image";
+					}
+					else {
+						return false;
+					}
+				},
+				function() use ( $mime_type ) {
+					if ( preg_match( "/^video/", $mime_type ) && class_exists("Video") ) {
+						return "Video";
+					}
+					else {
+						return false;
+					}
+				},
+				function() use ( $mime_type ) {
+					if ( preg_match( "/^application/", $mime_type ) && class_exists("Application") ) {
+						return "Application";
+					}
+					else {
+						return false;
+					}
+				},
+				function() use ( $mime_type ) {
+					if ( $mime_type == "text/plain" ) {
+						if ( class_exists( "Text" ) ) {
+							return "Text";
+						}
+						else if ( class_exists( "Plain" ) ) {
+							return "Plain";
+						}
+						else if ( class_exists( "TextPlain" ) ) {
+							return "TextPlain";
+						}
+						else {
+							return false;
+						}
+					}
+					else {
+						return false;
+					}
+				},
+				"Attachment",
+				"SingleAttachment",
+				"Single"
+			],
+			"is_single" => [
+				"Single" . ucfirst( $type ),
+				"Single"
+			],
+			"is_archive" => [
+				true => function() use ( $post_types ) {
+					foreach ( $post_types as $type ) {
+						if ( is_post_type_archive( $type ) ) {
+							if( class_exists( "Archive" . ucfirst( $type ) ) ) {
+								return "Archive" . ucfirst( $type );
+							}
+							else if ( class_exists("Archive") ) {
+								return "Archive";
+							}
+							else {
+								return false;
+							}
+						}
+						else {
+							return false;
+						}
+					}
+				}
+			]
+		];
+
+		$hierarchy = apply_filters( "dustpress/template_hierarchy", $hierarchy );
+
+		foreach( $hierarchy as $level => $keys ) {
+			if ( true === call_user_func ( $level ) ) {
+				foreach( $keys as $key => $value ) {
+					if ( is_integer( $key ) ) {
+						if( is_string( $value ) && class_exists( $value ) ) {
+							return $value;
+						}
+						else if ( is_callable( $value ) ) {
+							$value = call_user_func( $value );
+							if( is_string( $value ) && class_exists( $value ) ) {
+								return $value;
+							}
+						}
+					}
+					else if ( is_string( $key ) ) {
+						if ( class_exists( $key ) ) {
+							if( is_string( $value ) ) {
+								return $value;
+							}
+							else if ( is_callable( $value ) ) {
+								return call_user_func( $value );
+							}
+						}
+					}
+					else if ( true === $key or is_callable( $key ) ) {
+						if ( true === call_user_func( $key ) ) {
+							if( is_string( $value ) ) {
+								return $value;
+							}
+							else if ( is_callable( $value ) ) {
+								return call_user_func( $value );
+							}
+						}
+					}
 				}
 			}
 		}
-		else if ( is_404() ) {
-			return "error404";
-		}
-		else {
-			// if no template set, return default
-			if ( ! $pageTemplate && $type = get_post_type() ) {
-				if ( $type == "post" ) $type = "single";
-				return $type;
-			}
-			else if ( ! $pageTemplate ) return "page";
-		}
-		
-		$array = explode( "/", $pageTemplate );
 
-		$filename = array_pop( $array );
-
-		// strip out .php
-		$filename = str_replace( ".php", "", $filename );
-
-		// strip out page-, single-
-		$filename = str_replace( "page-", "", $filename );
-		$filename = str_replace( "single-", "", $filename );
-
-		if ( $filename == "default" ) $filename = "page";
-
-		return $filename;
+		return "Index";
 	}
 
 	/*
@@ -900,12 +1001,14 @@ class DustPress {
 	*  @param	$key (string)
 	*  @return	true/false (boolean)
 	*/
-	public function bind_data( $data, $key = null ) {
+	public function bind_data( $data, $key = null, $module = null ) {
 		global $dustpress;
 
 		$temp = array();
 
-		$module = $this->get_class();
+		if ( ! $module ) {
+			$module = $this->get_class();
+		}
 
 		if ( ! $key ) {
 			$key = $this->get_previous_function();
@@ -1063,7 +1166,7 @@ class DustPress {
 	*  @since	0.0.6
 	*
 	*  @param	N/A
-	*  @return	NY/A
+	*  @return	N/A
 	*/
 	public function do_not_render() {
 		global $dustpress;
@@ -1145,6 +1248,29 @@ class DustPress {
 		return true;
 	}
 
+	/*
+	*  camelcase_to_dashed
+	*
+	*  This function returns given string converted from CamelCase to camel-case
+	*  (or probably camel_case or somethinge else, if wanted).
+	*
+	*  @type	function
+	*  @date	15/6/2015
+	*  @since	0.1.0
+	*
+	*  @param	$string (string)
+	*  @param   $char (string)
+	*  @return	(string)
+	*/
+	private function camelcase_to_dashed( $string, $char = "-" ) {
+		preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches);
+		$results = $matches[0];
+		foreach ($results as &$match) {
+	    	$match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
+		}
+
+	 	return implode($char, $results);
+	}
 }
 
 // Create an instance of the plugin after checking a few things
