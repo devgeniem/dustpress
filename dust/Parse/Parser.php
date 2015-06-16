@@ -157,9 +157,10 @@ namespace Dust\Parse
             $sec->identifier = $this->parseIdentifier($ctx);
             if($sec->identifier == NULL)
             {
-                $this->error('Expected identifier', $ctx);
+                $this->error('Expected identifier ' . $sec->type . $sec->identifier, $ctx);
             }
             $sec->context = $this->parseContext($ctx);
+
             $sec->parameters = $this->parseParameters($ctx);
             $ctx->skipWhitespace();
             if($ctx->peek() == self::T_SECTION_END_TAG_BEGIN && $ctx->peek(2) == self::T_SECTION_END)
@@ -170,28 +171,28 @@ namespace Dust\Parse
             }
             if($ctx->next() != self::T_SECTION_END)
             {
-                $this->error('Missing end brace', $ctx);
+                $this->error('Missing end brace for ' . $sec->type . $sec->identifier, $ctx);
             }
             $sec->body = $this->parseBody($ctx);
             $sec->bodies = $this->parseBodies($ctx);
             if($ctx->next() != self::T_SECTION_BEGIN)
             {
-                $this->error('Missing end tag', $ctx);
+                $this->error('Missing end tag for ' . $sec->type . $sec->identifier, $ctx);
             }
             if($ctx->next() != self::T_SECTION_END_TAG_BEGIN)
             {
-                $this->error('Missing end tag', $ctx);
+                $this->error('Missing end tag for ' . $sec->type . $sec->identifier, $ctx);
             }
             $ctx->skipWhitespace();
             $end = $this->parseIdentifier($ctx);
             if($end == NULL || strval($end) != strval($sec->identifier))
             {
-                $this->error('Expecting end tag for ' . $sec->identifier, $ctx);
+                $this->error('Expecting end tag for ' . $sec->type . $sec->identifier, $ctx);
             }
             $ctx->skipWhitespace();
             if($ctx->next() != self::T_SECTION_END)
             {
-                $this->error('Missing end brace', $ctx);
+                $this->error('Missing end brace for ' . $sec->type . $sec->identifier, $ctx);
             }
 
             return $sec;

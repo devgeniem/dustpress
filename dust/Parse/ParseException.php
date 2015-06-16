@@ -10,7 +10,9 @@ namespace Dust\Parse
          */
         public function __construct($message, $line, $col) {
 
-            parent::__construct('(' . $line . ',' . $col . ') ' . $message);
+            die("Dust error: " . $message . " (line " . $line . " character " . $col . ")");
+
+            parent::__construct($message . " (line " . $line . " character " . $col . ")");
         }
     }
 }

@@ -1,0 +1,5 @@
+<ul{?ul_classes} class="{ul_classes}"{/ul_classes}{?ul_id} id="{ul_id}"{/ul_id}>
+	{#items}
+		{>menuitem /}
+	{/items}
+</ul>

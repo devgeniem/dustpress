@@ -102,7 +102,12 @@ class DustPress {
 					get_template_directory() . '/models',
 				);
 
-				$class = $this->camelcase_to_dashed( $class, "-" );
+				if ( $class == "DustPressHelper" ) {
+					$class = "dustpress-helper";
+				}
+				else {
+					$class = $this->camelcase_to_dashed( $class, "-" );
+				}
 				
 				$filename = strtolower( $class ) .".php";
 
@@ -124,6 +129,9 @@ class DustPress {
 
 			// Create Dust instance
 			$this->dust = new Dust\Dust();
+
+			// Set initial parameters
+			$this->dust->includedDirectories[] = __DIR__ . '/partials/';
 
 			// Find and include Dust helpers from DustPress plugin
 			$paths = array(
@@ -384,8 +392,9 @@ class DustPress {
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach( $methods as $method ) {
+
 			if ( is_array( $method ) ) {
-				if ( strpos( $method[0], "bind" ) !== false ) {
+				if ( isset($method[1]) && is_string($method[1]) && strpos( $method[1], "bind" ) !== false ) {
 					call_user_func( $method );
 				}
 			}
@@ -629,7 +638,10 @@ class DustPress {
 		else {
 			$templatefile =  $partial . '.dust';
 
-			$templatepaths = array( get_template_directory() . '/partials/' );
+			$templatepaths = [
+				get_template_directory() . '/partials/',
+				__DIR__ . '/partials/'
+			];
 
 			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
 
