@@ -316,21 +316,21 @@ class DustPressHelper {
 					$item->Submenu = $this->build_menu( $menu_items, $item->object_id, $override );
 
 					if ( is_array( $item->Submenu ) && count( $item->Submenu ) > 0 ) {
-						$item->classes[] = "has_submenu";
+						$item->classes[] = "menu-item-has-children";
 					}
-					if ( is_array( $item->Submenu) && $index = array_search( "active", $item->Submenu ) ) {
-						$item->classes[] = "active";
+					if ( is_array( $item->Submenu ) && $index = array_search( "active", $item->Submenu ) ) {
+						$item->classes[] = "current-menu-parent";
 						unset( $item->Submenu[$index] );
 						$tempItems[] = "active";
 					}
-					if ( is_array( $item->Submenu) && 0 === array_search( "active", $item->Submenu ) ) {
-						$item->classes[] = "active";
+					if ( is_array( $item->Submenu ) && 0 === array_search( "active", $item->Submenu ) ) {
+						$item->classes[] = "current-menu-parent";
 						unset( $item->Submenu[0] );
 						$tempItems[] = "active";
 					}
 
 					if ( ( $item->object_id == get_the_ID() ) || $item->object_id == $cat || ( $item->object_id == $override ) ) {
-						$item->classes[] = "active";
+						$item->classes[] = "current-menu-item";
 						$tempItems[] = "active";
 					}
 
@@ -341,6 +341,9 @@ class DustPressHelper {
 					if ( is_array( $item->classes ) ) {
 						$item->classes = array_filter($item->classes);
 					}
+
+					$item->classes[] = "menu-item";
+					$item->classes[] = "menu-item-" . $item->object_id;
 
 					$tempItems[] = $item;
 				}
