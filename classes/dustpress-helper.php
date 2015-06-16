@@ -306,6 +306,10 @@ class DustPressHelper {
 			}
 		}
 
+		if ( is_category() ) {
+			global $cat;			
+		}
+
 		if ( count( $menu_items ) > 0 ) {
 			foreach ( $menu_items as $item ) {
 				if ( $item->menu_item_parent == $parent_id ) {
@@ -325,7 +329,7 @@ class DustPressHelper {
 						$tempItems[] = "active";
 					}
 
-					if ( ( $item->object_id == get_the_ID() ) || ( $item->object_id == $override ) ) {
+					if ( ( $item->object_id == get_the_ID() ) || $item->object_id == $cat || ( $item->object_id == $override ) ) {
 						$item->classes[] = "active";
 						$tempItems[] = "active";
 					}
