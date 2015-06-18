@@ -3,20 +3,35 @@
  */
 jQuery(document).ready(function($) {
 
-	var button = '<div class="jsonview_data_debug"><button class="jsonview_open_debug">Show/Hide data debug</button></div>';
+	// button
+	var html = '<button class="jsonview_open_debug">Toggle debugger</button>\n';
+	// container
+	html += '<div class="jsonview_data_debug jsonview_data_debug_closed"><span class="jsonview_close_debug">x</span></div>';
 
-	$(button).appendTo('body');
+	$(html).appendTo('body');
 
 	var div = "<div class=\"jsonview_debug\"></div>";
 
 	$(div).appendTo(".jsonview_data_debug");
 
-	$(".jsonview_debug").jsonView($.parseJSON(dustpress_debugger.jsondata));
-	$(".property-value").css('display', 'none');
-	$(".property-toggle-button").html('[+]');
+	var jsonData = $.parseJSON(dustpress_debugger.jsondata);
+	console.log(jsonData);
+
+	$(".jsonview_debug").JSONView(
+		jsonData,
+		{ 
+			collapsed: true,
+			recursive_collapser: true
+		}
+	);
 
 	$(".jsonview_open_debug").click(function() {
-		$(".jsonview_debug").slideToggle();		
+		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
+		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
+	});
+	$(".jsonview_close_debug").click(function() {
+		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
+		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
 	});
 
 });

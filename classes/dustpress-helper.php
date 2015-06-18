@@ -271,8 +271,6 @@ class DustPressHelper {
 				unset( $menu[0] );
 			}
 
-			var_dump($menu);
-
 			return $menu;
 		}
 	}
