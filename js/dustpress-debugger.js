@@ -4,7 +4,7 @@
 jQuery(document).ready(function($) {
 
 	// button
-	var html = '<button class="jsonview_open_debug">Toggle debugger</button>\n';
+	var html = '<button class="jsonview_open_debug">Open debugger</button>\n';
 	// container
 	html += '<div class="jsonview_data_debug jsonview_data_debug_closed"><span class="jsonview_close_debug">x</span></div>';
 
