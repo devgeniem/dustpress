@@ -1003,10 +1003,11 @@ class DustPress {
 		global $dustpress;
 
 		if ( $this->is_wanted( $name ) ) {
-			$dustpress->classes[$name] = new $name();
-
+			
 			if ( is_array($args) )
 				$dustpress->args->{$name} = $args;
+
+			$dustpress->classes[$name] = new $name();
 
 			if ( ! isset( $dustpress->data[$name] ) ) $dustpress->data[$name] = new \StdClass();
 		}
