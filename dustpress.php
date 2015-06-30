@@ -386,22 +386,21 @@ class DustPress {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $className );
 
-		foreach( $methods as &$method ) {
+		foreach( $methods as &$method ) {			
 			$method = array( $this, $method );
 		}
 
 		$methods = apply_filters( "dustpress/methods", $methods, $className );
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
-		foreach( $methods as $method ) {
-
-			if ( is_array( $method ) ) {
-				if ( isset($method[1]) && is_string($method[1]) && strpos( $method[1], "bind" ) !== false ) {
-					call_user_func( $method );
+		foreach( $methods as $m ) {
+			if ( is_array( $m ) ) {
+				if ( isset($m[1]) && is_string($m[1]) && strpos( $m[1], "bind" ) !== false ) {	
+					call_user_func( $className . '::' . $m[1] );
 				}
 			}
-			else if ( is_callable( $method ) ) {
-				call_user_func( $method );
+			else if ( is_callable( $m ) ) {
+				call_user_func( $m );
 			}
 		}
 	}
@@ -1006,10 +1005,11 @@ class DustPress {
 		global $dustpress;
 
 		if ( $this->is_wanted( $name ) ) {
-			$dustpress->classes[$name] = new $name();
-
+			
 			if ( is_array($args) )
 				$dustpress->args->{$name} = $args;
+
+			$dustpress->classes[$name] = new $name();
 
 			if ( ! isset( $dustpress->data[$name] ) ) $dustpress->data[$name] = new \StdClass();
 		}
