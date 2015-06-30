@@ -61,7 +61,7 @@ class DustPress {
 
 		$this->errors[] = $this->is_installation_compatible();
 
-		if ( ! empty( $this->errors ) ) {	
+		if ( is_array( $this->errors ) && $this->errors[0] !== false ) {				
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
