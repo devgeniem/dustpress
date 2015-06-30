@@ -57,9 +57,11 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		$this->errors = $this->is_installation_compatible();
+		$this->errors = [];
 
-		if ( $this->errors !== false ) {	
+		$this->errors[] = $this->is_installation_compatible();
+
+		if ( ! empty( $this->errors ) ) {	
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
