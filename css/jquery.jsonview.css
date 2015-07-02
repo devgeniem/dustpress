@@ -1,34 +1,56 @@
 @charset "UTF-8";
 
+body.locked {
+    overflow-y: hidden;
+}
+
 .jsonview_open_debug {
     z-index: 100000;
     position: fixed;
     bottom: 20px;
     left: 20px;
-    padding: 12px 15px 10px;
+    margin: 0;
+    padding: 17px 20px 15px;
 
     border: none;
-    background: #3F2B58;
+    /*#3F2B58;*/
+    background: #EF133C;
     border-bottom: 5px solid rgba(0,0,0,0.3);
     
     color: #fff;
     text-transform: uppercase;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: Helvetica, Arial, sans-serif;
     font-weight: 700;
     font-size: 12px;
     cursor: pointer;
+
+    -webkit-transition: background .25s; 
+      -moz-transition: background .25s; 
+      -ms-transition: background .25s; 
+      -o-transition: background .25s; 
+      transition: background .25s;
+}
+
+.jsonview_open_debug:hover,
+.jsonview_open_debug:focus {
+    background: #D10F33;
 }
 
 .jsonview_data_debug {
-    position: absolute;    
+    position: fixed;    
     z-index: 100000;
-    min-height: 100%;
+    height: 100%;    
     min-width: 100%;
-    overflow-y: hidden;
+    max-width: 100%;
+    overflow-y: auto;
     top: 0;
     margin: 0;
     padding: 0;
     background: rgba(255,255,255,0.9);
+
+    /* fix mobile browser fixed element scrolling */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 
     transform: translate3d(0, 0, 0);
     transform-origin: top;
@@ -37,8 +59,18 @@
       -moz-transition: transform .25s; 
       -ms-transition: transform .25s; 
       -o-transition: transform .25s; 
-      transition: transform .25s;  
+      transition: transform .25s; 
+
+
+    box-sizing: border-box;
 }
+
+.jsonview_data_debug > *,
+.jsonview_data_debug > *:before,
+.jsonview_data_debug > *:after {
+    box-sizing: inherit;
+}
+
 .jsonview_data_debug_closed {
     transform: translate3d(-100%, 0, 0);
     overflow: hidden;
@@ -55,7 +87,7 @@
     padding: 0;    
 
     border: none;
-    background: #3F2B58;
+    background: #EF133C;
     
     text-align: center;
     line-height: 35px;
@@ -66,6 +98,17 @@
     cursor:pointer;
     text-decoration:none;
     overflow:visible;
+
+    -webkit-transition: background .25s; 
+      -moz-transition: background .25s; 
+      -ms-transition: background .25s; 
+      -o-transition: background .25s; 
+      transition: background .25s;
+}
+
+.jsonview_close_debug:hover,
+.jsonview_close_debug:focus {
+    background: #D10F33;
 }
 
 .jsonview_hide {
@@ -73,12 +116,13 @@
 }
 
 .jsonview {
-    color: #333;
-    margin-top: 80px;
-    margin-left: 40px;
+    color: #333;    
+    padding: 40px;
+    padding-top: 80px;
     font-family: monospace;
     font-size: 1.3em;
     white-space: pre-wrap; 
+    max-width: 100%;
 }
 .jsonview .prop {
     font-weight: bold; 
