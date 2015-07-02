@@ -22,18 +22,13 @@ some of the WordPress core functions. The naming of the data models and view par
 traditional WordPress themes. The model for a single post should be named `single.php` etc.
 
 In WordPress, your custom page templates could be named pretty much anything as long as you declare the name of the
-template in the comment section in the beginning of the file. That is however not the case with DustPress models.
-If you have a custom frontpage template with a class name `Frontpage`, your template file should be named
-`page-frontpage.php`. The same goes with custom content type singles, where a single `person` file should be named
-`single-person.php`.
+template in the comment section in the beginning of the file. This is the in DustPress, but the class name that you write for the model should follow certain pattern. For example if you have a `Frontpage` template with a filename `page-filename.php`, your class should be named PageFrontpage. The class names are case sensitive. The same goes with custom content type singles, where a single `person` file should be named `single-person.php` and the class accordingly `SinglePerson`.
 
 You still have to declare a name for the templates in the starting comment as you would have done in a traditional
 WordPress theme as well. This allows user to choose the template file to use with the page and points the controller
 to load correct model when loading the page.
 
-These models could be located in the root directory of your theme, but it is strongly recommended to place them in the
-models/ directory so that all data models could be found in same place. DustPress looks the files in the directory
-recursively, so you can arrange them in subdirectories anyhow you like.
+The models are located in the models/ directory, so that DustPress knows where to find them. They could, however, be arranged in any kind of subdirectory tree, so feel free to keep them in whatever structure you like.
 
 ### Dust templates
 
@@ -44,12 +39,14 @@ DustPress looks for the Dust templates in partials/ directory under the theme's 
 arranged in any kind of subdirectory hierarchy, so feel free to use whatever suits your needs.
 
 By default the Dust templatefiles follow the naming of the models. `single.php` should be paired with `single.dust`.
-That can be changed by the developer, of course.
+That can be changed by the developer, of course. If for some unimaginable reason you would like to use `page-frontpage.dust` template with your `single.php` model, you could make use of DustPress' `set_partial()` function.
+
+Just write anywhere in the model `$this->set_partial("partial_name")` and it will be used instead of the default template.
 
 ## Data models
 
-The data models of DustPress consist of one class named the same as the file without the page- or single- prefix.
-`page-frontpage.php` should have a class named Frontpage that extends the DustPress class:
+The data models of DustPress consist of one class named the same as the file but in CamelCase instead of hyphens.
+`page-frontpage.php` should have a class named PageFrontpage that extends the DustPress class:
 
 ```
 <?php
@@ -57,7 +54,7 @@ The data models of DustPress consist of one class named the same as the file wit
 Template name: Frontpage
 */
 
-class Frontpage extends DustPress {
+class PageFrontpage extends DustPress {
   //
 }
 ?>
@@ -87,7 +84,7 @@ a content block, a sidebar and a footer, the data object would look like this:
 
 ```
 object(stdClass)#1 (1) {
-  ["Frontpage"]=>
+  ["PageFrontpage"]=>
   array(4) {
     ["Header"]=>
     object(stdClass)#2 (0) {
@@ -108,17 +105,17 @@ object(stdClass)#1 (1) {
 #### Submodels
 
 Recurring elements like headers or footers should be created as submodels that can be included in any page.
-Submodels have their own classes and are located in their own files inside the models/ directory. They are
+Submodels have their own models and are located in their own files inside the models/ directory. They are
 attached to the main model with the aforementioned `bind_sub()` method. The frontpage model could look like
 this:
 
 ```
 <?php
 /*
-Template name: Frontpage
+Template name: PageFrontpage
 */
 
-class Frontpage extends DustPress {
+class PageFrontpage extends DustPress {
 
   public function bind_Submodels() {
     $this->bind_sub("Header");
@@ -131,7 +128,7 @@ class Frontpage extends DustPress {
 
 This code fetches all three models and binds their data to the global data hierarchy under corresponding
 object. `bind_Submodels` is just an example name, the `bind_sub` function calls can be anywhere in the model
-and run inside an if block etc.
+and run inside an if block etc if needed.
 
 `bind_sub()` can also take a second parameter, an array of arguments to pass to the submodel. It is then
 accessible in the submodel globally by calling `get_args()`.
@@ -150,11 +147,11 @@ public function bind_SomeData() {
 }
 ```
 
-If this code is located in our Frontpage class, the result's in the data object would be as follows:
+If this code is located in our PageFrontpage class, the result's in the data object would be as follows:
 
 ```
 object(stdClass)#1 (1) {
-  ["Frontpage"]=>
+  ["PageFrontpage"]=>
   array(4) {
     ["Header"]=>
     object(stdClass)#2 (0) {
@@ -180,6 +177,8 @@ otherwise reserved names for plugin's methods.
 
 You can also bind data straight to the root of the Content-object with `bind_Content()` method. It doesn't create
 a Content->Content structure but rather merges the data straight inside the Content block.
+
+It's also possible to give the function a third parameter, that is the model name. So you can bind data to your Header submodel inside your main model or even another submodel! Because the rendering will be done after all data has been gathered, you have 100 % control of what data the view template gets and can even interfere with that after you have already defined a submodel.
 
 #### Reserved model names
 
@@ -208,7 +207,7 @@ All templates should start with a context block with the name of the current mod
 in the template. As for our previous example model, very simplified template could look like this:
 
 ```
-{#Frontpage}
+{#PageFrontpage}
   {">shared/header" /}
 
   {#Content}
@@ -221,7 +220,7 @@ in the template. As for our previous example model, very simplified template cou
   {">shared/sidebar" /}
 
   {">shared/footer" /}
-{/Frontpage}
+{/PageFrontpage}
 ```
 
 This template includes header.dust, sidebar.dust and footer.dust templates from partials/shared/ subdirectory.
@@ -230,12 +229,14 @@ This template includes header.dust, sidebar.dust and footer.dust templates from 
 
 ### DoNotRender
 
-If you do not want the DustPress to render the page automatically but want to do it yourself, you can call
+If you do not want the DustPress to render the page automatically but would rather do it yourself, you can call
 `$this->do_not_render()` anywhere in your model or submodels. In that case DustPress populates the data object, but leaves the
 rendering for the developer.
 
-DustPress render function is declared public and is thus usable anywhere. It takes the partial (either as a complete
-absolute path, path relative to the partials/ directory or just a filename in the partials/ directory) as its first parameter
-and the data to be rendered as second parameter. The third parameter is the output type, which is 'html' by default. You can
-also get the data as a json by giving 'json' as the third parameter. Fourth parameter is a boolean value for whether the
-result should be echoed or not. If it's false, the function returns the resulting html or json as a string.
+DustPress render function is declared public and is thus usable anywhere. It takes an array of arguments as its parameter. Only mandatory argument is `partial` that contains the name, filename or path to the wanted partial.
+
+With only the partial defined, DustPress passes its global data object to the template. That can be changed by giving it another parameter `data` that would then be passed to the template.
+
+There is also a parameter `type` that define the format the data would be rendered in. By default it's `html`, but `json` is also a possibility. You can write your own render format functions as well. That feature will be documented later, sorry for that.
+
+The last but not the least of the parameters is `echo` that takes a boolean value. By default it's set to true, so the render function echos it's output straight to browser. If it's false, it's returned as a string.
