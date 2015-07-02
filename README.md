@@ -54,7 +54,7 @@ The data models of DustPress consist of one class named the same as the file but
 Template name: Frontpage
 */
 
-class Frontpage extends DustPress {
+class PageFrontpage extends DustPress {
   //
 }
 ?>
