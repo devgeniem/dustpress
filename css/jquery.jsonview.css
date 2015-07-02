@@ -77,7 +77,7 @@ body.locked {
 }
 
 .jsonview_close_debug {
-    position: fixed;
+    position: absolute;
     z-index: 100001;
     display: block;
     top: 80px;
