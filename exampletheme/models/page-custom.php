@@ -12,7 +12,8 @@ class PageCustom extends DustPress {
 		$dp = new DustPressHelper();
 
 		// Fetch the post object
-		$post = $dp->get_post( get_the_ID() );
+		$args = [ 'recursive' => true ];
+		$post = $dp->get_acf_post( get_the_ID(), $args );
 
 		// Here we just want to save some variable to $variable
 		$this->variable = "Some variable";

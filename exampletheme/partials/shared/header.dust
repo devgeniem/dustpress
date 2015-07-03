@@ -26,14 +26,17 @@
 
 		{@menu menu_name="primary" ul_classes="primary_menu_class" /}
 
-		{@select key="{WP.user.roles}"}
-			{@eq value="administrator"}
-				<h3>This is shown only for administrators</h3>
-			{/eq}
-			{@default}
-				<h3>This is shown for anyone but administrators</h3>
-			{/default}
-		{/select}
+		{?WP.loggedin}
+			<p>Logged in as: {WP.user.user_nicename}.</p>
+			{@select key="{WP.user.roles}"}
+				{@eq value="administrator"}
+					<h3>This is shown only for administrators</h3>
+				{/eq}
+				{@default}
+					<h3>This is shown for anyone but administrators</h3>
+				{/default}
+			{/select}
+		{/WP.loggedin}
 	</header>
 
 {/Header}

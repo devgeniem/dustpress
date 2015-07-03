@@ -34,9 +34,7 @@ class DustPressHelper {
 	*  @since	0.0.1
 	*
 	*  @param	$id (int)
-	*  @param	$metaKeys (array/string)
-	*  @param	$single (boolean)
-	*  @param	$metaType (string)
+	*  @param	$args (array)
 	*
 	*  $return  post object as an associative array with meta data
 	*/
@@ -64,7 +62,10 @@ class DustPressHelper {
 	/*
 	*  get_acf_post
 	*
-	*  This function will query single post and its meta.
+	*  This function will query a single post and its meta.
+	*  
+	*  If the args has a key 'recursive' with the value 'true', relational 
+	*  post objects are loaded recursively to get the full object.
 	*  Meta data is handled the same way as in get_post.
 	*
 	*  @type	function
@@ -72,10 +73,7 @@ class DustPressHelper {
 	*  @since	0.0.1
 	*
 	*  @param	$id (int)
-	*  @param	$metaKeys (array/string)
-	*  @param	$single (boolean)
-	*  @param	$metaType (string)
-	*  @param 	$wholeFields (boolean)
+	*  @param	$args (array)
 	*  @param 	$recursive (boolean)
 	*
 	*  $return  post object as an associative array with acf fields and meta data
@@ -99,16 +97,29 @@ class DustPressHelper {
 		if ( is_array( $acfpost ) ) {
 			$acfpost['fields'] = get_fields( $id );
 
-			// Get fields with relational post data as whole acf object
+			// Get fields with relational post data as a whole acf object
 			if ( $recursive ) {
-				foreach ($acfpost['fields'] as &$field) {
-					if ( is_array($field) && is_object($field[0]) ) {
-						for ($i=0; $i < count($field); $i++) { 
+				foreach ($acfpost['fields'] as &$field) {										
+					if ( is_array($field) && isset( $field[0]->post_type ) ) {
+						for ( $i=0; $i < count( $field ); $i++ ) { 
 							$field[$i] = $this->get_acf_post( $field[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
 						}
 					}
-				}
-				
+					// a repeater field has relational posts
+					if ( is_array( $field ) && is_array( $field[0] ) ) {												
+						foreach ( $field as $idx => &$repeater ) {													
+							if ( is_array( $repeater ) ) {
+								foreach ( $repeater as &$row ) {
+									if ( isset( $row[0]->post_type ) ) {									
+										for ( $i=0; $i < count( $row ); $i++ ) { 												
+												$row[$i] = $this->get_acf_post( $row[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
+											}
+										}
+								}								
+							}														
+						}
+					}
+				}						
 			}
 			elseif ( $wholeFields ) {
 				foreach($acfpost['fields'] as $name => &$field) {
@@ -135,9 +146,7 @@ class DustPressHelper {
 	*  @date	20/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$id (int)
-	*  @param	$metaKeys (array/string)	
-	*  @param	$metaType (string)
+	*  @param	$args (array)
 	*
 	*  @return	array of posts as an associative array with meta data
 	*/
@@ -182,9 +191,7 @@ class DustPressHelper {
 	*  @date	20/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$id (int)
-	*  @param	$metaKeys (array/string)	
-	*  @param	$metaType (string)
+	*  @param	$args (array)
 	*
 	*  @return	array of posts as an associative array with acf fields and meta data
 	*/
