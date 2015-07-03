@@ -1,0 +1,13 @@
+{#PageCustom}
+	{>"shared/header" /}
+
+	{#Content}
+		<h1>{@title /}</h1>
+
+		{@content /}
+
+		<p>For some reason we want to show the permalink of the page here: {@permalink /}</p>
+	{/Content}
+
+	{>"shared/footer" /}	
+{/PageCustom}

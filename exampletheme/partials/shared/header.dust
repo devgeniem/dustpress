@@ -1,0 +1,39 @@
+{#Header}
+	<!DOCTYPE html>
+	<!--[if IE 7]>
+	<html class="ie ie7" >
+	<![endif]-->
+	<!--[if IE 8]>
+	<html class="ie ie8" >
+	<![endif]-->
+	<!--[if !(IE 7) | !(IE 8)  ]><!-->
+	<html >
+	<!--<![endif]-->
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width">
+		<title>{@title /}</title>
+
+		{@wphead /}
+	</head>
+
+	<body>
+
+	<header>
+		<h2>{SomeData}</h2>
+
+		<p>If you go put some items in the menu "Primary menu", you'll see them appear below.</p>
+
+		{@menu menu_name="primary" ul_classes="primary_menu_class" /}
+
+		{@select key="{WP.user.roles}"}
+			{@eq value="administrator"}
+				<h3>This is shown only for administrators</h3>
+			{/eq}
+			{@default}
+				<h3>This is shown for anyone but administrators</h3>
+			{/default}
+		{/select}
+	</header>
+
+{/Header}

@@ -1,0 +1,19 @@
+{#Footer}
+		<h2>{SomeData.key1}</h2>
+
+		<p>{#SomeData.key2}{.}{@sep} {/sep}{/SomeData.key2}.</p>
+
+		{?Variable}<p>{Variable}</p>{/Variable}
+
+		{?Something}
+			<p>
+				{Something.Something}<br/>
+				{Something.Great}
+			</p>
+		{/Something}
+
+		{@wpfooter /}
+		
+		</body>
+	</html>
+{/Footer}
