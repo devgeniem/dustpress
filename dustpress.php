@@ -57,11 +57,9 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		$this->errors = [];
+		$this->errors = $this->is_installation_compatible();
 
-		$this->errors[] = $this->is_installation_compatible();
-
-		if ( is_array( $this->errors ) && $this->errors[0] !== false ) {				
+		if ( ! empty( $this->errors ) ) {	
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
@@ -202,7 +200,7 @@ class DustPress {
 						$partial = strtolower( $this->camelcase_to_dashed( $template ) );
 
 					if ( ! $this->get_render_status ) {
-						$this->render( $partial );
+						$this->render( [ "partial" => $partial ] );
 					}
 				}
 				else {
@@ -213,7 +211,12 @@ class DustPress {
 					foreach( $accepts as $accept ) {
 						if ( isset( $dustpress->data[ $accept->function ] ) ) {
 							if ( isset( $accept->dp_partial ) ) {
-								$response[ $accept->function ] = $dustpress->render( $accept->dp_partial, $dustpress->data, "html", false );
+								$response[ $accept->function ] = $dustpress->render( [
+									"partial" => $accept->dp_partial,
+									"data" => $dustpress->data, 
+									"type" => "html",
+									"echo " => false
+								] );
 							}
 							else if ( ! isset( $accept->dp_type ) && ( $accept->dp_type == "json" ) ) {
 								$response[ $accept->function ] = $dustpress->data[ $accept->function ];
@@ -419,8 +422,24 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function render( $partial, $data = -1, $type = 'default', $echo = true ) {
+	public function render( $args = array() ) {
 		global $dustpress;
+
+		$defaults = [
+			"data" => -1,
+			"type" => "default",
+			"echo" => true
+		];
+
+		if ( is_array( $args ) ) {
+			if ( ! isset( $args["partial"] ) ) {
+				return "<p><b>DustPress error:</b> No partial is given to the render function.</p>";
+			}
+		}
+		
+		$options = array_merge($defaults, (array)$args);
+
+		extract( $options );
 
 		if ( "default" == $type && ! get_option('dustpress_default_format' ) ) {
 			$type = "html";
@@ -456,7 +475,7 @@ class DustPress {
 		$types = apply_filters( 'dustpress/formats', $types );
 
 		// If no data attribute given, take contents from object data collection
-		if ( $data == -1 ) $data = $dustpress->data;
+		if ( $data === -1 ) $data = $dustpress->data;
 
 		$data = apply_filters( 'dustpress/data', $data );
 
@@ -516,7 +535,7 @@ class DustPress {
 			return $output;
 		}
 
-		if ( $error ) {
+		if ( isset( $error ) ) {
 			return false;
 		}
 		else {
@@ -788,74 +807,83 @@ class DustPress {
 
 			if ( $template == "default" ) $template = "page";
 		}
-
-		if ( is_single() ) {
-			$type = get_post_type();
-		}
-
-		if ( is_category() ) {
-			$cat = get_category( get_query_var('cat') );
-		}
-
-		if ( is_tag() ) {
-			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, "post_tag" );
-		}
-		
-		if ( is_tax() ) {
-			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
-		}
-
-		if ( is_author() ) {
-			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
-		}
-
-
-		if ( is_attachment() ) {
-			$mime_type = get_post_mime_type( get_the_ID() );
+		else {
+			$template = "default";
 		}
 
 		$hierarchy = [
 			"is_home" => [
 				"HomePage"
-			],
-			"is_page" => [
+			]
+		];
+
+		if ( is_page() ) {
+			$hierarchy["is_page"] = [
 				"Page" . ucfirst( $template ),
 				"Page" . ucfirst( $post->post_name ),
 				"Page" . $post->ID,
 				"Page"
-			],
-			"is_category" => [
+			];
+		}
+
+		if ( is_category() ) {
+			$cat = get_category( get_query_var('cat') );
+
+			$hierarchy["is_category"] = [
 				"Category" . ucfirst( $cat->slug ),
 				"Category" . $cat->term_id,
 				"Category",
 				"Archive"
-			],
-			"is_tag" => [
+			];
+		}
+
+		if ( is_tag() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, "post_tag" );
+
+			$hierarchy["is_tag"] = [
 				"Tag" . ucfirst( $term->slug ),
 				"Tag",
 				"Archive"
-			],
-			"is_tax" => [
+			];
+		}
+
+		if ( is_tax() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
+
+			$hierarchy["is_tax"] = [
 				"Taxonomy" . ucfirst( get_query_var('taxonomy') ) . ucfirst($term->slug),
 				"Taxonomy" . ucfirst( get_query_var('taxonomy') ),
 				"Taxonomy",
 				"Archive"
-			],
-			"is_author" => [
+			];
+		}
+
+		if ( is_author() ) {
+			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+
+			$hierarchy["is_author"] = [
 				"Author" . ucfirst( $author->user_nicename ),
 				"Author" . $author->ID,
 				"Author",
 				"Archive"
-			],
-			"is_search" => [
-				"Search"
-			],
-			"is_404" => [
-				"Error404"
-			],
-			"is_attachment" => [
+			];
+		}
+
+		$hierarchy["is_search"] = [
+			"Search"
+		];
+
+
+		$hierarchy["is_404"] = [
+			"Error404"
+		];
+
+		if ( is_attachment() ) {
+			$mime_type = get_post_mime_type( get_the_ID() );
+
+			$hiearchy["is_attachment"] = [
 				function() use ( $mime_type ) {
 					if ( preg_match( "/^image/", $mime_type ) && class_exists("Image") ) {
 						return "Image";
@@ -902,12 +930,20 @@ class DustPress {
 				"Attachment",
 				"SingleAttachment",
 				"Single"
-			],
-			"is_single" => [
+			];
+		}
+
+		if ( is_single() ) {
+			$type = get_post_type();
+
+			$hierarchy["is_single"] = [
 				"Single" . ucfirst( $type ),
 				"Single"
-			],
-			"is_archive" => [
+			];
+		}
+
+		if ( is_archive() ) {
+			$hierarchy["is_hierarchy"] = [
 				function() {
 					$post_types = get_post_types();
 
@@ -928,8 +964,8 @@ class DustPress {
 						}
 					}
 				}
-			]
-		];
+			];
+		}
 
 		$hierarchy = apply_filters( "dustpress/template_hierarchy", $hierarchy );
 
@@ -1005,10 +1041,9 @@ class DustPress {
 		global $dustpress;
 
 		if ( $this->is_wanted( $name ) ) {
-			
 			if ( is_array($args) )
 				$dustpress->args->{$name} = $args;
-
+			
 			$dustpress->classes[$name] = new $name();
 
 			if ( ! isset( $dustpress->data[$name] ) ) $dustpress->data[$name] = new \StdClass();
@@ -1307,17 +1342,19 @@ class DustPress {
 	*  @return	true/false (boolean)
 	*/
 	private function is_installation_compatible() {
+		$ret = [];
+
 		if ( ! is_readable( get_template_directory() .'/models' ) ) {
-			return "models";
+			$ret[] = "models";
 		}
 		if ( ! is_readable(get_template_directory() .'/partials' ) ) {
-			return "partials";
+			$ret[] = "partials";
 		}
 		if ( ! defined("PHP_VERSION_ID") or PHP_VERSION_ID < 50300 ) {
-			return "phpversion";
+			$ret[] = "phpversion";
 		}
 
-		return false;
+		return $ret;
 	}
 
 	/*

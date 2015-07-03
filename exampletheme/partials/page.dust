@@ -1,0 +1,11 @@
+{#Page}
+	{>"shared/header" /}
+
+	{#Content}
+		<h1>{@title /}</h1>
+
+		{@content /}
+	{/Content}
+
+	{>"shared/footer" /}	
+{/Page}
