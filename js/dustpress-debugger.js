@@ -15,23 +15,27 @@ jQuery(document).ready(function($) {
 	$(div).appendTo(".jsonview_data_debug");
 
 	var jsonData = $.parseJSON(dustpress_debugger.jsondata);
-	console.log(jsonData);
+	
+	// log also into console
+	console.log('Debugger', jsonData);
 
-	$(".jsonview_debug").JSONView(
+	var jsonView = $(".jsonview_debug").JSONView(
 		jsonData,
 		{ 
 			collapsed: true,
-			recursive_collapser: true
+			recursive_collapser: false
 		}
 	);
 
 	$(".jsonview_open_debug").click(function() {
 		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
 		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
+		$("body").toggleClass("locked");
 	});
 	$(".jsonview_close_debug").click(function() {
 		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
 		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
+		$("body").toggleClass("locked");
 	});
 
 });

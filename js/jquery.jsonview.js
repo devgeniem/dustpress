@@ -141,8 +141,15 @@ https://github.com/yesmeck/jquery-jsonview
       collapser.className = 'collapser';
       collapser.innerHTML = options.collapsed ? '+' : '-';
       collapser.addEventListener('click', (function(_this) {
-        return function(event) {
-          return _this.toggle(event.target, options);
+        return function(event) {      
+          _this.preventSelection(event);              
+          return _this.toggle(event.target, options, event.shiftKey);
+        };
+      })(this));
+      collapser.addEventListener('touchstart', (function(_this) {
+        return function(event) {    
+          _this.preventSelection(event);                   
+          return _this.toggle(event.target, options, event.shiftKey);
         };
       })(this));
       item.insertBefore(collapser, item.firstChild);
@@ -177,14 +184,14 @@ https://github.com/yesmeck/jquery-jsonview
       return collapser.innerHTML = '+';
     };
 
-    Collapser.toggle = function(collapser, options) {
+    Collapser.toggle = function(collapser, options, shiftKey) {
       var action, collapsers, target, _i, _len, _results;
       if (options == null) {
         options = {};
       }
       target = this.collapseTarget(collapser);
       action = target.style.display === 'none' ? 'expand' : 'collapse';
-      if (options.recursive_collapser) {
+      if (options.recursive_collapser || shiftKey) {
         collapsers = collapser.parentNode.getElementsByClassName('collapser');
         _results = [];
         for (_i = 0, _len = collapsers.length; _i < _len; _i++) {
@@ -205,6 +212,13 @@ https://github.com/yesmeck/jquery-jsonview
       }
       return target = targets[0];
     };
+
+    Collapser.preventSelection = function(e) {      
+      if (e.ctrlKey || e.shiftKey) {
+        document.getSelection().removeAllRanges();        
+        e.preventDefault();
+      }
+    }
 
     return Collapser;
 
