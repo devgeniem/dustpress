@@ -79,6 +79,8 @@ namespace Dust
                 "select"      => new Helper\Select(),
                 "math"        => new Helper\Math(),
                 "eq"          => new Helper\Eq(),
+                "any"         => new Helper\Any(),
+                "none"        => new Helper\None(),
                 "if"          => new Helper\IfHelper(),
                 "lt"          => new Helper\Lt(),
                 "lte"         => new Helper\Lte(),
