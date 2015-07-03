@@ -27,15 +27,25 @@ jQuery(document).ready(function($) {
 		}
 	);
 
+	$(document).keyup(function(e) {
+	     if (e.keyCode == 27) { // escape key maps to keycode `27`
+	        if ( ! $(".jsonview_data_debug").hasClass('jsonview_data_debug_closed') ) {
+	        	toggleDebugger();
+	        }
+	    }
+	});
+
 	$(".jsonview_open_debug").click(function() {
-		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
-		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
-		$("body").toggleClass("locked");
+		toggleDebugger();
 	});
 	$(".jsonview_close_debug").click(function() {
+		toggleDebugger();
+	});
+
+	var toggleDebugger = function() {
 		$(".jsonview_data_debug").toggleClass('jsonview_data_debug_closed');	
 		$(".jsonview_open_debug").toggleClass('jsonview_hide');	
 		$("body").toggleClass("locked");
-	});
+	}
 
 });
