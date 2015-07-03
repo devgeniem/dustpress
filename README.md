@@ -254,12 +254,27 @@ In this class you will also find a menu builder tailored for Dust-based menus wh
 #### get_post()
 
 With DustPressHelper you can query single WordPress posts with two different functions. The `get_post()` function accepts the following parameters:
-* id: the id of the post
-* args: arguments in an array 
+* id: The id of the post.
+* args: Arguments in an array.
 
-The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` with the same functionality as described in WordPress documentation for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`.
+The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` with the same functionality as described in WordPress documentation for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`. If no matching post with the passed id is found, `false`is returned.
 
 #### get_acf_post()
 
 This function extends the `get_post()` function with automatic loading of __Advanced Custom Fields__ (ACF) field group data. Fields are loaded with the ACF function `get_fields` and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
 
+This function has a recursive operation. If the argument with the key `recursive` is set to `true`, ACF fields with relational post object data are loaded recursively with full meta and field group data. This recursion also works within the first level of an ACF repeater field.
+
+### Quering multiple posts
+
+#### get_posts()
+
+This function will query multiple posts based on given arguments with the option to get post metadata binded with the post objects. Post objects are queried with the WordPress `get_post` function and the data is extended with metadata. Thus, this function accepts the same arguments as the basic `get_post` function. If found, posts are returned as an associative array. If no matching posts are found, `false`is returned. This function accepts arguments in an array with the following keys:
+* all the arguments described in the WordPress codex for the `get_posts`function
+** https://codex.wordpress.org/Function_Reference/get_posts
+* meta_keys: Function described in the `get_post()` function. Found meta values are returned automatically for all posts if this argument is set.
+* meta_type: Function described in the `get_post()`function
+
+#### get_acf_posts()
+
+This function extends the get_posts function with the ability to load __Advanced Custom Fields__ (ACF) field group data with the post objects. Accepts the same arguments as the `get_posts` function with the addition of the key `whole_fields` which functions similarly as described in the `get_acf_post` function. This function does not have a recursive functionality. ACF fields with relational post object data need to be loaded separately.
