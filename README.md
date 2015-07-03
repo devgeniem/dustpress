@@ -22,7 +22,7 @@ some of the WordPress core functions. The naming of the data models and view par
 traditional WordPress themes. The model for a single post should be named `single.php` etc.
 
 In WordPress, your custom page templates could be named pretty much anything as long as you declare the name of the
-template in the comment section in the beginning of the file. This is the in DustPress, but the class name that you write for the model should follow certain pattern. For example if you have a `Frontpage` template with a filename `page-filename.php`, your class should be named PageFrontpage. The class names are case sensitive. The same goes with custom content type singles, where a single `person` file should be named `single-person.php` and the class accordingly `SinglePerson`.
+template in the comment section in the beginning of the file. This is the case in DustPress too, but the class name that you write for the model should follow certain pattern. For example if you have a `Frontpage` template with a filename `page-frontpage.php`, your class should be named PageFrontpage. The class names are case sensitive. The same goes with custom content type singles, where a single `person` file should be named `single-person.php` and the class accordingly `SinglePerson`.
 
 You still have to declare a name for the templates in the starting comment as you would have done in a traditional
 WordPress theme as well. This allows user to choose the template file to use with the page and points the controller
