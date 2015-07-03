@@ -257,7 +257,7 @@ With DustPressHelper you can query single WordPress posts with two different fun
 * id: the id of the post
 * args: arguments in an array 
 
-The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` which the same functionality as described in WordPress documentation for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`.
+The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` with the same functionality as described in WordPress documentation for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`.
 
 #### get_acf_post()
 
