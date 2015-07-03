@@ -257,9 +257,9 @@ With DustPressHelper you can query single WordPress posts with two different fun
 * id: the id of the post
 * args: arguments in an array 
 
-The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` which the same functionality as described in [WordPress documentation]:(https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`.
+The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead with the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` which the same functionality as described in [WordPress documentation]: (https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`.
 
 #### get_acf_post()
 
-This function extends the `get_post()` function with automatic loading of __Advanced Custom Fields__ (ACF) field group data. Fields are loaded with [the ACF function `get_fields`]:(http://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
+This function extends the `get_post()` function with automatic loading of __Advanced Custom Fields__ (ACF) field group data. Fields are loaded with [the ACF function `get_fields`]: (http://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
 
