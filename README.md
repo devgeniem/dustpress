@@ -261,5 +261,5 @@ The argument key `'meta_keys'` accepts meta key values in an array as strings. P
 
 #### get_acf_post()
 
-This function extends the `get_post()` function with automatic loading of __Advanced Custom Fields__ (ACF) field group data. Fields are loaded with [the ACF function `get_fields`]: (http://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
+This function extends the `get_post()` function with automatic loading of __Advanced Custom Fields__ (ACF) field group data. Fields are loaded with the ACF function `get_fields` (http://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
 
