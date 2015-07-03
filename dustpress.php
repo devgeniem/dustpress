@@ -59,7 +59,7 @@ class DustPress {
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
 		$this->errors = $this->is_installation_compatible();
 
-		if ( is_array( ! $this->errors ) && $this->errors[0] !== false ) {	
+		if ( ! empty( $this->errors ) ) {	
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
@@ -1342,17 +1342,19 @@ class DustPress {
 	*  @return	true/false (boolean)
 	*/
 	private function is_installation_compatible() {
+		$ret = [];
+
 		if ( ! is_readable( get_template_directory() .'/models' ) ) {
-			return "models";
+			$ret[] = "models";
 		}
 		if ( ! is_readable(get_template_directory() .'/partials' ) ) {
-			return "partials";
+			$ret[] = "partials";
 		}
 		if ( ! defined("PHP_VERSION_ID") or PHP_VERSION_ID < 50300 ) {
-			return "phpversion";
+			$ret[] = "phpversion";
 		}
 
-		return false;
+		return $ret;
 	}
 
 	/*
