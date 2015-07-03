@@ -270,8 +270,7 @@ This function has a recursive operation. If the argument with the key `recursive
 #### get_posts()
 
 This function will query multiple posts based on given arguments with the option to get post metadata binded with the post objects. Post objects are queried with the WordPress `get_post` function and the data is extended with metadata. Thus, this function accepts the same arguments as the basic `get_post` function. If found, posts are returned as an associative array. If no matching posts are found, `false`is returned. This function accepts arguments in an array with the following keys:
-* all the arguments described in the WordPress codex for the `get_posts`function
-** https://codex.wordpress.org/Function_Reference/get_posts
+* all the arguments described in the WordPress codex for the `get_posts`function: https://codex.wordpress.org/Function_Reference/get_posts
 * meta_keys: Function described in the `get_post()` function. Found meta values are returned automatically for all posts if this argument is set.
 * meta_type: Function described in the `get_post()`function
 
