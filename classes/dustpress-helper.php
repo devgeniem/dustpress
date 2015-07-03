@@ -40,12 +40,22 @@ class DustPressHelper {
 	*
 	*  $return  post object as an associative array with meta data
 	*/
-	public function get_post( $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
+	public function get_post( $id, $args = array() ) {
 		global $post;
+
+		$defaults = [
+			"meta_keys" => null,
+			"single" => false,
+			"meta_type" => "post"
+		];
+
+		$options = array_merge($defaults, $args);
+
+		extract( $options );
 
 		$this->post = get_post( $id, 'ARRAY_A' );
 		if ( is_array( $this->post ) ) {
-			$this->get_post_meta( $this->post, $id, $metaKeys, $single, $metaType );
+			$this->get_post_meta( $this->post, $id, $meta_keys, $single, $meta_type );
 		}
 
 		return $this->post;
@@ -70,7 +80,19 @@ class DustPressHelper {
 	*
 	*  $return  post object as an associative array with acf fields and meta data
 	*/
-	public function get_acf_post( $id, $metaKeys = NULL, $single = false, $metaType = 'post', $wholeFields = false, $recursive = false ) {
+	public function get_acf_post( $id, $args ) {
+
+		$defaults = [
+			"meta_keys" => null,
+			"single" => false,
+			"meta_type" => "post",
+			"whole_fields" => false,
+			"recursive" => false
+		];
+
+		$options = array_merge($defaults, $args);
+
+		extract( $options );
 
 		$acfpost = get_post( $id, 'ARRAY_A' );
 		
@@ -82,7 +104,7 @@ class DustPressHelper {
 				foreach ($acfpost['fields'] as &$field) {
 					if ( is_array($field) && is_object($field[0]) ) {
 						for ($i=0; $i < count($field); $i++) { 
-							$field[$i] = $this->get_acf_post( $field[$i]->ID, $metaKeys, $single, $metaType, $wholeFields, $recursive );
+							$field[$i] = $this->get_acf_post( $field[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
 						}
 					}
 				}
@@ -93,7 +115,7 @@ class DustPressHelper {
 					$field = get_field_object($name, $id, true);
 				}
 			}
-			$this->get_post_meta( $acfpost, $id, $metaKeys, $single, $metaType );
+			$this->get_post_meta( $acfpost, $id, $meta_keys, $single, $metaType );
 		}
 
 		$acfpost['permalink'] = get_permalink($id);
@@ -119,7 +141,17 @@ class DustPressHelper {
 	*
 	*  @return	array of posts as an associative array with meta data
 	*/
-	public function get_posts( $args, $metaKeys = NULL, $metaType = 'post' ) {
+	public function get_posts( $args ) {
+
+		if ( isset( $args["meta_keys"] ) ) {
+			$meta_keys = $args["meta_keys"];
+			unset( $args["meta_keys"] );
+		}
+
+		if ( isset( $args["meta_type"] ) ) {
+			$meta_type = $args["meta_type"];
+			unset( $args["meta_type"] );
+		}
 
 		$this->posts = get_posts( $args );
 
@@ -130,7 +162,7 @@ class DustPressHelper {
 		
 		// get meta for posts
 		if ( count( $this->posts ) ) {
-			$this->get_meta_for_posts( $this->posts, $metaKeys, $metaType );
+			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type );
 			
 			wp_reset_postdata();
 			return $this->posts;
@@ -156,7 +188,22 @@ class DustPressHelper {
 	*
 	*  @return	array of posts as an associative array with acf fields and meta data
 	*/
-	public function get_acf_posts( $args, $metaKeys = NULL, $metaType = 'post', $wholeFields = false ) {
+	public function get_acf_posts( $args ) {
+
+		if ( isset( $args["meta_keys"] ) ) {
+			$meta_keys = $args["meta_keys"];
+			unset( $args["meta_keys"] );
+		}
+
+		if ( isset( $args["meta_type"] ) ) {
+			$meta_type = $args["meta_type"];
+			unset( $args["meta_type"] );
+		}
+
+		if ( isset( $args["whole_fields"] ) ) {
+			$whole_fields = $args["whole_fields"];
+			unset( $args["whole_fields"] );
+		}
 
 		$this->posts = get_posts( $args );
 
@@ -170,14 +217,14 @@ class DustPressHelper {
 			foreach ( $this->posts as &$p ) {								
 				$p['fields'] = get_fields( $p['ID'] );
 				$p['permalink'] = get_permalink( $p['ID'] );
-				if($wholeFields) {
+				if( $whole_fields ) {
 					foreach($p['fields'] as $name => &$field) {
 						$field = get_field_object($name, $p['ID'], true);
 					}
 				}
 			}
 
-			$this->get_meta_for_posts( $this->posts, $metaKeys, $metaType );
+			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type );
 
 			wp_reset_postdata();
 			return $this->posts;

@@ -57,11 +57,9 @@ class DustPress {
 	*  @return	N/A
 	*/
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		$this->errors = [];
+		$this->errors = $this->is_installation_compatible();
 
-		$this->errors[] = $this->is_installation_compatible();
-
-		if ( is_array( $this->errors ) && $this->errors[0] !== false ) {				
+		if ( is_array( ! $this->errors ) && $this->errors[0] !== false ) {	
 			add_action( "admin_notices", array( $this, "required") );
 			return;
 		}
@@ -202,7 +200,7 @@ class DustPress {
 						$partial = strtolower( $this->camelcase_to_dashed( $template ) );
 
 					if ( ! $this->get_render_status ) {
-						$this->render( $partial );
+						$this->render( [ "partial" => $partial ] );
 					}
 				}
 				else {
@@ -213,7 +211,12 @@ class DustPress {
 					foreach( $accepts as $accept ) {
 						if ( isset( $dustpress->data[ $accept->function ] ) ) {
 							if ( isset( $accept->dp_partial ) ) {
-								$response[ $accept->function ] = $dustpress->render( $accept->dp_partial, $dustpress->data, "html", false );
+								$response[ $accept->function ] = $dustpress->render( [
+									"partial" => $accept->dp_partial,
+									"data" => $dustpress->data, 
+									"type" => "html",
+									"echo " => false
+								] );
 							}
 							else if ( ! isset( $accept->dp_type ) && ( $accept->dp_type == "json" ) ) {
 								$response[ $accept->function ] = $dustpress->data[ $accept->function ];
@@ -419,8 +422,24 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function render( $partial, $data = -1, $type = 'default', $echo = true ) {
+	public function render( $args = array() ) {
 		global $dustpress;
+
+		$defaults = [
+			"data" => -1,
+			"type" => "default",
+			"echo" => true
+		];
+
+		if ( is_array( $args ) ) {
+			if ( ! isset( $args["partial"] ) ) {
+				return "<p><b>DustPress error:</b> No partial is given to the render function.</p>";
+			}
+		}
+		
+		$options = array_merge($defaults, (array)$args);
+
+		extract( $options );
 
 		if ( "default" == $type && ! get_option('dustpress_default_format' ) ) {
 			$type = "html";
@@ -1005,10 +1024,9 @@ class DustPress {
 		global $dustpress;
 
 		if ( $this->is_wanted( $name ) ) {
-			
 			if ( is_array($args) )
 				$dustpress->args->{$name} = $args;
-
+			
 			$dustpress->classes[$name] = new $name();
 
 			if ( ! isset( $dustpress->data[$name] ) ) $dustpress->data[$name] = new \StdClass();

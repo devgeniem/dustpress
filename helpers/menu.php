@@ -53,7 +53,12 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 	$menu->ul_id = $ul_id;
 	$menu->show_submenu = $show_submenu;
 
-	$output = $dustpress->render("menu", $menu, "html", false);
+	$output = $dustpress->render( [
+		"partial" => "menu",
+		"data" => $menu,
+		"type" => "html",
+		"echo" => false
+	]);
 
 	return $chunk->write( $output );
 };
