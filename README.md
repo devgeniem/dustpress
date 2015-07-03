@@ -5,7 +5,7 @@ A WordPress plugin for writing template files with Dust templating engine and se
 # Installation
 
 - Install DustPress plugin to your WordPress plugin folder as usual, and activate it from the admin panel.
-- Create models/ and partials/ directories in your theme root. DustPress won't search for those files anywhere else.
+- Copy exampletheme from plugin folder to your themes folder as a base for your own theme. You can of course rename it however you want.
 - That's it! You are ready to go.
 
 # Usage
@@ -175,7 +175,7 @@ If you for some reason want to bind the data with another name than the method's
 the `bind_data()` method as the second parameter. This way you can also have data named 'Sub' or 'Data' which are
 otherwise reserved names for plugin's methods.
 
-You can also bind data straight to the root of the Content-object with `bind_Content()` method. It doesn't create
+You can also bind data straight to the root of the Content-object with `bind_content()` method. It doesn't create
 a Content->Content structure but rather merges the data straight inside the Content block.
 
 It's also possible to give the function a third parameter, that is the model name. So you can bind data to your Header submodel inside your main model or even another submodel! Because the rendering will be done after all data has been gathered, you have 100 % control of what data the view template gets and can even interfere with that after you have already defined a submodel.

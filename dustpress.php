@@ -475,7 +475,7 @@ class DustPress {
 		$types = apply_filters( 'dustpress/formats', $types );
 
 		// If no data attribute given, take contents from object data collection
-		if ( $data == -1 ) $data = $dustpress->data;
+		if ( $data === -1 ) $data = $dustpress->data;
 
 		$data = apply_filters( 'dustpress/data', $data );
 
@@ -535,7 +535,7 @@ class DustPress {
 			return $output;
 		}
 
-		if ( $error ) {
+		if ( isset( $error ) ) {
 			return false;
 		}
 		else {
@@ -807,74 +807,83 @@ class DustPress {
 
 			if ( $template == "default" ) $template = "page";
 		}
-
-		if ( is_single() ) {
-			$type = get_post_type();
-		}
-
-		if ( is_category() ) {
-			$cat = get_category( get_query_var('cat') );
-		}
-
-		if ( is_tag() ) {
-			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, "post_tag" );
-		}
-		
-		if ( is_tax() ) {
-			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
-		}
-
-		if ( is_author() ) {
-			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
-		}
-
-
-		if ( is_attachment() ) {
-			$mime_type = get_post_mime_type( get_the_ID() );
+		else {
+			$template = "default";
 		}
 
 		$hierarchy = [
 			"is_home" => [
 				"HomePage"
-			],
-			"is_page" => [
+			]
+		];
+
+		if ( is_page() ) {
+			$hierarchy["is_page"] = [
 				"Page" . ucfirst( $template ),
 				"Page" . ucfirst( $post->post_name ),
 				"Page" . $post->ID,
 				"Page"
-			],
-			"is_category" => [
+			];
+		}
+
+		if ( is_category() ) {
+			$cat = get_category( get_query_var('cat') );
+
+			$hierarchy["is_category"] = [
 				"Category" . ucfirst( $cat->slug ),
 				"Category" . $cat->term_id,
 				"Category",
 				"Archive"
-			],
-			"is_tag" => [
+			];
+		}
+
+		if ( is_tag() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, "post_tag" );
+
+			$hierarchy["is_tag"] = [
 				"Tag" . ucfirst( $term->slug ),
 				"Tag",
 				"Archive"
-			],
-			"is_tax" => [
+			];
+		}
+
+		if ( is_tax() ) {
+			$term_id = get_queried_object()->term_id;
+			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
+
+			$hierarchy["is_tax"] = [
 				"Taxonomy" . ucfirst( get_query_var('taxonomy') ) . ucfirst($term->slug),
 				"Taxonomy" . ucfirst( get_query_var('taxonomy') ),
 				"Taxonomy",
 				"Archive"
-			],
-			"is_author" => [
+			];
+		}
+
+		if ( is_author() ) {
+			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
+
+			$hierarchy["is_author"] = [
 				"Author" . ucfirst( $author->user_nicename ),
 				"Author" . $author->ID,
 				"Author",
 				"Archive"
-			],
-			"is_search" => [
-				"Search"
-			],
-			"is_404" => [
-				"Error404"
-			],
-			"is_attachment" => [
+			];
+		}
+
+		$hierarchy["is_search"] = [
+			"Search"
+		];
+
+
+		$hierarchy["is_404"] = [
+			"Error404"
+		];
+
+		if ( is_attachment() ) {
+			$mime_type = get_post_mime_type( get_the_ID() );
+
+			$hiearchy["is_attachment"] = [
 				function() use ( $mime_type ) {
 					if ( preg_match( "/^image/", $mime_type ) && class_exists("Image") ) {
 						return "Image";
@@ -921,12 +930,20 @@ class DustPress {
 				"Attachment",
 				"SingleAttachment",
 				"Single"
-			],
-			"is_single" => [
+			];
+		}
+
+		if ( is_single() ) {
+			$type = get_post_type();
+
+			$hierarchy["is_single"] = [
 				"Single" . ucfirst( $type ),
 				"Single"
-			],
-			"is_archive" => [
+			];
+		}
+
+		if ( is_archive() ) {
+			$hierarchy["is_hierarchy"] = [
 				function() {
 					$post_types = get_post_types();
 
@@ -947,8 +964,8 @@ class DustPress {
 						}
 					}
 				}
-			]
-		];
+			];
+		}
 
 		$hierarchy = apply_filters( "dustpress/template_hierarchy", $hierarchy );
 
