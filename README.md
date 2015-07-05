@@ -1,6 +1,14 @@
 # DustPress
+Contributors: devgeniem
+Tags: dustpress, wordpress, dustjs, dust.js
+Requires at least: 4.2.0
+Tested up to: 4.4.2
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-A WordPress plugin for writing template files with Dust templating engine and separate data models.
+# Description
+
+A WordPress plugin for writing template files with Dust.js templating engine and separate data models.
 
 # Installation
 

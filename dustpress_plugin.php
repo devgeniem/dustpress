@@ -8,6 +8,9 @@ Author URI: http://www.geniem.com
 Version: 0.1.0
 */
 
+// Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
+require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+
 class DustPress {
 
 	// Instance of DustPHP
@@ -69,7 +72,7 @@ class DustPress {
 			    $prefix = 'Dust\\';
 
 			    // base directory for the namespace prefix
-			    $base_dir = get_template_directory() . '/dustpress/dust/';
+			    $base_dir = __DIR__ . '/dust/';
 
 			    // does the class use the namespace prefix?
 			    $len = strlen( $prefix );
@@ -95,7 +98,7 @@ class DustPress {
 			// Autoload DustPress classes
 			spl_autoload_register( function( $class ) {
 				$paths = array(
-					get_template_directory() . '/dustpress/classes/',
+					__DIR__ . '/classes/',
 					get_template_directory() . '/models',
 				);
 
@@ -128,11 +131,11 @@ class DustPress {
 			$this->dust = new Dust\Dust();
 
 			// Set initial parameters
-			$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
+			$this->dust->includedDirectories[] = __DIR__ . '/partials/';
 
 			// Find and include Dust helpers from DustPress plugin
 			$paths = array(
-				get_template_directory() . '/dustpress/helpers',
+				__DIR__ . '/helpers',
 			);
 
 			foreach( $paths as $path ) {
@@ -162,7 +165,7 @@ class DustPress {
 			add_action( 'admin_menu', array($this, 'plugin_menu') );
 
 			// Add admin stuff
-			add_action( 'after_setup_theme', array($this, 'admin_stuff') );
+			add_action( 'plugins_loaded', array($this, 'admin_stuff') );
 
 			return;
 		}
@@ -255,10 +258,10 @@ class DustPress {
 			wp_enqueue_script( 'jquery' );			
 			
 			// Just register the dustpress and enqueue later, if needed
-			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
+			wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, null, true );						
+			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );						
 		}
 	}
 
@@ -495,7 +498,6 @@ class DustPress {
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
 		// Create debug data if wanted and only if we are on the main instance.
-
 		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$jsondata = json_encode( $data );
 			
@@ -508,8 +510,8 @@ class DustPress {
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
 			
 			// jsonView jQuery plugin
-			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', array( 'jquery' ), null, true );
+			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
+			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, true );
 
 			// Enqueued script with localized data.
 			wp_enqueue_script( 'dustpress_debugger' );
@@ -658,7 +660,7 @@ class DustPress {
 
 			$templatepaths = [
 				get_template_directory() . '/partials/',
-				get_template_directory() . '/dustpress/partials/'
+				__DIR__ . '/partials/'
 			];
 
 			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
