@@ -2,6 +2,8 @@
 
 body.locked {
     overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
 .jsonview_open_debug {
@@ -72,7 +74,7 @@ body.locked {
 }
 
 .jsonview_data_debug_closed {
-    transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-120%, 0, 0);
     overflow: hidden;
 }
 
@@ -93,6 +95,7 @@ body.locked {
     line-height: 35px;
     font-size: 30px;
     color: #fff;
+    font-family: Helvetica, Arial, sans-serif;
 
     outline:0;
     cursor:pointer;
