@@ -811,7 +811,8 @@ class DustPress {
 
 		$hierarchy = [
 			"is_home" => [
-				"HomePage"
+			    "FrontPage",
+				"Home"
 			]
 		];
 
