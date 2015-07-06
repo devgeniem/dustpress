@@ -277,3 +277,11 @@ This function will query multiple posts based on given arguments with the option
 #### get_acf_posts()
 
 This function extends the get_posts function with the ability to load __Advanced Custom Fields__ (ACF) field group data with the post objects. Accepts the same arguments as the `get_posts` function with the addition of the key `whole_fields` which functions similarly as described in the `get_acf_post` function. This function does not have a recursive functionality. ACF fields with relational post object data need to be loaded separately.
+
+# Debugger
+
+DustPress comes with a debugger which displays the data loaded by your current model in a json viewer. To enable the debugger go to WordPress dashboard. Under the Settings there are DustPress' settings. Tick the box 'Show debug information' and save changes.
+
+In the debugger view you can:
+* open and close data sets recursively by holding down the 'Shift' key while clicking an item.
+* close the debugger by pressing the 'Esc' key.
