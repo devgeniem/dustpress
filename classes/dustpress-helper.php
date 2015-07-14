@@ -74,11 +74,10 @@ class DustPressHelper {
 	*
 	*  @param	$id (int)
 	*  @param	$args (array)
-	*  @param 	$recursive (boolean)
 	*
 	*  $return  post object as an associative array with acf fields and meta data
 	*/
-	public function get_acf_post( $id, $args ) {
+	public function get_acf_post( $id, $args = array() ) {
 
 		$defaults = [
 			"meta_keys" => null,
@@ -88,7 +87,7 @@ class DustPressHelper {
 			"recursive" => false
 		];
 
-		$options = array_merge($defaults, $args);
+		$options = array_merge( $defaults, $args );
 
 		extract( $options );
 
@@ -96,7 +95,6 @@ class DustPressHelper {
 		
 		if ( is_array( $acfpost ) ) {
 			$acfpost['fields'] = get_fields( $id );
-
 			// Get fields with relational post data as a whole acf object
 			if ( $recursive ) {
 				foreach ($acfpost['fields'] as &$field) {										
@@ -126,7 +124,7 @@ class DustPressHelper {
 					$field = get_field_object($name, $id, true);
 				}
 			}
-			$this->get_post_meta( $acfpost, $id, $meta_keys, $single, $metaType );
+			$this->get_post_meta( $acfpost, $id, $meta_keys, $single, $meta_type );
 		}
 
 		$acfpost['permalink'] = get_permalink($id);
@@ -264,8 +262,8 @@ class DustPressHelper {
 	private function get_meta_for_posts( &$posts, $metaKeys = NULL, $metaType = 'post' ) {
 		if ($metaKeys === 'all') {
 			// loop through posts and get the meta values
-			foreach ($posts as $post) {				
-				$post['meta'] = get_metadata( $metaType, $post->ID );				
+			foreach ($posts as $post) {
+				$post['meta'] = get_metadata( $metaType, $post->ID );
 			}				
 		}
 		elseif (is_array($metaKeys)) {
