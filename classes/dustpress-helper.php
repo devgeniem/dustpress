@@ -165,8 +165,10 @@ class DustPressHelper {
 		$this->posts = get_posts( $args );
 
 		// cast post object to associative arrays
+		// and get the permalink of the post
 		foreach ($this->posts as &$temp) {
 			$temp = (array) $temp;
+			$temp['permalink'] = get_permalink( $temp['ID'] );
 		}
 		
 		// get meta for posts
