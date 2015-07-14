@@ -56,6 +56,8 @@ class DustPressHelper {
 			$this->get_post_meta( $this->post, $id, $meta_keys, $single, $meta_type );
 		}
 
+		$this->post['permalink'] = get_permalink($id);
+
 		return $this->post;
 	}
 
