@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.1.0
+Version: 0.1.1
 */
 
 class DustPress {
@@ -61,6 +61,11 @@ class DustPress {
 			return;
 		}
 
+		// start sessio for data storing
+		if ( session_status() == PHP_SESSION_NONE ) {
+    		session_start();
+		}
+
 		if ("DustPress" === get_class( $this ) ) {
 			// Autoload DustPHP classes
 			spl_autoload_register( function ( $class ) {
@@ -87,7 +92,7 @@ class DustPress {
 			    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
 
 			    // if the file exists, require it
-			    if ( file_exists( $file ) ) {
+			    if ( file_exists( $file ) ) {			    	
 			        require $file;
 			    }
 			});
@@ -154,7 +159,7 @@ class DustPress {
 			$this->args = new StdClass();
 
 			// Add create_instance to right action hook if we are not on the admin side
-			if ( ! is_admin() && ! $this->is_login_page() && ! defined("DOING_AJAX") ) {
+			if ( ! is_admin() && ! $this->is_login_page() && ! defined("DOING_AJAX") ) {				
 				add_action( 'shutdown', array( $this, 'create_instance' ) );
 			}
 
@@ -258,7 +263,11 @@ class DustPress {
 			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
 
 			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, null, true );						
+			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, '0.0.2', true );						
+
+			// Register debugger ajax hook
+			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
+			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
 		}
 	}
 
@@ -420,7 +429,8 @@ class DustPress {
 	*  @return	true/false (boolean)
 	*/
 	public function render( $args = array() ) {
-		global $dustpress;
+		global 	$dustpress;
+				$hash;
 
 		$defaults = [
 			"data" => -1,
@@ -472,9 +482,14 @@ class DustPress {
 		$types = apply_filters( 'dustpress/formats', $types );
 
 		// If no data attribute given, take contents from object data collection
-		if ( $data === -1 ) $data = $dustpress->data;
+		//if ( $data !== -1 && $this->main == true ) $dustpress->data = $data;
 
-		$data = apply_filters( 'dustpress/data', $data );
+		if ( $this->main == true ) {
+			$dustpress->data = apply_filters( 'dustpress/data', $dustpress->data );
+		} 
+		else {
+			$data = apply_filters( 'dustpress/data', $data );
+		}
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
@@ -497,13 +512,19 @@ class DustPress {
 		// Create debug data if wanted and only if we are on the main instance.
 
 		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			$jsondata = json_encode( $data );
+			
+			$jsondata = json_encode( $dustpress->data );
 			
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Localize the script with new data
+			// $data_array = array(
+			// 	'jsondata' => $jsondata
+			// );
+			$hash = md5( $_SERVER[REQUEST_URI] . microtime() );
 			$data_array = array(
-				'jsondata' => $jsondata
+				'ajaxurl' 	=> admin_url( 'admin-ajax.php' ),
+				'hash' 		=> $hash
 			);
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
 			
@@ -517,9 +538,19 @@ class DustPress {
 		}
 
 		// Create output with wanted format.
-		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
+		if ( $this->main == true ) {
+			$output = call_user_func_array( $types[$type], array( $dustpress->data, $template, $dust ) );
+		} else {
+			$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
+		}
 
-		$output = apply_filters( 'dustpress/output', $output, $this->main );
+		$dustpress->data 	= apply_filters( 'dustpress/data/after_render', $dustpress->data );
+		$output 			= apply_filters( 'dustpress/output', $output, $this->main );
+
+		// Store data into session for debugger to fetch
+		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
+			$_SESSION[$hash] 	= $dustpress->data;			
+		}
 
 		if ( $echo ) {
 			if ( empty ( strlen( $output ) ) ) {
@@ -974,7 +1005,7 @@ class DustPress {
 					if ( is_integer( $key ) ) {
 						if ( is_string( $value ) ) {
 							$debugs[] = $value;
-							if ( class_exists( $value ) ) {
+							if ( class_exists( $value ) ) {								
 								return $value;
 							}
 						}
@@ -1259,6 +1290,105 @@ class DustPress {
 		global $dustpress;
 
 		return $dustpress->do_not_render;
+	}
+
+	/*
+	*  get_debugger_data
+	*
+	*  This function returns dustpress data from the session.
+	*
+	*  @type	function
+	*  @date	13/8/2015
+	*  @since	0.1.1
+	*
+	*  @return	$data (json)
+	*/
+	public function get_debugger_data() {
+		if ( defined("DOING_AJAX") ) {
+			session_start();
+		
+			$hash = $_POST['hash'];
+			$data = $_SESSION[$hash];
+
+			if ( isset( $data ) && is_array( $data ) ) {
+				$status = 'success';
+			} else {
+				$status = 'error';
+			}
+
+			$response = array (
+				'status' 	=> $status, // 'success' || 'error'			
+				'data' 		=> $data // data for js
+			);
+			
+			$output = json_encode($response);
+
+			exit( $output );
+		}
+	}
+
+	/*
+	*  set_debugger_data
+	*
+	*  This function sets data into global data collection.
+	*  To be used for debugging purposes.
+	*
+	*  @type	function
+	*  @date	13/8/2015
+	*  @since	0.1.1
+	*
+	*  @param	$key (string)
+	*  @param 	$data (N/A)
+	*  @return	$data (json)
+	*/
+	public function set_debugger_data( $key, $data ) {
+		if ( empty( $key ) ) {
+			die( 'You did not set a key for your debugging data collection.' );
+		} else {			
+			global $dustpress;
+			
+			if ( ! isset( $dustpress->data['Debugger'] ) ) {
+				$dustpress->data['Debugger'] = [];
+			}
+
+			if ( ! isset( $dustpress->data['Debugger'][ $key ] ) ) {
+				$dustpress->data['Debugger'][ $key ] = [];	
+			}
+
+			$dustpress->data['Debugger'][ $key ][] = $data;
+		}
+	}
+
+	/*
+	*  use_comments
+	*
+	*  This function adds scripts and styles needed with the Comments-helper.
+	*
+	*  @type	function
+	*  @date	13/8/2015
+	*  @since	0.1.1
+	*
+	*  @return	N/A
+	*/
+	public function use_comments( $post_id = null, $form_id = null, $status_id = null, $reply_label = null ) {		
+		global $post;
+
+		$js_args = [
+			'ajaxurl' 		=> admin_url( 'admin-ajax.php' ),
+			'post_id'		=> $post_id 	? $post_id		: $post->ID,
+			'form_id' 		=> $form_id 	? $form_id 		: 'commentform',
+			'status_id' 	=> $status_id 	? $status_id 	: 'comments__status',
+			'reply_label' 	=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPressComments')
+		];
+
+		// styles
+		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+		
+		// js		
+		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
+		wp_localize_script( 'dustpress-comments', 'comments', $js_args );
+		wp_enqueue_script( 'dustpress-comments' );
+
 	}
 
 	/*

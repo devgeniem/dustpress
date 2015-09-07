@@ -2,7 +2,7 @@
 <a href="{url}">{title|s}</a>
 
 {?show_submenu}
-	{?Submenu}<ul class="submenu">{/Submenu}
+	{?Submenu}<ul class="sub-menu">{/Submenu}
 	{#Submenu}
 		{>menuitem /}
 	{/Submenu}

@@ -1,0 +1,38 @@
+{?pages}
+<div class="pagination-centered">
+	<ul class="pagination" role="menubar" aria-label="Sivutus">
+		<li 
+			class="arrow arrow-first arrow-left{^first_page} unavailable not-used{/first_page}"	
+			aria-disabled="true">
+				<a class="paginate" href="{page_link}1{hash}" data-page="{first_page}">&laquo; {S.start}</a>
+		</li>
+		{?prev_page}
+			<li class="arrow arrow-left"><a class="paginate" href="{page_link}{prev_page}{hash}" data-page="{prev_page}">&laquo; {S.prev}</a></li>
+			<li class="arrow arrow-left-mobile"><a class="paginate" href="{page_link}{prev_page}{hash}" data-page="{prev_page}">&laquo;</a></li>
+		{/prev_page}
+		{?hellip_start}
+			<li class="unavailable" aria-disabled="true">
+				<a class="paginate hellip" href="#">&hellip;</a>
+			</li>
+		{/hellip_start}
+		{#pages}
+			<li {?active}class="current unavailable"{/active}>
+				<a class="paginate{^active} clickable{/active}" href="{page_link}{page}{hash}" data-page="{page}">{page}</a>
+			</li>
+		{/pages}
+		{?hellip_end}
+			<li class="unavailable" aria-disabled="true">
+				<a class="paginate hellip" href="#">&hellip;</a></li>
+		{/hellip_end}
+		{?next_page}
+			<li class="arrow arrow-right"><a class="paginate" href="{page_link}{next_page}{hash}" data-page="{next_page}">{S.next} &raquo;</a></li>
+			<li class="arrow arrow-right-mobile"><a class="paginate" href="{page_link}{next_page}{hash}" data-page="{next_page}">&raquo;</a></li>
+		{/next_page}
+		<li 
+			class="arrow arrow-last arrow-right{^last_page} unavailable not-used{/last_page}"	
+			aria-disabled="true">
+				<a class="paginate" href="{page_link}{last_page}{hash}" data-page="{last_page}">{S.end} &raquo;</a>
+		</li>
+	</ul>
+</div>
+{/pages}

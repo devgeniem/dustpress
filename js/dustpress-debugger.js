@@ -14,18 +14,32 @@ jQuery(document).ready(function($) {
 
 	$(div).appendTo(".jsonview_data_debug");
 
-	var jsonData = $.parseJSON(dustpress_debugger.jsondata);
-	
-	// log also into console
-	console.log('Debugger', jsonData);
+	// load debugger data
+	$.ajax({
+		type: "POST",
+        url: dustpress_debugger.ajaxurl,        
+        data: {
+            'action':'dustpress_debugger',
+            'hash' : dustpress_debugger.hash
+        },
+        success:function(data) {                    	
+            var jsonData = $.parseJSON(data);
 
-	var jsonView = $(".jsonview_debug").JSONView(
-		jsonData,
-		{ 
-			collapsed: true,
-			recursive_collapser: false
-		}
-	);
+            // log also into console
+			console.log('Debugger', jsonData);
+
+			var jsonView = $(".jsonview_debug").JSONView(
+				jsonData.data,
+				{ 
+					collapsed: true,
+					recursive_collapser: false
+				}
+			);
+        },
+        error: function(e){
+            console.log('DustPressDebugger Error', e);
+        }
+    });  
 
 	$(document).keyup(function(e) {
 	     if (e.keyCode == 27) { // escape key maps to keycode `27`
