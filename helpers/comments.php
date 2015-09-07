@@ -171,6 +171,8 @@ class Comments_Helper {
 	}
 
 	private function get_form() {
+		error_log('testi');
+		
 		// add input classes
 		if ( $input_class || isset( $this->form_args['replace_input'] ) || isset( $this->form_args['remove_input'] ) ) {
 			add_filter('comment_form_default_fields', array( $this, 'modify_fields' ) );
