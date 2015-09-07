@@ -150,6 +150,9 @@ class DustPress {
 				}
 			}
 
+			// Add hooks for helpers' ajax functions
+			$this->set_helper_hooks();
+
 			// Create data collection
 			$this->data = array();
 
@@ -269,6 +272,41 @@ class DustPress {
 			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
 			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
 		}
+	}
+
+	/*
+	*  set_helper_hooks
+	*
+	*  This function sets JavaScripts and styles for admin debug feature.
+	*
+	*  @type	function
+	*  @date	02/09/2015
+	*  @since	0.1.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+
+	public function set_helper_hooks() {
+
+		// set hooks for comments helper
+		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {		
+			
+			if ( ! defined('DOING_AJAX') ) {
+				define('DOING_AJAX', true);
+			}
+
+			// initialize helper
+			$comments_helper = new Comments_Helper( 'handle_ajax', $this );
+
+			// fires after comment is saved
+			add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
+
+			// wp error handling
+			add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
+	
+		}
+
 	}
 
 	/*

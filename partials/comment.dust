@@ -1,0 +1,34 @@
+{?comment_approved}
+    <div id="comment__{comment_ID}" data-id="{comment_ID}" {comment_class|s}>
+        <div id="div-comment-{comment_ID}" class="comment__body">
+            <div class="comment__header">
+                <div class="comment__avatar">
+                    {?avatar}
+                        <div class="comment__avatar__inner">{avatar|s}</div>
+                    {:else}
+                        {profile_pic|s}
+                    {/avatar}
+                </div>              
+                <div class="comment__info">
+                    <p class="comment__heading">{author_link|s}</p>
+                    <p class="comment__date">{@strtodate value=comment_date format="d.m.Y H:i" /}</p>
+                </div>                                   
+            </div>
+            <div class="comment__content" style="word-wrap: break-word;">
+                {@content data=comment_content /}
+            </div>
+            {?reply}
+                <div class="comment__reply">
+                    {reply_link|s}
+                </div>
+            {/reply}
+        </div>
+        {?replies}
+            <div class="comment__replies" id="comment__replies_{comment_ID}">
+                {#replies}
+                    {>"comment"/}
+                {/replies}
+            </div>
+        {/replies}
+    </div>
+{/comment_approved}

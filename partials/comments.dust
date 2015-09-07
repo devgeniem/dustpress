@@ -1,0 +1,35 @@
+<section class="comments" id="comments__section">
+	{?comments}	
+		{#comments}
+			<div class="comments__list">
+				{>"comment"/}
+			</div>
+		{/comments}
+	{/comments}
+
+	{?form}		
+		<div class="comments__form_container" id="{form_id}__container">
+			<div id="comments__status">
+				<div data-alert id="comments__success" class="alert-box success radius{?message.success} display{/message.success}">
+					{?message.success}
+						{message.success}
+					{/message.success}
+					<a href="#" class="close">&times;</a>
+				</div>
+			<div data-alert id="comments__error" class="alert-box alert radius{?message.error} display{/message.error}">	  
+					{?message.error}
+						{message.error}
+					{/message.error}
+					<a href="#" class="close">&times;</a>
+				</div>
+				<div data-alert id="comments__warning" class="alert-box warning radius{?message.warning} display{/message.warning}">	  
+					{?message.warning}
+						{message.warning}
+					{/message.warning}
+					<a href="#" class="close">&times;</a>
+				</div>
+			</div>			
+			{form|s}
+		</div>
+	{/form}
+</section>

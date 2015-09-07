@@ -53,6 +53,9 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 	$menu->ul_id = $ul_id;
 	$menu->show_submenu = $show_submenu;
 
+	// add data into debugger
+	$dustpress->set_debugger_data( 'Menu', $menu );
+
 	$output = $dustpress->render( [
 		"partial" => "menu",
 		"data" => $menu,

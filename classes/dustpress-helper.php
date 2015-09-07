@@ -290,122 +290,120 @@ class DustPressHelper {
 	 * 
 	 */
 
-/*
-        *  get_menu_as_items
-        *
-        *  Returns all menu items arranged in a recursive array form that's
-        *  easy to use with Dust templates. Menu_name parameter is mandatory.
-        *  Parent is used to get only submenu for certaing parent post ID.
-        *  Override is used to make some other post than the current "active".
-        *
-        *  @type        function
-        *  @date        16/6/2015
-        *  @since       0.0.2
-        *
-        *  @param       $menu_name (string)
-        *  @param   $parent (integer)
-        *  @param       $override (integer)
-        *
-        *  @return      array of menu items in a recursive array
-        */
-        function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
+	/*
+    *  get_menu_as_items
+    *
+    *  Returns all menu items arranged in a recursive array form that's
+    *  easy to use with Dust templates. Menu_name parameter is mandatory.
+    *  Parent is used to get only submenu for certaing parent post ID.
+    *  Override is used to make some other post than the current "active".
+    *
+    *  @type        function
+    *  @date        16/6/2015
+    *  @since       0.0.2
+    *
+    *  @param       $menu_name (string)
+    *  @param   	$parent (integer)
+    *  @param       $override (integer)
+    *
+    *  @return      array of menu items in a recursive array
+    */
+    function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
 
-                if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
-                        $menu_object = wp_get_nav_menu_object( $locations[ $menu_name ] );
-                }
+            if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
+                    $menu_object = wp_get_nav_menu_object( $locations[ $menu_name ] );
+            }
 
-                $menu_items = wp_get_nav_menu_items( $menu_object );
+            $menu_items = wp_get_nav_menu_items( $menu_object );
 
-                if ( $menu_items ) {
+            if ( $menu_items ) {
 
-                        $menu = $this->build_menu( $menu_items, $parent, null, $override );
+                    $menu = $this->build_menu( $menu_items, $parent, null, $override );
 
-                        if ( $index = array_search( "active", $menu ) ) {
-                                unset( $menu[$index] );
-                        }
-                        if ( 0 === array_search( "active", $menu ) ) {
-                                unset( $menu[0] );
-                        }
+                    if ( $index = array_search( "active", $menu ) ) {
+                            unset( $menu[$index] );
+                    }
+                    if ( 0 === array_search( "active", $menu ) ) {
+                            unset( $menu[0] );
+                    }
 
-                        return $menu;
-                }
-        }
+                    return $menu;
+            }
+    }
 
-        /*
-        *  build_menu
-        *
-        *  Recursive function that builds a menu downwards from an item. Calls
-        *  itself recursively in case there is a submenu under current item.
-        *
-        *  @type        function
-        *  @date        16/6/2015
-        *  @since       0.0.2
-        *
-        *  @param       $menu_items (array)
-        *  @param       $parent (integer)
-        *  @param       $override (integer)
-        *
-        *  @return      array of menu items
-        */
+    /*
+    *  build_menu
+    *
+    *  Recursive function that builds a menu downwards from an item. Calls
+    *  itself recursively in case there is a submenu under current item.
+    *
+    *  @type        function
+    *  @date        16/6/2015
+    *  @since       0.0.2
+    *
+    *  @param       $menu_items (array)
+    *  @param       $parent (integer)
+    *  @param       $override (integer)
+    *
+    *  @return      array of menu items
+    */        
 
-        // miika lisännyt parametrin $type, fiksinä taksonomioiden ja pagejen collisioneihin 03.09.2015
+    function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
+            $tempItems = array();
+            $parent_id = 0;
 
-        function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
-                $tempItems = array();
-                $parent_id = 0;
+            if ( count( $menu_items ) > 0 ) {
+                    foreach ( $menu_items as $item ) {
+                            if ( $item->object_id == $parent && $item->object == $type ) {
+                                    $parent_id = $item->ID;
+                                    break;
+                            }
+                    }
+            }
 
-                if ( count( $menu_items ) > 0 ) {
-                        foreach ( $menu_items as $item ) {
-                                if ( $item->object_id == $parent && $item->object == $type ) {
-                                        $parent_id = $item->ID;
-                                        break;
-                                }
-                        }
-                }
+            if ( is_category() ) {
+                    global $cat;
+            }
 
-                if ( is_category() ) {
-                        global $cat;
-                }
+            if ( count( $menu_items ) > 0 ) {
+                    foreach ( $menu_items as $item ) {
+                            if ( $item->menu_item_parent == $parent_id ) {
+                                    $item->Submenu = $this->build_menu( $menu_items, $item->object_id, $item->object, $override );
 
-                if ( count( $menu_items ) > 0 ) {
-                        foreach ( $menu_items as $item ) {
-                                if ( $item->menu_item_parent == $parent_id ) {
-                                        $item->Submenu = $this->build_menu( $menu_items, $item->object_id, $item->object, $override );
+                                    $item->classes = array();
 
-                                        $item->classes = array();
+                                    if ( is_array( $item->Submenu ) && count( $item->Submenu ) > 0 ) {
+                                            $item->classes[] = "menu-item-has-children";
+                                    }
+                                    if ( is_array( $item->Submenu ) && $index = array_search( "active", $item->Submenu ) ) {
+                                            $item->classes[] = "current-menu-parent";
+                                            unset( $item->Submenu[$index] );
+                                            $tempItems[] = "active";
+                                    }
+                                    if ( is_array( $item->Submenu ) && 0 === array_search( "active", $item->Submenu ) ) {
+                                            $item->classes[] = "current-menu-parent";
+                                            unset( $item->Submenu[0] );
+                                            $tempItems[] = "active";
+                                    }
 
-                                        if ( is_array( $item->Submenu ) && count( $item->Submenu ) > 0 ) {
-                                                $item->classes[] = "menu-item-has-children";
-                                        }
-                                        if ( is_array( $item->Submenu ) && $index = array_search( "active", $item->Submenu ) ) {
-                                                $item->classes[] = "current-menu-parent";
-                                                unset( $item->Submenu[$index] );
-                                                $tempItems[] = "active";
-                                        }
-                                        if ( is_array( $item->Submenu ) && 0 === array_search( "active", $item->Submenu ) ) {
-                                                $item->classes[] = "current-menu-parent";
-                                                unset( $item->Submenu[0] );
-                                                $tempItems[] = "active";
-                                        }
+                                    if ( ( $item->object_id == get_the_ID() ) || $item->object_id == $cat || ( $item->object_id == $override ) ) {
+                                            $item->classes[] = "current-menu-item";
+                                            $tempItems[] = "active";
+                                    }
 
-                                        if ( ( $item->object_id == get_the_ID() ) || $item->object_id == $cat || ( $item->object_id == $override ) ) {
-                                                $item->classes[] = "current-menu-item";
-                                                $tempItems[] = "active";
-                                        }
+                                    if ( is_array( $item->classes ) ) {
+                                            $item->classes = array_filter($item->classes);
+                                    }
 
-                                        if ( is_array( $item->classes ) ) {
-                                                $item->classes = array_filter($item->classes);
-                                        }
+                                    $item->classes[] = "menu-item";
+                                    $item->classes[] = "menu-item-" . $item->object_id;
 
-                                        $item->classes[] = "menu-item";
-                                        $item->classes[] = "menu-item-" . $item->object_id;
+                                    $tempItems[] = $item;
+                            }
+                    }
 
-                                        $tempItems[] = $item;
-                                }
-                        }
+            }
 
-                }
-
-                return $tempItems;
-        }
+            return $tempItems;
+    }
 }
