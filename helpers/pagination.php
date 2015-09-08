@@ -10,11 +10,11 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 	$neighbours		= 3;
 	$hellip_start 	= true;
 	$hellip_end 	= true;
+  	$cur_page		= (int) $params->page;
 	$prev_page		= $cur_page - 1;
 	$next_page 		= $cur_page + 1;
 	$offset 		= (int) $params->offset;
 	$rows 			= (int) $params->rows;
-	$cur_page		= (int) $params->page;
 	$hash			= $params->hash 		? '#' . $params->hash : '';
 	$page_label		= $params->page_label 	? $params->page_label : 'page';
 
@@ -23,39 +23,39 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 		$page_count = ceil( $rows / $offset );
 
 		$first_page = 1;
-		$last_page 	= $page_count;			
+		$last_page 	= $page_count;
 
 		// on the first page
-		if ( $cur_page == $first_page ) {				
+		if ( $cur_page == $first_page ) {
 			$hellip_start = '';
-			$first_page = '';	
+			$first_page = '';
 			for ( $i = 0; $i < 7; $i++ ) {
 				if ( ( $i + 1 ) > $page_count ) {
 					$hellip_end = '';
 					break;
-				} 				
-				$pages[$i] = new stdClass();					
+				}
+				$pages[$i] = new stdClass();
 				$pages[$i]->page = $i + 1;
 				if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
 			}
 		}
 		// on the last page
-		elseif ( $cur_page == $last_page ) {				
+		elseif ( $cur_page == $last_page ) {
 			$hellip_end = '';
 			$last_page = '';
-			if ( $page_count <= $visible ) {					
+			if ( $page_count <= $visible ) {
 				$hellip_start = '';
-				for ( $i = 0; $i < $page_count; $i++ ) { 
-					$pages[$i] = new stdClass();						
+				for ( $i = 0; $i < $page_count; $i++ ) {
+					$pages[$i] = new stdClass();
 					$pages[$i]->page = $i + 1;
 					if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
 				}
-			}	
+			}
 			else {
-				$start = $page_count - $visible + 1;			
-				for ( $i = $start; $i <= $page_count; $i++ ) { 
-					$pages[$i] = new stdClass();						
-					$pages[$i]->page = $i;										
+				$start = $page_count - $visible + 1;
+				for ( $i = $start; $i <= $page_count; $i++ ) {
+					$pages[$i] = new stdClass();
+					$pages[$i]->page = $i;
 					if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
 				}
 			}
@@ -63,25 +63,25 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 		// on a random page
 		else {
 			$start = $cur_page - $neighbours;
-			if ( $start <= 1 ) {					
+			if ( $start <= 1 ) {
 				$start = 1;
-				$hellip_start = '';	
+				$hellip_start = '';
 			}
 			$end = $cur_page + $neighbours;
-			if ( $end >= $page_count ) {					
+			if ( $end >= $page_count ) {
 				$end = $page_count;
 				$start = $start - ( ( $cur_page + $neighbours ) - $page_count );
 				if ( $start <= 1 ) {
 					$start = 1;
-					$hellip_start = '';	
+					$hellip_start = '';
 				}
-				$hellip_end = '';	
+				$hellip_end = '';
 			}
 
 			// display max number of pages
 			$max_pages = $start + ( $visible - 1 );
 			if ( $max_pages <= $page_count ) {
-				for ( $i = $start; $i <= $max_pages; $i++) { 
+				for ( $i = $start; $i <= $max_pages; $i++) {
 					$pages[$i] = new stdClass();
 					$pages[$i]->page = $i;
 					if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
@@ -89,7 +89,7 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 			}
 			// display less
 			else {
-				for ( $i = $start; $i <= $end; $i++) { 
+				for ( $i = $start; $i <= $end; $i++) {
 					$pages[$i] = new stdClass();
 					$pages[$i]->page = $i;
 					if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
@@ -103,7 +103,7 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 		if ( $next_page > $page_count ) {
 			$next_page = '';
 		}
-		
+
 	}
 
 	// format page link
@@ -120,21 +120,21 @@ $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dus
 						$page_link .= $key . '=' . $value;
 					}
 					else {
-						$page_link .= '&' . $key . '=' . $value;	
+						$page_link .= '&' . $key . '=' . $value;
 					}
-				}				
+				}
 				$idx++;
 			}
-			$page_link .= '&' . $page_label . '=';			
+			$page_link .= '&' . $page_label . '=';
 		}
 		// no page queried
 		else {
-			$page_link = $query_string . '&' . $page_label . '=';
+			$page_link .= $query_string . '&' . $page_label . '=';
 		}
 	}
 	// no get parameters
 	else {
-		$page_link = $page_label . '=';
+		$page_link .= $page_label . '=';
 	}
 	// formatting ends
 
