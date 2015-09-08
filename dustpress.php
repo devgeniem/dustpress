@@ -725,9 +725,10 @@ class DustPress {
 		else {
 			$templatefile =  $partial . '.dust';
 
-			$templatepaths = [
-				get_template_directory() . '/partials/',
-				get_template_directory() . '/dustpress/partials/'
+			// järjestys vaihdettu, jotta ensin ladattaisiin hakemisto /partials/, teris 8.9.2015
+			$templatepaths = [				
+				get_template_directory() . '/dustpress/partials/',
+				get_template_directory() . '/partials/'
 			];
 
 			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
