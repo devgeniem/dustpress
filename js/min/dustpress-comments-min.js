@@ -2,6 +2,9 @@ window.DustPressComments = ( function( window, document, $ ){
 
     var app = {};
 
+    // array for event listeners
+    app.listeners = [];
+
     app.cache = function() {
         app.postId          = comments.post_id;
         app.formId          = '#' + comments.form_id;
@@ -20,8 +23,7 @@ window.DustPressComments = ( function( window, document, $ ){
     };
 
     app.cacheMessageBoxes = function(id, container) {        
-        if (id) {
-            console.log(id, container);
+        if (id) {            
             app.$successBox     = container.find('#comments__success_' + id);            
             app.$errorBox       = container.find('#comments__error_' + id);
             app.$warningBox     = container.find('#comments__warning_' + id);
@@ -40,8 +42,18 @@ window.DustPressComments = ( function( window, document, $ ){
 
         app.listen();
         app.displayMessages();
-        app.addIdentifier();
+        app.addIdentifier();        
     };
+
+    app.addListener = function(fn) {
+        app.listeners.push(fn);
+    }
+
+    app.fireListeners = function() {
+        $.each(app.listeners, function(i, fn) {
+            fn.call();
+        });
+    }
 
     // event listeners
     app.listen = function() {
@@ -53,6 +65,11 @@ window.DustPressComments = ( function( window, document, $ ){
         });
         // form submission
         app.$commentForm.submit(app.submit);
+        // message boxes hiding
+        app.$section.find('.close').on('click', function(e) {
+            app.stop(e);
+            app.hideMessages();
+        })
     };
 
     app.addReplyForm = function( target ) {           
@@ -138,8 +155,11 @@ window.DustPressComments = ( function( window, document, $ ){
     };
 
     app.hideMessages = function() {
+        app.$successBox.removeClass('display');
         app.$successBox.hide();
+        app.$errorBox.removeClass('display');
         app.$errorBox.hide();
+        app.$warningBox.removeClass('display');
         app.$warningBox.hide();
     };
 
@@ -152,6 +172,7 @@ window.DustPressComments = ( function( window, document, $ ){
         app.$section.replaceWith(data.html);
         // reload comments app
         app.init();
+        app.fireListeners();
     };
 
     app.handleError = function(data) {        
@@ -163,7 +184,7 @@ window.DustPressComments = ( function( window, document, $ ){
         else {
             app.$errorBox.html('Error');
             app.$errorBox.show();
-        }
+        }        
     };
 
     app.addIdentifier = function() {

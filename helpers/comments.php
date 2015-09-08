@@ -104,8 +104,8 @@ class Comments_Helper {
 		global $dustpress;
 
 		$c_data 		 		= new stdClass();
-		$params 	 			= $this->params;		
-		$this->comment_class	= $params->comment_class;		
+		$params 	 			= $this->params;
+		$this->comment_class	= $params->comment_class;
 		$this->form_args		= $params->form_args;
 		$this->comments_args	= $params->comments_args;
 		$this->reply_args		= $params->reply_args;
@@ -115,12 +115,12 @@ class Comments_Helper {
 		$this->echo_form  		= $params->echo_form ? $params->echo_form : true;
 		$this->author_info		= $params->author_info ? $params->author_info : true;
 		$this->load_comments  	= $params->load_comments ? $params->load_comments : true;
-		$this->reply 			= $params->reply ? $params->reply : true;	
-		$this->threaded 		= $params->threaded ? $params->threaded : get_option('thread_comments');		
+		$this->reply 			= $params->reply ? $params->reply : true;		
+		$this->threaded 		= $params->threaded ? $params->threaded : get_option('thread_comments');
 		$this->replacements 	= $this->form_args['replace_input'];
 		$this->remove 			= $this->form_args['remove_input'];
 		$this->status_div 		= $this->form_args['status_div'];
-		$this->status_id 		= $this->form_args['status_id'];		
+		$this->status_id 		= $this->form_args['status_id'];
 		$this->form_id 			= $this->form_args['id_form'] ? $form_args['id_form'] : 'commentform';		
 
 		// default args
@@ -149,10 +149,11 @@ class Comments_Helper {
 		}		
 
 		// map data		
-		$c_data->form 	= $this->form;
-		$c_data->comments = $this->comments;
-		$c_data->form_id 	= $this->form_id;
-		$c_data->message  = $params->message;
+		$c_data->form 			= $this->form;
+		$c_data->comments 		= $this->comments;
+		$c_data->form_id 		= $this->form_id;
+		$c_data->message  		= $params->message;
+		$c_data->after_comments = apply_filters( 'dustpress/comments/after-comments', $params->after_comments );
 
 		// add data into debugger
 		$dustpress->set_debugger_data( 'Comments', $c_data );

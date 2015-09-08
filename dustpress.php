@@ -1413,11 +1413,12 @@ class DustPress {
 		global $post;
 
 		$js_args = [
-			'ajaxurl' 		=> admin_url( 'admin-ajax.php' ),
-			'post_id'		=> $post_id 	? $post_id		: $post->ID,
-			'form_id' 		=> $form_id 	? $form_id 		: 'commentform',
-			'status_id' 	=> $status_id 	? $status_id 	: 'comments__status',
-			'reply_label' 	=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPressComments')
+			'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
+			'comments_per_page' => get_option('comments_per_page'),
+			'post_id'			=> $post_id 	? $post_id		: $post->ID,
+			'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
+			'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
+			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPressComments')
 		];
 
 		// styles

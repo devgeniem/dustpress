@@ -1,10 +1,13 @@
 <section class="comments" id="comments__section">
 	{?comments}	
-		{#comments}
-			<div class="comments__list">
+	<div id="comments__list_container">
+		<div class="comments__list">
+			{#comments}
 				{>"comment"/}
-			</div>
-		{/comments}
+			{/comments}			
+		</div>
+		{after_comments|s}
+	</div>
 	{/comments}
 
 	{?form}		
