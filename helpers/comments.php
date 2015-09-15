@@ -35,6 +35,7 @@ class Comments_Helper {
 	private $params;
 	private $data;
 	private $input_class;
+	private $input_attrs;
 	private $replacements;
 	private $remove;
 	private $status_div;
@@ -110,8 +111,7 @@ class Comments_Helper {
 		$this->form_args		= $params->form_args;
 		$this->comments_args	= $params->comments_args;
 		$this->reply_args		= $params->reply_args;
-		$this->avatar_args		= $params->avatar_args;
-		$this->input_class		= $params->input_class;
+		$this->avatar_args		= $params->avatar_args;		
 		$this->post_id			= $params->post_id ? $params->post_id : $post->ID;
 		$this->echo_form  		= $params->echo_form ? $params->echo_form : true;
 		$this->author_info		= $params->author_info ? $params->author_info : true;
@@ -122,6 +122,8 @@ class Comments_Helper {
 		$this->remove 			= $this->form_args['remove_input'];
 		$this->status_div 		= $this->form_args['status_div'];
 		$this->status_id 		= $this->form_args['status_id'];
+		$this->input_class		= $this->form_args['input_class'];
+		$this->input_attrs		= $this->form_args['input_attrs'] ? ' ' . $this->form_args['input_attrs'] : null;
 		$this->form_id 			= $this->form_args['id_form'] ? $form_args['id_form'] : 'commentform';		
 
 		// default args
@@ -174,7 +176,7 @@ class Comments_Helper {
 
 	private function get_form() {
 		// add input classes
-		if ( $input_class || isset( $this->form_args['replace_input'] ) || isset( $this->form_args['remove_input'] ) ) {
+		if ( $this->input_class || isset( $this->form_args['replace_input'] ) || isset( $this->form_args['remove_input'] ) ) {
 			add_filter('comment_form_default_fields', array( $this, 'modify_fields' ) );
 			add_filter('comment_form_field_comment', array( $this, 'modify_comment_field' ) );				
 		}
@@ -248,7 +250,8 @@ class Comments_Helper {
 	}
 
 	public function modify_fields( $fields ) {
-		$input_class	= $this->params->input_class;
+		$input_class	= $this->input_class;
+		$input_attrs	= $this->input_attrs;
 		$replacements	= $this->replacements;
 		$remove 		= $this->remove;
 
@@ -260,8 +263,8 @@ class Comments_Helper {
 			elseif ( array_search( $key, $remove ) !== false ) {
 				unset( $fields[$key] );
 			} 
-			else {
-				$field = preg_replace( '/<input/', '<input class="' . $input_class . '"', $field );							
+			elseif ( $input_class ) {
+				$field = preg_replace( '/<input/', '<input class="' . $input_class . '"' . $input_attrs, $field );							
 			}
 
 		}		
@@ -270,7 +273,8 @@ class Comments_Helper {
 	}
 
 	public function modify_comment_field( $textarea ) {
-		$input_class 	= $this->params->input_class;
+		$input_class	= $this->input_class;
+		$input_attrs	= $this->input_attrs;
 		$replacements	= $this->replacements;
 		$remove 		= $this->remove;
 
@@ -280,8 +284,8 @@ class Comments_Helper {
 		elseif ( array_search( 'comment', $remove ) !== false ) {
 			return '';
 		} 
-		else {
-			return preg_replace( '/<textarea/', '<textarea class="' . $input_class . '"', $textarea );				
+		elseif ( $input_class ) {
+			return preg_replace( '/<textarea/', '<textarea class="' . $input_class . '"' . $input_attrs, $textarea );				
 		}
 	}
 

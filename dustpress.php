@@ -1351,8 +1351,8 @@ class DustPress {
 
 			if ( isset( $data ) && is_array( $data ) ) {
                 unset( $_SESSION[$hash] );
-				$status = 'success';
-			} else {
+                $status = 'success';
+            } else {
 				$status = 'error';
 			}
 
