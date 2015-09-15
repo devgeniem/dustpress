@@ -116,7 +116,7 @@ class Comments_Helper {
 		$this->echo_form  		= $params->echo_form ? $params->echo_form : true;
 		$this->author_info		= $params->author_info ? $params->author_info : true;
 		$this->load_comments  	= $params->load_comments ? $params->load_comments : true;
-		$this->reply 			= $params->reply ? $params->reply : true;		
+		$this->reply 			= $params->reply !== null ? $params->reply : true;		
 		$this->threaded 		= $params->threaded ? $params->threaded : get_option('thread_comments');
 		$this->replacements 	= $this->form_args['replace_input'];
 		$this->remove 			= $this->form_args['remove_input'];
