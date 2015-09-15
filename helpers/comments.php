@@ -123,7 +123,7 @@ class Comments_Helper {
 		$this->status_div 		= $this->form_args['status_div'];
 		$this->status_id 		= $this->form_args['status_id'];
 		$this->input_class		= $this->form_args['input_class'];
-		$this->input_attrs		= $this->form_args['input_attrs'] ? ' ' . $this->form_args['input_attrs'] : null;
+		$this->input_attrs		= $this->form_args['input_attrs'];
 		$this->form_id 			= $this->form_args['id_form'] ? $form_args['id_form'] : 'commentform';		
 
 		// default args
@@ -266,6 +266,9 @@ class Comments_Helper {
 			elseif ( $input_class ) {
 				$field = preg_replace( '/<input/', '<input class="' . $input_class . '"' . $input_attrs, $field );							
 			}
+			elseif ( $input_attrs ) {
+				$field = preg_replace( '/<input/', '<input ' . $input_attrs, $field );							
+			}
 
 		}		
 
@@ -285,8 +288,13 @@ class Comments_Helper {
 			return '';
 		} 
 		elseif ( $input_class ) {
-			return preg_replace( '/<textarea/', '<textarea class="' . $input_class . '"' . $input_attrs, $textarea );				
+			return preg_replace( '/<textarea/', '<textarea class="' . $input_class . '"', $textarea );				
 		}
+		elseif ( $input_attrs ) {
+			return preg_replace( '/<textarea/', '<textarea ' . $input_attrs, $textarea );				
+		}
+
+		return $textarea;
 	}
 
 	public function form_status_div() {
