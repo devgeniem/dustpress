@@ -39,8 +39,7 @@ class Comments_Helper {
 	private $replacements;
 	private $remove;
 	private $status_div;
-	private $echo_form;
-	private $author_info;
+	private $echo_form;	
 	private $load_comments;
 	private $reply;
 	private $comment_class;
@@ -109,21 +108,27 @@ class Comments_Helper {
 		$params 	 			= $this->params;
 		$this->comment_class	= $params->comment_class;
 		$this->form_args		= $params->form_args;
-		$this->comments_args	= $params->comments_args;
-		$this->reply_args		= $params->reply_args;
+		$this->comments_args	= $params->comments_args;		
 		$this->avatar_args		= $params->avatar_args;		
 		$this->post_id			= $params->post_id ? $params->post_id : $post->ID;
-		$this->echo_form  		= $params->echo_form ? $params->echo_form : true;
-		$this->author_info		= $params->author_info ? $params->author_info : true;
-		$this->load_comments  	= $params->load_comments ? $params->load_comments : true;
-		$this->reply 			= $params->reply !== null ? $params->reply : true;		
-		$this->threaded 		= $params->threaded ? $params->threaded : get_option('thread_comments');
+
+		// get_comment_reply_link functions arguments
+		$this->reply_args		= $params->reply_args;
+
+		// comments' arguments		
+		$this->load_comments  	= $this->comments_args['load_comments'] ? $this->comments_args['load_comments'] : true;
+		$this->after_comments 	= $this->comments_args['after_comments'] ? $this->comments_args['after_comments'] : null;
+		$this->reply 			= $this->comments_args['reply'] ? $this->comments_args['reply'] : true;
+		$this->threaded 		= $this->comments_args['threaded'] ? $this->comments_args['threaded'] : get_option('thread_comments');
+
+		// form loading and modification arguments
 		$this->replacements 	= $this->form_args['replace_input'];
 		$this->remove 			= $this->form_args['remove_input'];
 		$this->status_div 		= $this->form_args['status_div'];
 		$this->status_id 		= $this->form_args['status_id'];
 		$this->input_class		= $this->form_args['input_class'];
 		$this->input_attrs		= $this->form_args['input_attrs'];
+		$this->echo_form  		= $this->form_args['echo_form'] ? $this->form_args['echo_form'] : true;
 		$this->form_id 			= $this->form_args['id_form'] ? $form_args['id_form'] : 'commentform';		
 
 		// default args
@@ -156,7 +161,7 @@ class Comments_Helper {
 		$c_data->comments 		= $this->comments;
 		$c_data->form_id 		= $this->form_id;
 		$c_data->message  		= $params->message;
-		$c_data->after_comments = apply_filters( 'dustpress/comments/after-comments', $params->after_comments );
+		$c_data->after_comments = apply_filters( 'dustpress/comments/after-comments', $this->after_comments );
 
 		// add data into debugger
 		$dustpress->set_debugger_data( 'Comments', $c_data );
