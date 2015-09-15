@@ -1350,15 +1350,16 @@ class DustPress {
 			$data = $_SESSION[$hash];
 
 			if ( isset( $data ) && is_array( $data ) ) {
+                unset( $_SESSION[$hash] );
 				$status = 'success';
 			} else {
 				$status = 'error';
 			}
 
-			$response = array (
+			$response = [
 				'status' 	=> $status, // 'success' || 'error'			
 				'data' 		=> $data // data for js
-			);
+            ];
 			
 			$output = json_encode($response);
 

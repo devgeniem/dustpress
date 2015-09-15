@@ -102,6 +102,7 @@ class Comments_Helper {
 
 	private function init() {
 		global $dustpress;
+		global $post;
 
 		$c_data 		 		= new stdClass();
 		$params 	 			= $this->params;
