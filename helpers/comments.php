@@ -106,6 +106,7 @@ class Comments_Helper {
 
 		$c_data 		 		= new stdClass();
 		$params 	 			= $this->params;
+		$this->section_title	= $params->section_title;
 		$this->comment_class	= $params->comment_class;
 		$this->form_args		= $params->form_args;
 		$this->comments_args	= $params->comments_args;		
@@ -156,7 +157,8 @@ class Comments_Helper {
 			$this->extend_comments();
 		}		
 
-		// map data		
+		// map data
+		$c_data->title 			= $this->section_title;		
 		$c_data->form 			= $this->form;
 		$c_data->comments 		= $this->comments;
 		$c_data->form_id 		= $this->form_id;
