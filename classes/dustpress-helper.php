@@ -386,7 +386,7 @@ class DustPressHelper {
                                             $tempItems[] = "active";
                                     }
 
-                                    if ( ( $item->object_id == get_the_ID() && in_array( $item->object, ["page", "post", "custom"] ) ) || ( $item->object_id == $term_id && in_array( $item->object, ["taxonomy"] ) ) || ( $item->object_id == $override ) ) {
+                                    if ( ( $item->object_id == get_the_ID() && $item->type == "post_type" ) || ( $item->object_id == $term_id && $item->type == "taxonomy" ) || ( $item->object_id == $override ) ) {
                                             $item->classes[] = "current-menu-item";
                                             $tempItems[] = "active";
                                     }
