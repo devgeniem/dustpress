@@ -361,8 +361,8 @@ class DustPressHelper {
                     }
             }
 
-            if ( is_category() ) {
-                    global $cat;
+            if ( is_tax() ) {
+                $term_id = get_queried_object()->term_id;
             }
 
             if ( count( $menu_items ) > 0 ) {
@@ -386,7 +386,7 @@ class DustPressHelper {
                                             $tempItems[] = "active";
                                     }
 
-                                    if ( ( $item->object_id == get_the_ID() ) || $item->object_id == $cat || ( $item->object_id == $override ) ) {
+                                    if ( ( $item->object_id == get_the_ID() && in_array( $item->object, ["page", "post", "custom"] ) ) || ( $item->object_id == $term_id && in_array( $item->object, ["taxonomy"] ) ) || ( $item->object_id == $override ) ) {
                                             $item->classes[] = "current-menu-item";
                                             $tempItems[] = "active";
                                     }
