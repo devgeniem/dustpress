@@ -47,13 +47,13 @@ class DustPressHelper {
 			"meta_type" => "post"
 		];
 
-		$options = array_merge($defaults, $args);
+		$options = array_merge( $defaults, $args );
 
 		extract( $options );
 
 		$this->post = get_post( $id, 'ARRAY_A' );
 		if ( is_array( $this->post ) ) {
-			$this->get_post_meta( $this->post, $id, $meta_keys, $single, $meta_type );
+			$this->get_post_meta( $this->post, $id, $meta_keys, $meta_type, $single );
 		}
 
 		$this->post['permalink'] = get_permalink($id);
@@ -89,7 +89,7 @@ class DustPressHelper {
 			"recursive" => false
 		];
 
-		$options = array_merge($defaults, $args);		
+		$options = array_merge( $defaults, $args );
 
 		extract( $options );
 
@@ -123,11 +123,11 @@ class DustPressHelper {
 				}						
 			}
 			elseif ( $wholeFields ) {
-				foreach($acfpost['fields'] as $name => &$field) {
+				foreach( $acfpost['fields'] as $name => &$field ) {
 					$field = get_field_object($name, $id, true);
 				}
 			}
-			$this->get_post_meta( $acfpost, $id, $meta_keys, $single, $meta_type );
+			$this->get_post_meta( $acfpost, $id, $meta_keys, $meta_type, $single );
 		}
 
 		$acfpost['permalink'] = get_permalink($id);
@@ -153,15 +153,16 @@ class DustPressHelper {
 	*/
 	public function get_posts( $args ) {
 
-		if ( isset( $args["meta_keys"] ) ) {
-			$meta_keys = $args["meta_keys"];
-			unset( $args["meta_keys"] );
-		}
+        $defaults = [
+            "meta_keys" => null,
+            "single" => false,
+            "meta_type" => "post",
+            "whole_fields" => false,
+        ];
 
-		if ( isset( $args["meta_type"] ) ) {
-			$meta_type = $args["meta_type"];
-			unset( $args["meta_type"] );
-		}
+        $options = array_merge( $defaults, $args );
+
+        extract( $options );
 
 		$this->posts = get_posts( $args );
 
@@ -174,7 +175,7 @@ class DustPressHelper {
 		
 		// get meta for posts
 		if ( count( $this->posts ) ) {
-			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type );			
+			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type, $single );
 			wp_reset_postdata();
 			return $this->posts;
 		}	
@@ -199,20 +200,16 @@ class DustPressHelper {
 	*/
 	public function get_acf_posts( $args ) {
 
-		if ( isset( $args["meta_keys"] ) ) {
-			$meta_keys = $args["meta_keys"];
-			unset( $args["meta_keys"] );
-		}
+        $defaults = [
+            "meta_keys" => null,
+            "single" => false,
+            "meta_type" => "post",
+            "whole_fields" => false,
+        ];
 
-		if ( isset( $args["meta_type"] ) ) {
-			$meta_type = $args["meta_type"];
-			unset( $args["meta_type"] );
-		}
+        $options = array_merge( $defaults, $args );
 
-		if ( isset( $args["whole_fields"] ) ) {
-			$whole_fields = $args["whole_fields"];
-			unset( $args["whole_fields"] );
-		}
+        extract( $options );
 
 		$this->posts = get_posts( $args );
 
@@ -233,7 +230,7 @@ class DustPressHelper {
 				}
 			}
 
-			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type );
+			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type, $single );
 
 			wp_reset_postdata();
 			return $this->posts;
@@ -248,34 +245,34 @@ class DustPressHelper {
 	 * Private functions
 	 *
 	 */
-	private function get_post_meta( &$post, $id, $metaKeys = NULL, $single = false, $metaType = 'post' ) {
+    private function get_post_meta( &$post, $id, $meta_keys = NULL, $meta_type, $single ) {
 		$meta = array();
 
-		if ($metaKeys === 'all') {			
-			$meta = get_metadata( $metaType, $id );			
+		if ( $meta_keys === 'all' ) {
+			$meta = get_metadata( $meta_type, $id );
 		}
-		elseif (is_array($metaKeys)) {
-			foreach ($metaKeys as $key) {
-				$meta[$key] = get_metadata( $metaType, $id, $key, $single );
+		elseif ( is_array( $meta_keys ) ) {
+			foreach ( $meta_keys as $key ) {
+				$meta[$key] = get_metadata( $meta_type, $id, $key, $single );
 			}
 		}
 
 		$post['meta'] = $meta;
 	}
 
-	private function get_meta_for_posts( &$posts, $metaKeys = NULL, $metaType = 'post' ) {
-		if ($metaKeys === 'all') {
+	private function get_meta_for_posts( &$posts, $meta_keys = NULL, $meta_type, $single ) {
+		if ( $meta_keys === 'all' ) {
 			// loop through posts and get the meta values
-			foreach ($posts as $post) {				
-				$post['meta'] = get_metadata( $metaType, $post->ID );				
-			}				
+			foreach ( $posts as &$post ) {
+				$post['meta'] = get_metadata( $meta_type, $post['ID'], '', $single );
+			}
 		}
-		elseif (is_array($metaKeys)) {
+		elseif ( is_array( $meta_keys ) ) {
 			// loop through selected meta keys
-			foreach ($metaKeys as $key) {
+			foreach ( $meta_keys as $key ) {
 				// loop through posts and get the meta values
-				foreach ($posts as &$post) {					
-					$post['meta'][$key] = get_metadata( $metaType, $post->ID, $key, $single = false);	
+				foreach ( $posts as &$post ) {
+					$post['meta'][$key] = get_metadata( $meta_type, $post['ID'], $key, $single );
 				}	
 			}
 
