@@ -84,10 +84,10 @@ class Comments_Helper {
 		$this->params 	= $comments_model->get_helper_params();
 		
 		if ( $comment->comment_approved ) {
-			$this->params->message = ['success' => __( 'Comment sent!', 'DustPress-Comments' )];
+			$this->params->message = ['success' => __( 'Comment sent.', 'DustPress-Comments' )];
 		}
 		else {
-			$this->params->message = ['warning' => __( 'Your comment is waiting for approval!', 'DustPress-Comments' )];	
+			$this->params->message = ['warning' => __( 'Comment is waiting for approval.', 'DustPress-Comments' )];	
 		}
 
 		$this->init();
@@ -106,6 +106,7 @@ class Comments_Helper {
 
 		$c_data 		 		= new stdClass();
 		$params 	 			= $this->params;
+		$this->section_title	= $params->section_title;
 		$this->comment_class	= $params->comment_class;
 		$this->form_args		= $params->form_args;
 		$this->comments_args	= $params->comments_args;		
@@ -118,7 +119,7 @@ class Comments_Helper {
 		// comments' arguments		
 		$this->load_comments  	= $this->comments_args['load_comments'] ? $this->comments_args['load_comments'] : true;
 		$this->after_comments 	= $this->comments_args['after_comments'] ? $this->comments_args['after_comments'] : null;
-		$this->reply 			= $this->comments_args['reply'] ? $this->comments_args['reply'] : true;
+		$this->reply 			= $this->comments_args['reply'] !== null ? $this->comments_args['reply'] : true;
 		$this->threaded 		= $this->comments_args['threaded'] ? $this->comments_args['threaded'] : get_option('thread_comments');
 
 		// form loading and modification arguments
@@ -156,7 +157,8 @@ class Comments_Helper {
 			$this->extend_comments();
 		}		
 
-		// map data		
+		// map data
+		$c_data->title 			= $this->section_title;		
 		$c_data->form 			= $this->form;
 		$c_data->comments 		= $this->comments;
 		$c_data->form_id 		= $this->form_id;

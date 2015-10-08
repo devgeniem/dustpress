@@ -1419,7 +1419,7 @@ class DustPress {
 			'post_id'			=> $post_id 	? $post_id		: $post->ID,
 			'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
 			'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
-			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPressComments')
+			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPress-Comments')
 		];
 
 		// styles
