@@ -234,7 +234,12 @@ class DustPressModel {
 		}
 		else {
 			if ( ! $this->parent ) {
-				$this->data[ $className ]->Content->{ $key } = $data;
+				if ( "Content" == $key ) {
+					$this->data[ $className ]->{ $key } = $data;
+				}
+				else {
+					$this->data[ $className ]->Content->{ $key } = $data;
+				}
 			}
 			else {
 				$this->data[ $className ]->{ $key } = $data;	
