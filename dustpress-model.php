@@ -22,6 +22,9 @@ class DustPress_Model {
 	// Possible parent model
 	private $parent;
 
+	// Possible wanted template
+	private $template;
+
 	/*
 	*  __construct
 	*
@@ -59,6 +62,20 @@ class DustPress_Model {
 
 	public function get_submodels() {
 		return $this->submodels;
+	}
+
+	public function get_ancestor( $model = null ) {
+		if ( ! isset( $model ) ) {
+			return $this->get_ancestor( $this );
+		}
+		else {
+			if ( isset( $model->parent ) ) {
+				return $this->get_ancestor( $model->parent );
+			}
+			else {
+				return $model;
+			}
+		}
 	}
 
 	/*
@@ -176,6 +193,102 @@ class DustPress_Model {
 	*/
 
 	public function bind_data( $data, $key = null, $model = null ) {
+		$className = get_class( $this );
 
+		if ( ! $key ) {
+			$key = $this->get_previous_function();
+		}
+
+		if ( $model ) {
+			if ( !isset( $this->data[ $model ] ) ) {
+				$this->data[ $model ] = (object)[];
+			}
+
+			$this->data[ $model ]->{ $key } = $data;
+		}
+		else {
+			if ( ! $this->parent ) {
+				$this->data[ $className ]->Content->{ $key } = $data;
+			}
+			else {
+				$this->data[ $className ]->{ $key } = $data;	
+			}
+		}
+	}
+
+	/*
+	*  get_previous_function
+	*
+	*  This function returns the function where current function was called.
+	*
+	*  @type	function
+	*  @date	20/3/2015
+	*  @since	0.0.1
+	*
+	*  @param	N/A
+	*  @return	$function (string)
+	*/
+	public function get_previous_function() {
+		$backtrace = debug_backtrace();
+
+		if ( isset( $backtrace[2] ) ) {
+			$function = $backtrace[2]["function"];
+
+			// strip out extra or get to get the block
+			$function = str_replace ( "bind_", "bind", $function );
+			$function = str_replace ( "bind", "", $function );
+			return $function;
+		}
+		else {
+			return false;
+		}
+	}
+
+	/*
+	*  get_template
+	*
+	*  This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
+	*
+	*  @type	function
+	*  @date	15/10/2015
+	*  @since	0.2.0
+	*
+	*  @param	N/A
+	*  @return	mixed
+	*/
+	public function get_template() {
+		$ancestor = $this->get_ancestor();
+
+		if ( $this == $ancestor ) {
+			return $this->template;
+		}
+		else {
+			return $ancestor->get_template();
+		}
+	}
+
+	/*
+	*  set_template
+	*
+	*  This function lets the developer to set the template to be used to render a page.
+	*
+	*  @type	function
+	*  @date	15/10/2015
+	*  @since	0.2.0
+	*
+	*  @param	$template (string)
+	*  @return	N/A
+	*/
+	public function set_template( $template ) {
+		$ancestor = $this->get_ancestor();
+
+		if ( $template ) {
+			if ( $this == $ancestor ) {
+				$this->template = $template;
+			}
+			else {
+				$ancestor->set_template( $template );
+			}
+		}
 	}
 }
