@@ -117,7 +117,7 @@ class DustPressModel {
 							$this->data[ $className ]->{ $method } = [];
 						}
 
-						$data = call_user_func( $className . '::' . $method );
+						$data = call_user_func( $className . '::' . $m[1] );
 
 						if ( ! is_null( $data ) ) {
 							$this->data[ $className ]->{ $method } = $data;
@@ -128,7 +128,7 @@ class DustPressModel {
 							$this->data[ $className ]->Content->{ $method } = [];
 						}
 
-						$data = call_user_func( $className . '::' . $method );
+						$data = call_user_func( $className . '::' . $m );
 
 						if ( ! is_null( $data ) ) {
 							$this->data[ $className ]->Content->{ $method } = $data;
