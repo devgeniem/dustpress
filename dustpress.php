@@ -13,7 +13,7 @@ class DustPress {
 	// Instance of DustPHP
 	private $dust;
 
-	// Instances of other classesƒ
+	// Instances of other classes
 	public $classes;
 
 	// Data collection
