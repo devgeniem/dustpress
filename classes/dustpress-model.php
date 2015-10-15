@@ -110,39 +110,43 @@ class DustPressModel {
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) {
 				if ( isset( $m[1] ) && is_string( $m[1] ) ) {
-					if ( $m[1] == "Content" ) {
-						if ( ! isset( $this->data[ $className ]->{ $m[1] } ) ) {
-							$this->data[ $className ]->{ $m[1] } = [];
+					$method = str_replace( "bind_", "", $m[1] );
+
+					if ( $method == "Content" ) {
+						if ( ! isset( $this->data[ $className ]->{ $method } ) ) {
+							$this->data[ $className ]->{ $method } = [];
 						}
 
-						$data = call_user_func( $className . '::' . $m[1] );
+						$data = call_user_func( $className . '::' . $method );
 
 						if ( ! is_null( $data ) ) {
-							$this->data[ $className ]->{ $m[1] } = $data;
+							$this->data[ $className ]->{ $method } = $data;
 						}
 					}
 					else {
-						if ( ! isset( $this->data[ $className ]->Content->{ $m[1] } ) ) {
-							$this->data[ $className ]->Content->{ $m[1] } = [];
+						if ( ! isset( $this->data[ $className ]->Content->{ $method } ) ) {
+							$this->data[ $className ]->Content->{ $method } = [];
 						}
 
-						$data = call_user_func( $className . '::' . $m[1] );
+						$data = call_user_func( $className . '::' . $method );
 
 						if ( ! is_null( $data ) ) {
-							$this->data[ $className ]->Content->{ $m[1] } = $data;
+							$this->data[ $className ]->Content->{ $method } = $data;
 						}
 					}
 				}
 			}
 			else if ( is_callable( $m ) ) {
-				if ( ! isset( $this->data[ $className ]->Content->{ $m } ) ) {
-					$this->data[ $className ]->Content->{ $m } = [];
+				$method = str_replace( "bind_", "", $m );
+
+				if ( ! isset( $this->data[ $className ]->Content->{ $method } ) ) {
+					$this->data[ $className ]->Content->{ $method } = [];
 				}
 
-				$data = call_user_func( $m );
+				$data = call_user_func( $method );
 
 				if ( ! is_null( $data ) ) {
-					$this->data[ $className ]->Content->{ $m } = $data;
+					$this->data[ $className ]->Content->{ $method } = $data;
 				}
 			}
 		}
