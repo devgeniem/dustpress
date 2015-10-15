@@ -963,9 +963,15 @@ class DustPress_Core {
 
 	private function want_autoload() {
 		$conditions = [
+			function() {
+				defined( WP_CLI );
+			},
+			function() {
+				return ( php_sapi_name() === 'cli' );
+			},
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],
-			$_POST['gform_ajax']
+			$_POST['gform_ajax'],
 		];
 
 		$conditions = apply_filters( "dustpress/want_autoload", $conditions );
