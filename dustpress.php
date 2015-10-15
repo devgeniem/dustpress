@@ -78,6 +78,9 @@ class DustPress {
 			if ( $class == "DustPressHelper" ) {
 				$class = "dustpress-helper";
 			}
+			elseif ( $class == "DustPressModel" ) {
+				$class = "dustpress-model";	
+			}
 			else {
 				$class = $this->camelcase_to_dashed( $class, "-" );
 			}
@@ -163,7 +166,9 @@ class DustPress {
 
 			$this->model->fetch_data();
 
-			$this->render();
+			$partial = strtolower( $this->camelcase_to_dashed( $template ) );
+
+			$this->render( $partial );
 		}
 		else {
 			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
@@ -574,7 +579,7 @@ class DustPress {
 
 		$types = apply_filters( 'dustpress/formats', $types );
 
-		$this->model->data->WP = $this->populate_data_collection();
+		$this->model->data['WP'] = $this->populate_data_collection();
 
 		$this->model->data = apply_filters( 'dustpress/data', $this->model->data );
 
@@ -964,10 +969,10 @@ class DustPress {
 	private function want_autoload() {
 		$conditions = [
 			function() {
-				defined( WP_CLI );
+				! defined( WP_CLI );
 			},
 			function() {
-				return ( php_sapi_name() === 'cli' );
+				return ( php_sapi_name() !== 'cli' );
 			},
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],
@@ -978,7 +983,7 @@ class DustPress {
 
 		foreach( $conditions as $condition ) {
 			if ( is_callable( $condition ) ) {
-				if ( false === call_user_func( $condition ) ) {
+				if ( false === $condition() ) {
 					return false;
 				}
 			}

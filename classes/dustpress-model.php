@@ -8,7 +8,7 @@
 *  @class DustPress_Model
 */
 
-class DustPress_Model {
+class DustPressModel {
 
 	// The data
 	public $data;
@@ -170,7 +170,7 @@ class DustPress_Model {
 	public function bind_sub( $name, $args = null ) {
 		$model = new $name( $args, $this );
 
-		$this->data->{$name} = $model->fetch_data();
+		$this->data[$name] = $model->fetch_data();
 
 		$this->submodels->{$name} = $model;
 	}
