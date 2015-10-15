@@ -174,7 +174,7 @@ class DustPress {
 
 			$partial = strtolower( $this->camelcase_to_dashed( $template ) );
 
-			$this->render( $partial );
+			$this->render( [ "partial" => $partial ] );
 		}
 		else {
 			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
@@ -562,7 +562,7 @@ class DustPress {
 		$types = array(
 			"html" => function( $data, $partial, $dust ) {
 
-				try {
+				try {					
 					$compiled = $dust->compileFile( $partial );
 				}
 				catch ( Exception $e ) {
@@ -609,7 +609,7 @@ class DustPress {
 
 		// Create debug data if wanted.
 
-		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			
 			$jsondata = json_encode( $this->model->data );
 		
@@ -975,10 +975,16 @@ class DustPress {
 	private function want_autoload() {
 		$conditions = [
 			function() {
-				! defined( WP_CLI );
+				return ! is_admin();
 			},
 			function() {
-				return ( php_sapi_name() !== 'cli' );
+				return ! defined( "WP_CLI" );
+			},
+			function() {
+				return ( php_sapi_name() !== "cli" );
+			},
+			function() {
+				return ! defined( "DOING_AJAX" );
 			},
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],

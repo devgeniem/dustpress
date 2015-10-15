@@ -100,7 +100,7 @@ class DustPressModel {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $className );
 
-		foreach( $methods as &$method ) {			
+		foreach( $methods as &$method ) {
 			$method = array( $this, $method );
 		}
 
@@ -110,6 +110,10 @@ class DustPressModel {
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) {
 				if ( isset( $m[1] ) && is_string( $m[1] ) ) {	
+					if ( ! isset( $this->data[ $className ]->Content->{ $m[1] } ) ) {
+						$this->data[ $className ]->Content->{ $m[1] } = [];
+					}
+
 					$data = call_user_func( $className . '::' . $m[1] );
 
 					if ( ! is_null( $data ) ) {
@@ -118,13 +122,19 @@ class DustPressModel {
 				}
 			}
 			else if ( is_callable( $m ) ) {
+				if ( ! isset( $this->data[ $className ]->Content->{ $m } ) ) {
+					$this->data[ $className ]->Content->{ $m } = [];
+				}
+
 				$data = call_user_func( $m );
 
 				if ( ! is_null( $data ) ) {
-					$this->data[ $className ]->Content->{ $m[1] } = $data;
+					$this->data[ $className ]->Content->{ $m } = $data;
 				}
 			}
 		}
+
+		return $data;
 	}
 
 	/*
@@ -171,7 +181,6 @@ class DustPressModel {
 		$model = new $name( $args, $this );
 
 		$this->data[$name] = $model->fetch_data();
-
 		$this->submodels->{$name} = $model;
 	}
 
