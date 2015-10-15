@@ -109,15 +109,28 @@ class DustPressModel {
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) {
-				if ( isset( $m[1] ) && is_string( $m[1] ) ) {	
-					if ( ! isset( $this->data[ $className ]->Content->{ $m[1] } ) ) {
-						$this->data[ $className ]->Content->{ $m[1] } = [];
+				if ( isset( $m[1] ) && is_string( $m[1] ) ) {
+					if ( $m[1] == "Content" ) {
+						if ( ! isset( $this->data[ $className ]->{ $m[1] } ) ) {
+							$this->data[ $className ]->{ $m[1] } = [];
+						}
+
+						$data = call_user_func( $className . '::' . $m[1] );
+
+						if ( ! is_null( $data ) ) {
+							$this->data[ $className ]->{ $m[1] } = $data;
+						}
 					}
+					else {
+						if ( ! isset( $this->data[ $className ]->Content->{ $m[1] } ) ) {
+							$this->data[ $className ]->Content->{ $m[1] } = [];
+						}
 
-					$data = call_user_func( $className . '::' . $m[1] );
+						$data = call_user_func( $className . '::' . $m[1] );
 
-					if ( ! is_null( $data ) ) {
-						$this->data[ $className ]->Content->{ $m[1] } = $data;
+						if ( ! is_null( $data ) ) {
+							$this->data[ $className ]->Content->{ $m[1] } = $data;
+						}
 					}
 				}
 			}
