@@ -91,47 +91,51 @@ class DustPressModel {
 	*  @return	N/A
 	*/
 	public function fetch_data() {
-		$className = get_class( $this );
+		$class_name = get_class( $this );
 
 		// Create a place to store the wanted data in the global data structure.
-		if ( ! isset( $this->data[ $className ] ) ) $this->data[ $className ] = new \StdClass();
-		if ( ! isset( $this->data[ $className ]->Content ) ) $this->data[ $className ]->Content = new \StdClass();
+		if ( ! isset( $this->data[ $class_name ] ) ) $this->data[ $class_name ] = new \StdClass();
+		if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
 
 		// Fetch all methods from given class.
-		$methods = $this->get_class_methods( $className );
+		$methods = $this->get_class_methods( $class_name );
 
-		foreach( $methods as &$method ) {
-			$method = array( $this, $method );
+		foreach( $methods as &$method_item ) {
+			$method_item = array( $this, $method_item );
 		}
 
-		$methods = apply_filters( "dustpress/methods", $methods, $className );
+		$methods = apply_filters( "dustpress/methods", $methods, $class_name );
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach( $methods as $m ) {
-			if ( is_array( $m ) ) {
-				if ( isset( $m[1] ) && is_string( $m[1] ) ) {
+			if ( is_array( $m ) ) { 
+				if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
 					$method = str_replace( "bind_", "", $m[1] );
 
 					if ( $method == "Content" ) {
-						if ( ! isset( $this->data[ $className ]->{ $method } ) ) {
-							$this->data[ $className ]->{ $method } = [];
+						if ( ! isset( $this->data[ $class_name ]->{ $method } ) ) {
+							$this->data[ $class_name ]->{ $method } = [];
 						}
 
-						$data = call_user_func( $className . '::' . $m[1] );
+						$data = call_user_func( $class_name . '::' . $m[1] );
 
 						if ( ! is_null( $data ) ) {
-							$this->data[ $className ]->{ $method } = $data;
+							$this->data[ $class_name ]->{ $method } = $data;
 						}
 					}
 					else {
-						if ( ! isset( $this->data[ $className ]->Content->{ $method } ) ) {
-							$this->data[ $className ]->Content->{ $method } = [];
-						}
-
-						$data = call_user_func( $className . '::' . $m[1] );
-
+						$data = call_user_func( $class_name . '::' . $m[1] );
 						if ( ! is_null( $data ) ) {
-							$this->data[ $className ]->Content->{ $method } = $data;
+							if ( $this->parent ) {
+								$content = (array) $this->data[ $class_name ];
+								$content[ $method ] = $data;
+								$this->data[ $class_name ] = (object) $content;
+							}
+							else {
+								$content = (array) $this->data[ $class_name ]->Content;
+								$content[ $method ] = $data;
+								$this->data[ $class_name ]->Content = (object) $content;
+							}
 						}
 					}
 				}
@@ -139,19 +143,28 @@ class DustPressModel {
 			else if ( is_callable( $m ) ) {
 				$method = str_replace( "bind_", "", $m );
 
-				if ( ! isset( $this->data[ $className ]->Content->{ $method } ) ) {
-					$this->data[ $className ]->Content->{ $method } = [];
+				if ( ! isset( $this->data[ $class_name ]->Content->{ $method } ) ) {
+					$this->data[ $class_name ]->Content->{ $method } = [];
 				}
 
 				$data = call_user_func( $m );
 
 				if ( ! is_null( $data ) ) {
-					$this->data[ $className ]->Content->{ $method } = $data;
+					if ( strtolower( $method ) == "content" ) {
+    					$this->data[$class_name]->Content = (object) array_merge( (array) $this->data[$class_name]->Content, [ $method => $data ] );
+					}
+					else {
+						if ( $this->parent ) {
+							$this->data[ $class_name ]->{ $method } = $data;
+						}
+						else {
+							$this->data[ $class_name ]->Content->{ $method } = $data;
+						}
+					}
 				}
 			}
 		}
-
-		return $data;
+		return $this->data[ $class_name ];
 	}
 
 	/*
@@ -163,17 +176,17 @@ class DustPressModel {
 	*  @date	19/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$className (string)
+	*  @param	$class_name (string)
 	*  @return	$methods (array)
 	*/
 
-	private function get_class_methods( $className ) {
-		$rc = new \ReflectionClass( $className );
+	private function get_class_methods( $class_name ) {
+		$rc = new \ReflectionClass( $class_name );
 		$rmpu = $rc->getMethods( \ReflectionMethod::IS_PUBLIC );
 
 		$methods = array();
 		foreach ( $rmpu as $r ) {
-			if ( $r->class === $className ) {
+			if ( $r->class === $class_name ) {
 				$methods[] = $r->name;
 			}
 		}
@@ -219,13 +232,18 @@ class DustPressModel {
 	*/
 
 	public function bind_data( $data, $key = null, $model = null ) {
-		$className = get_class( $this );
+		$class_name = get_class( $this );
 
 		if ( ! $key ) {
 			$key = $this->get_previous_function();
 		}
 
 		if ( $model ) {
+
+			// Create a place to store the wanted data in the global data structure.
+			if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \StdClass();
+			if ( ! $this->parent && ! isset( $this->data[ $model ]->Content ) ) $this->data[ $model ]->Content = new \StdClass();
+
 			if ( !isset( $this->data[ $model ] ) ) {
 				$this->data[ $model ] = (object)[];
 			}
@@ -233,16 +251,20 @@ class DustPressModel {
 			$this->data[ $model ]->{ $key } = $data;
 		}
 		else {
+			// Create a place to store the wanted data in the global data structure.
+			if ( ! isset( $this->data[ $class_name ] ) ) $this->data[ $class_name ] = new \StdClass();
+			if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
+
 			if ( ! $this->parent ) {
 				if ( "Content" == $key ) {
-					$this->data[ $className ]->{ $key } = $data;
+					$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
 				}
 				else {
-					$this->data[ $className ]->Content->{ $key } = $data;
+					$this->data[ $class_name ]->Content->{ $key } = $data;
 				}
 			}
 			else {
-				$this->data[ $className ]->{ $key } = $data;	
+				$this->data[ $class_name ]->{ $key } = $data;
 			}
 		}
 	}

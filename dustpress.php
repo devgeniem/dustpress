@@ -965,7 +965,7 @@ class DustPress {
 	private function camelcase_to_dashed( $string, $char = "-" ) {
 		preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches);
 		$results = $matches[0];
-		foreach ($results as &$match) {
+		foreach ( $results as &$match ) {
 	    	$match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
 		}
 
@@ -976,6 +976,9 @@ class DustPress {
 		$conditions = [
 			function() {
 				return ! is_admin();
+			},
+			function() {
+				return ! $this->is_login_page();
 			},
 			function() {
 				return ! defined( "WP_CLI" );
