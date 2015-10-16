@@ -100,8 +100,15 @@ class DustPressModel {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $class_name );
 
-		foreach( $methods as &$method_item ) {
-			$method_item = array( $this, $method_item );
+		foreach( $methods as $index => $method_item ) {
+			$reflection = new ReflectionMethod( $class_name, $method_item );
+			
+			if ( $rf->getNumberOfParameters() > 0 ) {
+				unset( $methods[ $index ] );
+			}
+			else {
+				$methods[ $index ] = array( $this, $method_item );
+			}
 		}
 
 		$methods = apply_filters( "dustpress/methods", $methods, $class_name );
