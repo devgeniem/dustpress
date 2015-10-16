@@ -103,7 +103,7 @@ class DustPressModel {
 		foreach( $methods as $index => $method_item ) {
 			$reflection = new ReflectionMethod( $class_name, $method_item );
 			
-			if ( $rf->getNumberOfParameters() > 0 ) {
+			if ( $reflection->getNumberOfParameters() > 0 ) {
 				unset( $methods[ $index ] );
 			}
 			else {
