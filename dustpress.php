@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.1.1
+Version: 0.2.0
 */
 
 class DustPress {
@@ -13,367 +13,133 @@ class DustPress {
 	// Instance of DustPHP
 	private $dust;
 
-	// Instances of other classesƒ
-	public $classes;
+	// Main model
+	private $model;
 
-	// Data collection
-	public $data;
-
-	// Possible parent
-	public $parent;
-
-	// Possible arguments from external caller
-	public $args;
-
-	// Possible partial name
-	public $partial;
-
-	// Are we on the main instance?
-	public $main;
-
-	// Do we want to render
-	public $do_not_render;
-
-	// Possible post body is stored hiere
-	public $body;
-
-	// Possible errors to disable
-	private $errors;
+	private $data;
 
 	/*
 	*  __construct
 	*
-	*  Constructor for DustPress. Takes possible parent instance as parameter and stores it, if needed. Can and should be
-	*  extended by subclasses.
+	*  Constructor for DustPress core class.
 	*
 	*  @type	function
-	*  @date	19/3/2015
-	*  @since	0.0.1
+	*  @date	10/8/2015
+	*  @since	0.2.0
 	*
-	*  @param	parent (object)
+	*  @param	N/A
 	*  @return	N/A
 	*/
-	public function __construct( $parent = null, $args = null, $is_main = false ) {
-		$this->errors = $this->is_installation_compatible();
 
-		if ( ! empty( $this->errors ) ) {	
-			add_action( "admin_notices", array( $this, "required") );
-			return;
-		}
+	public function __construct() {
 
 		// start sessio for data storing
 		if ( session_status() == PHP_SESSION_NONE ) {
     		session_start();
 		}
 
-		if ("DustPress" === get_class( $this ) ) {
-			// Autoload DustPHP classes
-			spl_autoload_register( function ( $class ) {
+		// Autoload DustPHP classes
+		spl_autoload_register( function ( $class ) {
 
-			    // project-specific namespace prefix
-			    $prefix = 'Dust\\';
+		    // project-specific namespace prefix
+		    $prefix = 'Dust\\';
 
-			    // base directory for the namespace prefix
-			    $base_dir = get_template_directory() . '/dustpress/dust/';
+		    // base directory for the namespace prefix
+		    $base_dir = get_template_directory() . '/dustpress/dust/';
 
-			    // does the class use the namespace prefix?
-			    $len = strlen( $prefix );
-			    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-			        // no, move to the next registered autoloader
-			        return;
-			    }
+		    // does the class use the namespace prefix?
+		    $len = strlen( $prefix );
+		    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+		        // no, move to the next registered autoloader
+		        return;
+		    }
 
-			    // get the relative class name
-			    $relative_class = substr( $class, $len );
+		    // get the relative class name
+		    $relative_class = substr( $class, $len );
 
-			    // replace the namespace prefix with the base directory, replace namespace
-			    // separators with directory separators in the relative class name, append
-			    // with .php
-			    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+		    // replace the namespace prefix with the base directory, replace namespace
+		    // separators with directory separators in the relative class name, append
+		    // with .php
+		    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
 
-			    // if the file exists, require it
-			    if ( file_exists( $file ) ) {			    	
-			        require $file;
-			    }
-			});
+		    // if the file exists, require it
+		    if ( file_exists( $file ) ) {			    	
+		        require $file;
+		    }
+		});
 
-			// Autoload DustPress classes
-			spl_autoload_register( function( $class ) {
-				$paths = array(
-					get_template_directory() . '/dustpress/classes/',
-					get_template_directory() . '/models',
-				);
+		// Autoload DustPress classes
+		spl_autoload_register( function( $class ) {
+			$paths = [
+				get_template_directory() . '/dustpress/classes/',
+				get_template_directory() . '/models',
+			];
 
-				if ( $class == "DustPressHelper" ) {
-					$class = "dustpress-helper";
-				}
-				else {
-					$class = $this->camelcase_to_dashed( $class, "-" );
-				}
-				
-				$filename = strtolower( $class ) .".php";
-
-				foreach ( $paths as $path ) {
-					if ( is_readable( $path ) ) {
-						foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
-							if ( strpos( $file, $filename ) ) {
-								if ( is_readable( $file ) ) {
-									require_once( $file );
-								}
-							}
-						}
-					}
-					else {
-						die("DustPress error: Your theme does not have required directory ". $path);
-					}
-				}
-			});
-
-			// Create Dust instance
-			$this->dust = new Dust\Dust();
-
-			// Set initial parameters
-			$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
-
-			// Find and include Dust helpers from DustPress plugin
-			$paths = array(
-				get_template_directory() . '/dustpress/helpers',
-			);
-
-			foreach( $paths as $path ) {
-				if ( is_readable( $path ) ) {
-					foreach( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
-						if ( is_readable( $file ) ) {
-							require_once( $file );
-						}
-					}
-				}
+			if ( $class == "DustPressHelper" ) {
+				$class = "dustpress-helper";
 			}
-
-			// Add hooks for helpers' ajax functions
-			$this->set_helper_hooks();
-
-			// Create data collection
-			$this->data = array();
-
-			// Create classes array
-			$this->classes = array();
-
-			$this->args = new StdClass();
-
-			// Add create_instance to right action hook if we are not on the admin side
-			if ( ! is_admin() && ! $this->is_login_page() && ! defined("DOING_AJAX") ) {				
-				add_action( 'shutdown', array( $this, 'create_instance' ) );
-			}
-
-			// Add admin menu
-			add_action( 'admin_menu', array($this, 'plugin_menu') );
-
-			// Add admin stuff
-			add_action( 'after_setup_theme', array($this, 'admin_stuff') );
-
-			return;
-		}
-		else {
-			global $dustpress;
-
-			$template = $this->get_template_filename();
-
-			$template = apply_filters( "dustpress/template", $template );
-
-			if ( is_array( $args ) ) {
-				$class = $this->get_class();
-				$dustpress->args->{$class} = $args;
-			}
-
-			if ( $parent ) {
-				$this->parent = $parent;
-			}
-
-			if ( $is_main ) {
-				$this->main = $is_main;
-			}
-
-			if ( strtolower( $template ) == strtolower( get_class( $this ) ) ) {
-				$this->populate_data_collection();
-
-				$this->get_data();
-
-				if ( $this->get_post_body() === true ) {
-
-					if ( ! ( $partial = $this->get_partial() ) )
-						$partial = strtolower( $this->camelcase_to_dashed( $template ) );
-
-					if ( ! $this->get_render_status ) {
-						$this->render( [ "partial" => $partial ] );
-					}
-				}
-				else {
-					$accepts = $this->get_post_body();
-
-					$response = array();
-
-					foreach( $accepts as $accept ) {
-						if ( isset( $dustpress->data[ $accept->function ] ) ) {
-							if ( isset( $accept->dp_partial ) ) {
-								$response[ $accept->function ] = $dustpress->render( [
-									"partial" => $accept->dp_partial,
-									"data" => $dustpress->data, 
-									"type" => "html",
-									"echo " => false
-								] );
-							}
-							else if ( ! isset( $accept->dp_type ) && ( $accept->dp_type == "json" ) ) {
-								$response[ $accept->function ] = $dustpress->data[ $accept->function ];
-							}
-						}
-					}
-
-					echo json_encode( $response );
-					return;
-				}
-
+			elseif ( $class == "DustPressModel" ) {
+				$class = "dustpress-model";	
 			}
 			else {
-				$this->get_data();
+				$class = $this->camelcase_to_dashed( $class, "-" );
+			}
+			
+			$filename = strtolower( $class ) .".php";
+
+			foreach ( $paths as $path ) {
+				if ( is_readable( $path ) ) {
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
+						if ( strpos( $file, $filename ) ) {
+							if ( is_readable( $file ) ) {
+								require_once( $file );
+							}
+						}
+					}
+				}
+				else {
+					die("DustPress error: Your theme does not have required directory ". $path);
+				}
+			}
+		});
+
+		// Create Dust instance
+		$this->dust = new Dust\Dust();
+
+		// Set initial parameters
+		$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
+		$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
+
+		// Find and include Dust helpers from DustPress plugin
+		$paths = [
+			get_template_directory() . '/dustpress/helpers',
+		];
+
+		foreach( $paths as $path ) {
+			if ( is_readable( $path ) ) {
+				foreach( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
+					if ( is_readable( $file ) ) {
+						require_once( $file );
+					}
+				}
 			}
 		}
-	}
 
-	/*
-	*  admin_stuff
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
+		// Add hooks for helpers' ajax functions
+		$this->set_helper_hooks();
 
-	public function admin_stuff() {
-		global $current_user;
-
-		get_currentuserinfo();
-
-		// If admin and debug is set to true, enqueue JSON printing
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );			
-			
-			// Just register the dustpress and enqueue later, if needed
-			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
-
-			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, '0.0.2', true );						
-
-			// Register debugger ajax hook
-			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-		}
-	}
-
-	/*
-	*  set_helper_hooks
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	02/09/2015
-	*  @since	0.1.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function set_helper_hooks() {
-
-		// set hooks for comments helper
-		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {		
-			
-			if ( ! defined('DOING_AJAX') ) {
-				define('DOING_AJAX', true);
-			}
-
-			// initialize helper
-			$comments_helper = new Comments_Helper( 'handle_ajax', $this );
-
-			// fires after comment is saved
-			add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
-
-			// wp error handling
-			add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
-	
+		// Add create_instance to right action hook if we are not on the admin side
+		if ( $this->want_autoload() ) {				
+			add_action( 'shutdown', [ $this, 'create_instance' ] );
 		}
 
-	}
+		// Add admin menu
+		add_action( 'admin_menu', [ $this, 'plugin_menu' ] );
 
-	/*
-	*  plugin_menu
-	*
-	*  This function creates the menu item for DustPress options in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
+		// Add admin stuff
+		add_action( 'after_setup_theme', [ $this, 'admin_stuff' ] );
 
-	public function plugin_menu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
-	}
-
-	/*
-	*  dustPress_options
-	*
-	*  This function creates the options page functionality in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function dustPress_options() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
-		}
-
-		if ( isset( $_POST['dustpress_hidden_send'] ) && $_POST['dustpress_hidden_send'] == 1 ) {
-			$debug = $_POST['debug'];
-
-			update_option( 'dustpress_debug', $debug );
-
-			echo '<div class="updated"><p>Settings saved.</p></div>';
-		}
-
-		$debug_val = get_option('dustpress_debug');
-
-		if ( $debug_val )
-			$string = " checked=\"checked\"";
-		else
-			$string = "";
-		
-		echo '<div class="wrap">';
-		echo '<h2>DustPress Options</h2>';
-?>
-		<form name="form1" method="post" action="">
-			<input type="hidden" name="dustpress_hidden_send" value="1"/>
-
-			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug"<?php echo $string; ?>/></p>
-
-			<p class="submit">
-				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
-			</p>
-		</form>
-<?php
-
-		echo '</div>';
+		return;
 	}
 
 	/*
@@ -388,12 +154,13 @@ class DustPress {
 	*  @param   N/A
 	*  @return	N/A
 	*/
+
 	public function create_instance() {
 		global $post;
 		global $dustpress;
 
 		// Initialize an array for debugging.
-		$debugs = array();
+		$debugs = [];
 
 		// Get current template name tidied up a bit.
 		$template = $this->get_template_filename( $debugs );
@@ -402,446 +169,17 @@ class DustPress {
 		// We do not throw error if the class does not exist, to ensure that you can still create
 		// templates in traditional style if needed.
 		if ( class_exists ( $template ) ) {
-			new $template( $dustpress, null, true );
+			$this->model = new $template();
+
+			$this->model->fetch_data();
+
+			$partial = strtolower( $this->camelcase_to_dashed( $template ) );
+
+			$this->render( [ "partial" => $partial ] );
 		}
 		else {
 			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
 		}
-	}
-
-	/*
-	*  get_data
-	*
-	*  This function gets the data from models and binds it to the global data structure
-	*
-	*  @type	function
-	*  @date	19/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-	public function get_data() {
-		global $dustpress;
-
-		$className = get_class( $this );
-
-		// Create a place to store the wanted data in the global data structure.
-		if ( ! isset( $dustpress->data[ $className ] ) ) $dustpress->data[ $className ] = new \StdClass();
-		if ( ! isset( $dustpress->data[ $className ]->Content ) ) $dustpress->data[ $className ]->Content = new \StdClass();
-
-		// Fetch all methods from given class.
-		$methods = $this->get_class_methods( $className );
-
-		foreach( $methods as &$method ) {			
-			$method = array( $this, $method );
-		}
-
-		$methods = apply_filters( "dustpress/methods", $methods, $className );
-
-		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
-		foreach( $methods as $m ) {
-			if ( is_array( $m ) ) {
-				if ( isset($m[1]) && is_string($m[1]) && strpos( $m[1], "bind" ) !== false ) {	
-					call_user_func( $className . '::' . $m[1] );
-				}
-			}
-			else if ( is_callable( $m ) ) {
-				call_user_func( $m );
-			}
-		}
-	}
-
-	/*
-	*  render
-	*
-	*  This function will render the given data in selected format
-	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$partial (string)
-	*  @param	$data (N/A)
-	*  @param	$type (string)
-	*  @return	true/false (boolean)
-	*/
-	public function render( $args = array() ) {
-		global 	$dustpress;
-				$hash;
-
-		$defaults = [
-			"data" => -1,
-			"type" => "default",
-			"echo" => true
-		];
-
-		if ( is_array( $args ) ) {
-			if ( ! isset( $args["partial"] ) ) {
-				return "<p><b>DustPress error:</b> No partial is given to the render function.</p>";
-			}
-		}
-		
-		$options = array_merge($defaults, (array)$args);
-
-		extract( $options );
-
-		if ( "default" == $type && ! get_option('dustpress_default_format' ) ) {
-			$type = "html";
-		}
-		else if ( "default" == $type && get_option('dustpress_default_format' ) ) {
-			$type = get_option('dustpress_default_format');
-		}
-
-		$types = array(
-			"html" => function( $data, $partial, $dust ) {
-
-				try {
-					$compiled = $dust->compileFile( $partial );
-				}
-				catch ( Exception $e ) {
-					die( "DustPress error: ". $e->getMessage() );
-				}
-
-				return $dust->renderTemplate( $compiled, $data );		
-			},
-			"json" => function( $data, $partial, $dust ) {
-				try {
-					$output = json_encode( $data );
-				}
-				catch ( Exception $e ) {
-					die( "JSON encode error: ". $e->getMessage() );
-				}
-
-				return $output;
-			}
-		);
-
-		$types = apply_filters( 'dustpress/formats', $types );
-
-		// If no data attribute given, take contents from object data collection
-		//if ( $data !== -1 && $this->main == true ) $dustpress->data = $data;
-
-		if ( $this->main == true ) {
-			$dustpress->data = apply_filters( 'dustpress/data', $dustpress->data );
-		} 
-		else {
-			$data = apply_filters( 'dustpress/data', $data );
-		}
-
-		// Fetch Dust partial by given name. Throw error if there is something wrong.
-		try {
-			$template = $this->get_template( $partial );
-		}
-		catch ( Exception $e ) {
-			die( "DustPress error: ". $e->getMessage() );
-		}
-
-		// Ensure we have a DustPHP instance.
-		if ( isset( $this->dust ) ) {
-			$dust = $this->dust;
-		}
-		else {
-			$dust = $this->parent->dust;
-		}
-
-		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
-
-		// Create debug data if wanted and only if we are on the main instance.
-
-		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			
-			$jsondata = json_encode( $dustpress->data );
-			
-			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
-
-			// Localize the script with new data
-			// $data_array = array(
-			// 	'jsondata' => $jsondata
-			// );
-			$hash = md5( $_SERVER[REQUEST_URI] . microtime() );
-			$data_array = array(
-				'ajaxurl' 	=> admin_url( 'admin-ajax.php' ),
-				'hash' 		=> $hash
-			);
-			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
-			
-			// jsonView jQuery plugin
-			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', array( 'jquery' ), null, true );
-
-			// Enqueued script with localized data.
-			wp_enqueue_script( 'dustpress_debugger' );
-
-		}
-
-		// Create output with wanted format.
-		if ( $this->main == true ) {
-			$output = call_user_func_array( $types[$type], array( $dustpress->data, $template, $dust ) );
-		} else {
-			$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
-		}
-
-		$dustpress->data 	= apply_filters( 'dustpress/data/after_render', $dustpress->data );
-		$output 			= apply_filters( 'dustpress/output', $output, $this->main );
-
-		// Store data into session for debugger to fetch
-		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
-			$_SESSION[$hash] 	= $dustpress->data;			
-		}
-
-		if ( $echo ) {
-			if ( empty ( strlen( $output ) ) ) {
-				echo "DustPress warning: empty output.";
-			}
-			else {
-				echo $output;
-			}
-		}
-		else {
-			return $output;
-		}
-
-		if ( isset( $error ) ) {
-			return false;
-		}
-		else {
-			return true;
-		}
-
-	}
-
-	/*
-	*  is_wanted
-	*
-	*  This function checks if certain partial is wanted into output
-	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$partial (string)
-	*  @return	true/false (boolean)
-	*/
-	public function is_wanted( $partial ) {
-		global $dustpress;
-
-		if ( ( $accepts = $this->get_post_body() ) === true ) {
-			return true;
-		}
-
-		foreach( $accepts as $accept ) {
-			if ( $partial == $accept->function ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/*
-	*  get_post_body
-	*
-	*  This function gets the possible settings json from post body and assigns the data
-	*  to appropriate places. It returns either an array containing data for which functions'
-	*  data to include in the response or boolean "true" if we are not in an ajax request.
-	*
-	*  @type	function
-	*  @date	02/04/2015
-	*  @since	0.0.6
-	*
-	*  @param	N/A
-	*  @return	mixed
-	*/
-	private function get_post_body() {
-		global $dustpress;
-
-		if ( isset( $dustpress->body ) ) {
-			$body = $dustpress->body;
-		}
-		else {
-			$dustpress->body = file_get_contents('php://input');
-			$body = $dustpress->body;
-		}
-
-		$accepts = array();
-
-		try {
-			$json = json_decode( $body );
-
-			if ( $json["ajax"] === true ) {
-				$accepts[] = "Content";
-			}
-
-			if ( count( $json ) > 0 ) {
-				foreach ( $json as $container ) {
-					if ( isset( $container->function ) ) {
-						$temp = new StdClass();
-						$temp->function = $container->function;
-
-						if ( isset( $container->args->dp_type ) ) {
-							$temp->type = $container->args->dp_type;
-						}
-
-						if ( isset( $container->args->dp_partial ) ) {
-							$temp->partial = $container->args->dp_partial;
-						}
-
-						$accepts[] = $temp;
-
-						if ( isset( $container->args ) ) {
-							$dustpress->args->{$container->function} = $container->args;
-						}
-					}
-				}
-			}
-			else {
-				return true;
-			}
-		}
-		catch( Exception $e ) {
-			return true;
-		}
-
-		return $accepts;
-	}
-
-	/*
-	*  get_template
-	*
-	*  This function checks whether the given partial exists and returns the contents of the file as a string
-	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$partial (string)
-	*  @return	$template (string)
-	*/
-	private function get_template( $partial ) {
-		// Check if we have received an absolute path.
-		if ( file_exists( $partial ) )
-			return $partial;
-		else {
-			$templatefile =  $partial . '.dust';
-
-			// järjestys vaihdettu, jotta ensin ladattaisiin hakemisto /partials/, teris 8.9.2015
-			$templatepaths = [				
-				get_template_directory() . '/dustpress/partials/',
-				get_template_directory() . '/partials/'
-			];
-
-			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
-
-			foreach ( $templatepaths as $templatepath ) {
-				if ( is_readable( $templatepath ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
-						if ( strpos( $file, $templatefile ) !== false ) {
-							if ( is_readable( $file ) ) {
-								return $templatepath . $templatefile;
-							}
-						}
-					}
-				}
-			}
-			
-			// If we could not find such template.
-			throw new Exception( "Error loading template file: " . $partial, 1 );
-
-			return false;
-		}
-	}
-
-	/*
-	*  get_error_template
-	*
-	*  This function returns simple error template
-	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	$template (string)
-	*/
-	private function get_error_template() {
-		return '<p class="dustpress-error">{dustPressError}</p>';
-	}
-
-	/*
-	*  populate_data_collection
-	*
-	*  This function populates the data collection with essential data
-	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-	private function populate_data_collection() {
-		global $dustpress;
-
-		$WP = array();
-
-		// Insert Wordpress blog info data to collection
-		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","text_direction","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","siteurl","home" );
-
-		foreach ( $infos as $info ) {
-			$WP[ $info ] = get_bloginfo( $info );
-		}
-
-		// Insert user info to collection
-
-		$currentuser = wp_get_current_user();		
-		
-		if ( 0 === $currentuser->ID ) {
-			$WP["loggedin"] = false;
-		}
-		else {
-			$WP["loggedin"] = true;
-			$WP["user"] = $currentuser->data;
-			$WP["user"]->roles = $currentuser->roles;
-			unset( $WP["user"]->user_pass );
-		}
-
-		// Insert WP title to collection
-		ob_start();
-		wp_title();
-		$WP["title"] = ob_get_clean();
-
-		// Insert admin ajax url
-		$WP["admin_ajax_url"] = admin_url( 'admin-ajax.php' );
-
-		$WP["permalink"] = get_permalink();
-
-		// Push array to collection
-		$dustpress->data["WP"] = $WP;
-	}
-
-	/*
-	*  get_class_methods
-	*
-	*  This function returns all public methods from given class. Only class' own methods, no inherited.
-	*
-	*  @type	function
-	*  @date	19/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$className (string)
-	*  @return	$methods (array)
-	*/
-	private function get_class_methods($className) {
-		$rc = new \ReflectionClass($className);
-		$rmpu = $rc->getMethods(\ReflectionMethod::IS_PUBLIC);
-
-		$methods = array();
-		foreach ( $rmpu as $r ) {
-			$r->class === $className && $methods[] = $r->name;
-		}
-
-		return $methods;
 	}
 
 	/*
@@ -856,6 +194,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	$filename (string)
 	*/
+	
 	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
@@ -1036,6 +375,7 @@ class DustPress {
 			];
 		}
 
+		// I don't think you really want to do this.
 		$hierarchy = apply_filters( "dustpress/template_hierarchy", $hierarchy );
 
 		foreach( $hierarchy as $level => $keys ) {
@@ -1093,9 +433,96 @@ class DustPress {
 	}
 
 	/*
-	*  bind_sub
+	*  set_helper_hooks
 	*
-	*  This function checks if a bound submodel is wanted to run and if it is, runs it.
+	*  This function sets JavaScripts and styles for admin debug feature.
+	*
+	*  @type	function
+	*  @date	02/09/2015
+	*  @since	0.1.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+
+	public function set_helper_hooks() {
+
+		// set hooks for comments helper
+		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {		
+			
+			if ( ! defined('DOING_AJAX') ) {
+				define('DOING_AJAX', true);
+			}
+
+			// initialize helper
+			$comments_helper = new Comments_Helper( 'handle_ajax', $this );
+
+			// fires after comment is saved
+			add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
+
+			// wp error handling
+			add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
+	
+		}
+
+	}
+
+	/*
+	*  populate_data_collection
+	*
+	*  This function populates the data collection with essential data
+	*
+	*  @type	function
+	*  @date	17/3/2015
+	*  @since	0.0.1
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	private function populate_data_collection() {
+		global $dustpress;
+
+		$wp_data = array();
+
+		// Insert Wordpress blog info data to collection
+		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","text_direction","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","siteurl","home" );
+
+		foreach ( $infos as $info ) {
+			$wp_data[ $info ] = get_bloginfo( $info );
+		}
+
+		// Insert user info to collection
+
+		$currentuser = wp_get_current_user();		
+		
+		if ( 0 === $currentuser->ID ) {
+			$wp_data["loggedin"] = false;
+		}
+		else {
+			$wp_data["loggedin"] = true;
+			$wp_data["user"] = $currentuser->data;
+			$wp_data["user"]->roles = $currentuser->roles;
+			unset( $wp_data["user"]->user_pass );
+		}
+
+		// Insert WP title to collection
+		ob_start();
+		wp_title();
+		$wp_data["title"] = ob_get_clean();
+
+		// Insert admin ajax url
+		$wp_data["admin_ajax_url"] = admin_url( 'admin-ajax.php' );
+
+		$wp_data["permalink"] = get_permalink();
+
+		// Return collection after filters
+		return apply_filters( "dustpress/data/wp", $wp_data );
+	}
+
+	/*
+	*  render
+	*
+	*  This function will render the given data in selected format
 	*
 	*  @type	function
 	*  @date	17/3/2015
@@ -1106,229 +533,287 @@ class DustPress {
 	*  @param	$type (string)
 	*  @return	true/false (boolean)
 	*/
-	public function bind_sub( $name, $args = null ) {
-		global $dustpress;
+	public function render( $args = array() ) {
+		global 	$dustpress;
+				$hash;
 
-		if ( $this->is_wanted( $name ) ) {
-			if ( is_array($args) )
-				$dustpress->args->{$name} = $args;
-			
-			$dustpress->classes[$name] = new $name();
+		$defaults = [
+			"data" => false,
+			"type" => "default",
+			"echo" => true
+		];
 
-			if ( ! isset( $dustpress->data[$name] ) ) $dustpress->data[$name] = new \StdClass();
+		if ( is_array( $args ) ) {
+			if ( ! isset( $args["partial"] ) ) {
+				die("<p><b>DustPress error:</b> No partial is given to the render function.</p>");
+			}
 		}
-	}
+		
+		$options = array_merge( $defaults, (array)$args );
 
-	/*
-	*  get_args
-	*
-	*  This function gets the arguments for wanted name or, if we don't give a name, we get
-	*  args for current module.
-	*
-	*  @type	function
-	*  @date	26/3/2015
-	*  @since	0.0.3
-	*
-	*  @param	$name (string)
-	*  @return	args (array)
-	*/
-	public function get_args( $name = null ) {
-		global $dustpress;
+		extract( $options );
 
-		if ( $name ) {
-			if ( isset( $dustpress->args->{$name} ) ) {
-				return $dustpress->args->{$name};
+		if ( "default" == $type && ! get_option('dustpress_default_format' ) ) {
+			$type = "html";
+		}
+		else if ( "default" == $type && get_option('dustpress_default_format' ) ) {
+			$type = get_option('dustpress_default_format');
+		}
+
+		$types = array(
+			"html" => function( $data, $partial, $dust ) {
+
+				try {					
+					$compiled = $dust->compileFile( $partial );
+				}
+				catch ( Exception $e ) {
+					die( "DustPress error: ". $e->getMessage() );
+				}
+
+				return $dust->renderTemplate( $compiled, $data );		
+			},
+			"json" => function( $data, $partial, $dust ) {
+				try {
+					$output = json_encode( $data );
+				}
+				catch ( Exception $e ) {
+					die( "JSON encode error: ". $e->getMessage() );
+				}
+
+				return $output;
+			}
+		);
+
+		$types = apply_filters( 'dustpress/formats', $types );
+
+		if ( ! $data ) {
+			$this->model->data = (array)$this->model->data;
+
+			$this->model->data['WP'] = $this->populate_data_collection();
+		}
+
+		// Fetch Dust partial by given name. Throw error if there is something wrong.
+		try {
+			$template = $this->get_template( $partial );
+		}
+		catch ( Exception $e ) {
+			die( "DustPress error: ". $e->getMessage() );
+		}
+
+		// Ensure we have a DustPHP instance.
+		if ( isset( $this->dust ) ) {
+			$dust = $this->dust;
+		}
+		else {
+			die("DustPress error: Something very unexpected happened: there is no DustPHP.");
+		}
+
+		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
+
+		// Create debug data if wanted.
+
+		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			$jsondata = json_encode( $this->model->data );
+		
+			$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
+			$data_array = array(
+				'ajaxurl' 	=> admin_url( 'admin-ajax.php' ),
+				'hash' 		=> $hash
+			);
+			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
+			
+			// jsonView jQuery plugin
+			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
+			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', array( 'jquery' ), null, true );
+
+			// Enqueued script with localized data.
+			wp_enqueue_script( 'dustpress_debugger' );
+		}
+
+		if ( $data ) {
+			$render_data = apply_filters( 'dustpress/data', $data );;
+		}
+		else {
+			$render_data = apply_filters( 'dustpress/data', $this->model->data );
+		}
+
+		// Create output with wanted format.
+		$output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
+
+		$output = apply_filters( 'dustpress/output', $output );
+
+		// Store data into session for debugger to fetch
+		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
+			$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
+
+			$_SESSION[ $hash ] = $this->model->data;			
+		}
+
+		if ( $echo ) {
+			if ( empty ( strlen( $output ) ) ) {
+				$error = true;
+				echo "DustPress warning: empty output.";
 			}
 			else {
-				return null;
+				echo $output;
 			}
 		}
 		else {
-			$module = $this->get_class();
+			return $output;
+		}
 
-			if ( isset( $dustpress->args->{$module} ) ) {
-				return $dustpress->args->{$module};
-			}
-			else {
-				return null;
-			}
+		if ( isset( $error ) ) {
+			return false;
+		}
+		else {
+			return true;
 		}
 	}
 
 	/*
-	*  bind_data
+	*  get_template
 	*
-	*  This function binds the data from the models to the global data structure.
-	*  It could take a key to bind the data in, but as default creates the key from
-	*  the function name.
+	*  This function checks whether the given partial exists and returns the contents of the file as a string
 	*
 	*  @type	function
 	*  @date	17/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$data (N/A)
-	*  @param	$key (string)
-	*  @return	true/false (boolean)
-	*/
-	public function bind_data( $data, $key = null, $module = null ) {
-		global $dustpress;
-
-		$temp = array();
-
-		if ( ! $module ) {
-			$module = $this->get_class();
-		}
-		else {
-			// If we don't yet have them, create a place to store the wanted data in the
-			// global data structure.
-			if ( ! isset( $dustpress->data[ $module ] ) ) $dustpress->data[ $module ] = new \StdClass();
-			if ( ! isset( $dustpress->data[ $module ]->Content ) ) $dustpress->data[ $module ]->Content = new \StdClass();
-		}
-
-		if ( ! $key ) {
-			$key = $this->get_previous_function();
-		}
-
-		if ( strtolower( $key ) == "content" ) {
-			$dustpress->data[$module]->Content = (object) array_merge( (array) $dustpress->data[$module]->Content, (array) $data );
-		}
-		else if ( $this->is_sub_module() ) {
-			if ( isset( $dustpress->data[$module] ) ) {
-				$dustpress->data[$module]->{$key} = $data;
-			}
-		}
-		else {
-			if ( isset( $dustpress->data[$module] ) ) {
-				$dustpress->data[$module]->Content->{$key} = $data;
-			}	
-		}
-	}
-
-	/*
-	*  get_class
-	*
-	*  This function is a static proxy for PHP function get_called_class() to know from which
-	*  class a certain possibly inherited function is run.
-	*
-	*  @type	function
-	*  @date	18/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$data (N/A)
-	*  @return	$classname (string)
-	*/
-	public static function get_class() {
-		return get_called_class();
-	}
-
-	/*
-	*  get_previous_function
-	*
-	*  This function returns the function where current function was called.
-	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	$function (string)
-	*/
-	public function get_previous_function() {
-		$backtrace = debug_backtrace();
-
-		if ( isset( $backtrace[2] ) ) {
-			$function = $backtrace[2]["function"];
-
-			// strip out extra or get to get the block
-			$function = str_replace ( "bind_", "bind", $function );
-			$function = str_replace ( "bind", "", $function );
-			return $function;
-		}
-		else {
-			return false;
-		}
-	}
-
-	/*
-	*  is_sub_module
-	*
-	*  This function returns true if current function is from a submodule.
-	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	true/false (boolean)
-	*/
-	public function is_sub_module() {
-		if ( $this->array_search_recursive( "bind_sub", debug_backtrace() ) ) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	/*
-	*  get_partial
-	*
-	*  This function returns the desired partial, if the developer has wished to do so. Otherwise return false.
-	*
-	*  @type	function
-	*  @date	1/4/2015
-	*  @since	0.0.6
-	*
-	*  @param	N/A
-	*  @return	mixed
-	*/
-	public function get_partial() {
-		global $dustpress;
-
-		if ( isset( $dustpress->partial ) ) {
-			return $dustpress->partial;
-		}
-		else {
-			return false;
-		}
-	}
-
-	/*
-	*  set_partial
-	*
-	*  This function lets the developer to set the partial to be used to render a page.
-	*
-	*  @type	function
-	*  @date	1/4/2015
-	*  @since	0.0.6
-	*
 	*  @param	$partial (string)
+	*  @return	$template (string)
+	*/
+	private function get_template( $partial ) {
+		// Check if we have received an absolute path.
+		if ( file_exists( $partial ) )
+			return $partial;
+		else {
+			$templatefile =  $partial . '.dust';
+
+			$templatepaths = [				
+				get_template_directory() . '/dustpress/partials/',
+				get_template_directory() . '/partials/'
+			];
+
+			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+
+			foreach ( $templatepaths as $templatepath ) {
+				if ( is_readable( $templatepath ) ) {
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
+						if ( strpos( $file, $templatefile ) !== false ) {
+							if ( is_readable( $file ) ) {
+								return $templatepath . $templatefile;
+							}
+						}
+					}
+				}
+			}
+			
+			// If we could not find such template.
+			throw new Exception( "Error loading template file: " . $partial, 1 );
+
+			return false;
+		}
+	}
+
+	/*
+	*  admin_stuff
+	*
+	*  This function sets JavaScripts and styles for admin debug feature.
+	*
+	*  @type	function
+	*  @date	23/3/2015
+	*  @since	0.0.2
+	*
+	*  @param	N/A
 	*  @return	N/A
 	*/
-	public function set_partial( $partial ) {
-		global $dustpress;
 
-		if ( $partial ) {
-			$dustpress->partial = $partial;
+	public function admin_stuff() {
+		global $current_user;
+
+		get_currentuserinfo();
+
+		// If admin and debug is set to true, enqueue JSON printing
+		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+			wp_enqueue_script( 'jquery' );			
+			
+			// Just register the dustpress and enqueue later, if needed
+			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
+
+			// Register the debugger script
+			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, '0.0.2', true );						
+
+			// Register debugger ajax hook
+			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
+			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
 		}
 	}
 
 	/*
-	*  get_render_status
+	*  plugin_menu
 	*
-	*  This function returns true/false whether we want to render (by default) or not.
+	*  This function creates the menu item for DustPress options in admin side.
 	*
 	*  @type	function
-	*  @date	1/4/2015
-	*  @since	0.0.6
+	*  @date	23/3/2015
+	*  @since	0.0.2
 	*
 	*  @param	N/A
-	*  @return	true/false (boolean)
+	*  @return	N/A
 	*/
-	public function get_render_status() {
-		global $dustpress;
 
-		return $dustpress->do_not_render;
+	public function plugin_menu() {
+		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
+	}
+
+	/*
+	*  dustPress_options
+	*
+	*  This function creates the options page functionality in admin side.
+	*
+	*  @type	function
+	*  @date	23/3/2015
+	*  @since	0.0.2
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+
+	public function dustPress_options() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
+
+		if ( isset( $_POST['dustpress_hidden_send'] ) && $_POST['dustpress_hidden_send'] == 1 ) {
+			$debug = $_POST['debug'];
+
+			update_option( 'dustpress_debug', $debug );
+
+			echo '<div class="updated"><p>Settings saved.</p></div>';
+		}
+
+		$debug_val = get_option('dustpress_debug');
+
+		if ( $debug_val )
+			$string = " checked=\"checked\"";
+		else
+			$string = "";
+		
+		echo '<div class="wrap">';
+		echo '<h2>DustPress Options</h2>';
+?>
+		<form name="form1" method="post" action="">
+			<input type="hidden" name="dustpress_hidden_send" value="1"/>
+
+			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug"<?php echo $string; ?>/></p>
+
+			<p class="submit">
+				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
+			</p>
+		</form>
+<?php
+
+		echo '</div>';
 	}
 
 	/*
@@ -1363,7 +848,7 @@ class DustPress {
 			
 			$output = json_encode($response);
 
-			exit( $output );
+			die( $output );
 		}
 	}
 
@@ -1385,102 +870,18 @@ class DustPress {
 		if ( empty( $key ) ) {
 			die( 'You did not set a key for your debugging data collection.' );
 		} else {			
-			global $dustpress;
-			
-			if ( ! isset( $dustpress->data['Debugger'] ) ) {
-				$dustpress->data['Debugger'] = [];
-			}
+			if ( isset( $this->model ) ) {
+				if ( ! isset( $this->model->data['Debugger'] ) ) {
+					$this->model->data['Debugger'] = [];
+				}
 
-			if ( ! isset( $dustpress->data['Debugger'][ $key ] ) ) {
-				$dustpress->data['Debugger'][ $key ] = [];	
-			}
+				if ( ! isset( $this->model->data['Debugger'][ $key ] ) ) {
+					$this->model->data['Debugger'][ $key ] = [];	
+				}
 
-			$dustpress->data['Debugger'][ $key ][] = $data;
+				$this->model->data['Debugger'][ $key ][] = $data;
+			}
 		}
-	}
-
-	/*
-	*  use_comments
-	*
-	*  This function adds scripts and styles needed with the Comments-helper.
-	*
-	*  @type	function
-	*  @date	13/8/2015
-	*  @since	0.1.1
-	*
-	*  @return	N/A
-	*/
-	public function use_comments( $post_id = null, $form_id = null, $status_id = null, $reply_label = null ) {		
-		global $post;
-
-		$js_args = [
-			'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
-			'comments_per_page' => get_option('comments_per_page'),
-			'post_id'			=> $post_id 	? $post_id		: $post->ID,
-			'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
-			'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
-			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPress-Comments')
-		];
-
-		// styles
-		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
-		
-		// js		
-		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
-		wp_localize_script( 'dustpress-comments', 'comments', $js_args );
-		wp_enqueue_script( 'dustpress-comments' );
-
-	}
-
-	/*
-	*  do_not_render
-	*
-	*  The developer can call this function if he wishes to not render the view automatically.
-	*
-	*  @type	function
-	*  @date	1/4/2015
-	*  @since	0.0.6
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-	public function do_not_render() {
-		global $dustpress;
-
-		$dustpress->do_not_render = true;
-	}
-
-	/*
-	*  array_search_recursive
-	*
-	*  This function extends PHP's array_search function making it recursive. Updates $indedex also
-	*  with the indexes where wanted value is located.
-	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
-	*
-	*  @param	$needle (N/A)
-	*  @param	$haystack (array)
-	*  @param	&$indexes (array)
-	*  @return	true/false (boolean)
-	*/
-	public function array_search_recursive($needle, $haystack, &$indexes=array()) {
-	    foreach ( $haystack as $key => $value ) {
-	        if ( is_array( $value ) ) {
-	            $indexes[] = $key;
-	            $status = $this->array_search_recursive( $needle, $value, $indexes );
-	            if ( $status ) {
-	                return true;
-	            } else {
-	                $indexes = array();
-	            }
-	        } else if ( $value === $needle ) {
-	            $indexes[] = $key;
-	            return true;
-	        }
-	    }
-	    return false;
 	}
 
 	/*
@@ -1495,6 +896,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
+
 	public function is_login_page() {
 	    return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
 	}
@@ -1511,6 +913,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	true/false (boolean)
 	*/
+
 	private function is_installation_compatible() {
 		$ret = [];
 
@@ -1539,6 +942,7 @@ class DustPress {
 	*  @param	N/A
 	*  @return	N/A
 	*/
+
 	public function required() {
 		$errors = [
 			"models" => "Directory named \"models\" is required under the activated theme's directory.",
@@ -1570,16 +974,52 @@ class DustPress {
 	private function camelcase_to_dashed( $string, $char = "-" ) {
 		preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches);
 		$results = $matches[0];
-		foreach ($results as &$match) {
+		foreach ( $results as &$match ) {
 	    	$match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
 		}
 
 	 	return implode($char, $results);
 	}
+
+	private function want_autoload() {
+		$conditions = [
+			function() {
+				return ! is_admin();
+			},
+			function() {
+				return ! $this->is_login_page();
+			},
+			function() {
+				return ! defined( "WP_CLI" );
+			},
+			function() {
+				return ( php_sapi_name() !== "cli" );
+			},
+			function() {
+				return ! defined( "DOING_AJAX" );
+			},
+			$_GET['_wpcf7_is_ajax_call'],
+			$_POST['_wpcf7_is_ajax_call'],
+			$_POST['gform_ajax'],
+		];
+
+		$conditions = apply_filters( "dustpress/want_autoload", $conditions );
+
+		foreach( $conditions as $condition ) {
+			if ( is_callable( $condition ) ) {
+				if ( false === $condition() ) {
+					return false;
+				}
+			}
+			else {
+				if ( ! is_null( $condition ) ) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
 }
 
-// Create an instance of the plugin after checking a few things
-	// Contact Form 7 Ajax call filter
-	if ( !( isset( $_POST['_wpcf7_is_ajax_call'] ) || isset( $_GET['_wpcf7_is_ajax_call'] ) ) ) {
-		$dustpress = new DustPress();
-	}
+$dustpress = new DustPress();
