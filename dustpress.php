@@ -538,7 +538,7 @@ class DustPress {
 				$hash;
 
 		$defaults = [
-			"data" => -1,
+			"data" => false,
 			"type" => "default",
 			"echo" => true
 		];
@@ -586,9 +586,11 @@ class DustPress {
 
 		$types = apply_filters( 'dustpress/formats', $types );
 
-		$this->model->data['WP'] = $this->populate_data_collection();
+		if ( ! $data ) {
+			$this->model->data = (array)$this->model->data;
 
-		$this->model->data = apply_filters( 'dustpress/data', $this->model->data );
+			$this->model->data['WP'] = $this->populate_data_collection();
+		}
 
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
@@ -610,8 +612,7 @@ class DustPress {
 
 		// Create debug data if wanted.
 
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			
+		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$jsondata = json_encode( $this->model->data );
 		
 			$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
@@ -627,17 +628,24 @@ class DustPress {
 
 			// Enqueued script with localized data.
 			wp_enqueue_script( 'dustpress_debugger' );
+		}
 
+		if ( $data ) {
+			$render_data = apply_filters( 'dustpress/data', $data );;
+		}
+		else {
+			$render_data = apply_filters( 'dustpress/data', $this->model->data );
 		}
 
 		// Create output with wanted format.
-		$output = call_user_func_array( $types[$type], array( $this->model->data, $template, $dust ) );
+		$output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
 
-		$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
 		$output = apply_filters( 'dustpress/output', $output );
 
 		// Store data into session for debugger to fetch
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
+		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
+			$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
+
 			$_SESSION[ $hash ] = $this->model->data;			
 		}
 
