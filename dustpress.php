@@ -16,6 +16,7 @@ class DustPress {
 	// Main model
 	private $model;
 
+	// This is where the data will be stored
 	private $data;
 
 	/*
@@ -159,11 +160,23 @@ class DustPress {
 		global $post;
 		global $dustpress;
 
+		// Filter for wanted post ID
+		$new_post = apply_filters( "dustpress/router", $post->ID );
+
+		// If developer wanted a post ID, make it happen
+		if ( ! is_null( $new_post ) ) {
+			$post = get_post( $new_post );
+
+			setup_postdata( $post );
+		}
+
 		// Initialize an array for debugging.
 		$debugs = [];
 
 		// Get current template name tidied up a bit.
 		$template = $this->get_template_filename( $debugs );
+
+		$template = apply_filters( "dustpress/template", $template );
 
 		// If class exists with the template's name, create new instance with it.
 		// We do not throw error if the class does not exist, to ensure that you can still create
@@ -198,10 +211,10 @@ class DustPress {
 	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
-		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
+		$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
 
-		if ( $pageTemplate ) {
-			$array = explode( "/", $pageTemplate );
+		if ( $page_template ) {
+			$array = explode( "/", $page_template );
 
 			$template = array_pop( $array );
 
