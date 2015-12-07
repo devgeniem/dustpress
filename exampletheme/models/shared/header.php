@@ -1,5 +1,5 @@
 <?php
-class Header extends DustPress {
+class Header extends DustPressModel {
 	public function bind_SomeData() {
 		$this->bind_data("This is the header.");
 	}

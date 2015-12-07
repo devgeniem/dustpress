@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
 *  DustPress Model Class
 *
 *  Extendable class which contains basic functions for DustPress models.
@@ -25,7 +25,7 @@ class DustPressModel {
 	// Possible wanted template
 	private $template;
 
-	/*
+	/**
 	*  __construct
 	*
 	*  Constructor for DustPress model class.
@@ -78,7 +78,7 @@ class DustPressModel {
 		}
 	}
 
-	/*
+	/**
 	*  fetch_data
 	*
 	*  This function gets the data from models and binds it to the global data structure
@@ -119,9 +119,9 @@ class DustPressModel {
 				if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
 					$method = str_replace( "bind_", "", $m[1] );
 
-					if ( $method == "Content" ) {
+					if ( "Content" == $method ) {
 						if ( ! isset( $this->data[ $class_name ]->{ $method } ) ) {
-							$this->data[ $class_name ]->{ $method } = [];
+							$this->data[ $class_name ]->{ $method } = new stdClass();
 						}
 
 						$data = call_user_func( $class_name . '::' . $m[1] );
@@ -157,7 +157,7 @@ class DustPressModel {
 				$data = call_user_func( $m );
 
 				if ( ! is_null( $data ) ) {
-					if ( strtolower( $method ) == "content" ) {
+					if ( "content" == strtolower( $method )  ) {
     					$this->data[$class_name]->Content = (object) array_merge( (array) $this->data[$class_name]->Content, [ $method => $data ] );
 					}
 					else {
@@ -174,7 +174,7 @@ class DustPressModel {
 		return $this->data[ $class_name ];
 	}
 
-	/*
+	/**
 	*  get_class_methods
 	*
 	*  This function returns all public methods from given class. Only class' own methods, no inherited.
@@ -201,7 +201,7 @@ class DustPressModel {
 		return $methods;
 	}
 
-	/*
+	/**
 	*  bind_sub
 	*
 	*  This function checks if a bound submodel is wanted to run and if it is, runs it.
@@ -215,13 +215,22 @@ class DustPressModel {
 	*/
 
 	public function bind_sub( $name, $args = null ) {
+		$class_name = get_class( $this );
 		$model = new $name( $args, $this );
 
-		$this->data[$name] = $model->fetch_data();
+		// If the submodel is not on the root level, set it under the current submodel.
+		if ( $this->parent ) {
+			$this->data[$class_name]->{ $name } = $model->fetch_data();
+		}
+		// Set submodel under the main model.
+		else {
+			$this->data[$name] = $model->fetch_data();
+		}
+
 		$this->submodels->{$name} = $model;
 	}
 
-	/*
+	/**
 	*  bind_data
 	*
 	*  This function binds the data from the models to the global data structure.
@@ -263,11 +272,11 @@ class DustPressModel {
 			if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
 
 			if ( ! $this->parent ) {
-				if ( "Content" == $key ) {
+				if ( "Content" == $key ) {	
 					$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
 				}
-				else {
-					$this->data[ $class_name ]->Content->{ $key } = $data;
+				else {					
+					$this->data[ $class_name ]->Content->{ $key } = (object) $data;
 				}
 			}
 			else {
@@ -276,7 +285,7 @@ class DustPressModel {
 		}
 	}
 
-	/*
+	/**
 	*  get_previous_function
 	*
 	*  This function returns the function where current function was called.
@@ -304,7 +313,7 @@ class DustPressModel {
 		}
 	}
 
-	/*
+	/**
 	*  get_template
 	*
 	*  This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
@@ -316,6 +325,7 @@ class DustPressModel {
 	*  @param	N/A
 	*  @return	mixed
 	*/
+
 	public function get_template() {
 		$ancestor = $this->get_ancestor();
 
@@ -327,7 +337,7 @@ class DustPressModel {
 		}
 	}
 
-	/*
+	/**
 	*  set_template
 	*
 	*  This function lets the developer to set the template to be used to render a page.
@@ -339,6 +349,7 @@ class DustPressModel {
 	*  @param	$template (string)
 	*  @return	N/A
 	*/
+
 	public function set_template( $template ) {
 		$ancestor = $this->get_ancestor();
 
@@ -350,5 +361,39 @@ class DustPressModel {
 				$ancestor->set_template( $template );
 			}
 		}
+	}
+
+	/**
+	*  use_comments
+	*
+	*  This function adds scripts and styles needed with the Comments-helper.
+	*
+	*  @type	function
+	*  @date	13/8/2015
+	*  @since	0.1.1
+	*
+	*  @return	N/A
+	*/
+
+	public function use_comments( $post_id = null, $form_id = null, $status_id = null, $reply_label = null ) {		
+		global $post;
+
+		$js_args = [
+			'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
+			'comments_per_page' => get_option('comments_per_page'),
+			'post_id'			=> $post_id 	? $post_id		: $post->ID,
+			'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
+			'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
+			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPress-Comments')
+		];
+
+		// styles
+		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+		
+		// js		
+		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
+		wp_localize_script( 'dustpress-comments', 'comments', $js_args );
+		wp_enqueue_script( 'dustpress-comments' );
+
 	}
 }

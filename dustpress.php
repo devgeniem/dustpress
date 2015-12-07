@@ -186,7 +186,9 @@ class DustPress {
 
 			$this->model->fetch_data();
 
-			$partial = strtolower( $this->camelcase_to_dashed( $template ) );
+			$template_override = $this->model->get_template();
+
+			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
 			$this->render( [ "partial" => $partial ] );
 		}
@@ -461,7 +463,7 @@ class DustPress {
 	public function set_helper_hooks() {
 
 		// set hooks for comments helper
-		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {		
+		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {
 			
 			if ( ! defined('DOING_AJAX') ) {
 				define('DOING_AJAX', true);

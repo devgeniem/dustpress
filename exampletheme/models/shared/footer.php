@@ -1,6 +1,6 @@
 <?php
 
-class Footer extends DustPress {
+class Footer extends DustPressModel {
 	public function bind_SomeData() {
 		$data = [
 			"key1" => "This is the footer.",

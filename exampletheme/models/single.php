@@ -1,6 +1,6 @@
 <?php
 
-class Single extends DustPress {
+class Single extends DustPressModel {
 	public function bind_submodules() {
 		// Include header in the page
 		$this->bind_sub("Header");

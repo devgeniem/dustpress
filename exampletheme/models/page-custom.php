@@ -3,7 +3,7 @@
 Template name: Custom
 */
 
-class PageCustom extends DustPress {
+class PageCustom extends DustPressModel {
 	private $variable;
 
 	public function bind_content() {

@@ -81,6 +81,8 @@ class Comments_Helper {
 
 		$comment 		= get_comment( $comment_id );
 		$comments_model = new Comments();
+		// TODO: korjaa yleistettäväksi
+		$comments_model->bind_Content();
 		$this->params 	= $comments_model->get_helper_params();
 		
 		if ( $comment->comment_approved ) {
@@ -130,7 +132,7 @@ class Comments_Helper {
 		$this->input_class		= $this->form_args['input_class'];
 		$this->input_attrs		= $this->form_args['input_attrs'];
 		$this->echo_form  		= $this->form_args['echo_form'] ? $this->form_args['echo_form'] : true;
-		$this->form_id 			= $this->form_args['id_form'] ? $form_args['id_form'] : 'commentform';		
+		$this->form_id 			= $this->form_args['form_id'] ? $form_args['form_id'] : 'commentform';		
 
 		// default args
 		$reply_defaults = [

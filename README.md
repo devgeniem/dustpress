@@ -62,7 +62,7 @@ The data models of DustPress consist of one class named the same as the file but
 Template name: Frontpage
 */
 
-class PageFrontpage extends DustPress {
+class PageFrontpage extends DustPressModel {
   //
 }
 ?>
@@ -123,7 +123,7 @@ this:
 Template name: PageFrontpage
 */
 
-class PageFrontpage extends DustPress {
+class PageFrontpage extends DustPressModel {
 
   public function bind_Submodels() {
     $this->bind_sub("Header");
