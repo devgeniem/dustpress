@@ -133,6 +133,7 @@ class DustPress {
 			$this->dust = new Dust\Dust();
 
 			// Set initial parameters
+			$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
 			$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
 
 			// Find and include Dust helpers from DustPress plugin
@@ -744,7 +745,7 @@ class DustPress {
 					}
 				}
 			}
-			
+
 			// If we could not find such template.
 			throw new Exception( "Error loading template file: " . $partial, 1 );
 
