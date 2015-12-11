@@ -284,11 +284,16 @@ class DustPressModel {
 			if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
 
 			if ( ! $this->parent ) {
-				if ( "Content" == $key ) {	
-					$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
+				if ( "Content" == $key ) {
+					// array merge ei toimi, jos data ei ole array
+					// jos data on tyhjä, tulee php warning
+					// TODO: luo virheilmoitus
+					if ( is_array( $data ) ) {
+						$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
+					}
 				}
 				else {					
-					$this->data[ $class_name ]->Content->{ $key } = (object) $data;
+					$this->data[ $class_name ]->Content->{ $key } = $data;
 				}
 			}
 			else {
