@@ -117,6 +117,10 @@ class DustPressModel {
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) { 
 				if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
+					if ( $m[1] == "__construct" ) {
+						continue;
+					} 
+
 					$method = str_replace( "bind_", "", $m[1] );
 
 					if ( "Content" == $method ) {
@@ -148,6 +152,10 @@ class DustPressModel {
 				}
 			}
 			else if ( is_callable( $m ) ) {
+				if ( $m == "__construct" ) {
+					continue;
+				} 
+
 				$method = str_replace( "bind_", "", $m );
 
 				if ( ! isset( $this->data[ $class_name ]->Content->{ $method } ) ) {
@@ -225,6 +233,10 @@ class DustPressModel {
 		// Set submodel under the main model.
 		else {
 			$this->data[$name] = $model->fetch_data();
+		}
+
+		if ( ! is_object( $this->submodels ) ) {
+			$this->submodels = (object)[];
 		}
 
 		$this->submodels->{$name} = $model;

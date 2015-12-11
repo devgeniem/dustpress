@@ -1013,6 +1013,9 @@ class DustPress {
 			function() {
 				return ! defined( "DOING_AJAX" );
 			},
+			function() {
+				return WP_USE_THEMES !== false;
+			},
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],
 			$_POST['gform_ajax'],
