@@ -1,5 +1,5 @@
 {?comment_approved}
-    <div id="comment__{comment_ID}" data-id="{comment_ID}" {comment_class|s}>
+    <div id="comment-{comment_ID}" data-id="{comment_ID}" {comment_class|s}>
         <div id="div-comment-{comment_ID}" class="comment__body">
             <div class="comment__header">
                 <div class="comment__avatar">

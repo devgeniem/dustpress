@@ -34,7 +34,7 @@ class DustPress {
 
 	public function __construct() {
 
-		// start sessio for data storing
+		// start session for data storing
 		if ( session_status() == PHP_SESSION_NONE ) {
     		session_start();
 		}
