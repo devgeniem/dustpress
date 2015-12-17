@@ -118,7 +118,7 @@ class DustPressModel {
 				}
 				else {
 					if ( ! $reflection->isPublic() && ! is_function_allowed( $method_item ) ) {
-						die( json_encode( "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ) );
+						die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ] ) );
 					}
 					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
 						$private_methods[] = $method_item;

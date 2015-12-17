@@ -1011,6 +1011,9 @@ class DustPress {
 	private function want_autoload() {
 		$conditions = [
 			function() {
+				return ! $this->is_dustpress_ajax();
+			},
+			function() {
 				return ! is_admin();
 			},
 			function() {
@@ -1118,7 +1121,7 @@ class DustPress {
 		}
 
 		// If there was not model defined in JS call, use the one we already are in.
-		if ( ! $model ) {
+		if ( ! $model ) {
 			// Get current template name
 			$model = $this->get_template_filename();
 
