@@ -1,18 +1,27 @@
-var $dp = function( path, args, success, error, get ) {
+var $dp = function( path, params ) {
 	
 	var dp = window.DustPressAjax,
-		
 		data = {
 			dustpress_data: {
 				path: path,
-				args: args
+				args: params.args
 			}
-		};
+		},
+		options = {};
 
-	if ( get )
-		dp.ajaxGet(window.location, encodeURIComponent(JSON.stringify(data)), success, error );
+	params.options = {};
+
+	if (params.options.get)
+		options.get = params.options.get;
+	if (params.options.contentType)
+		options.contentType = params.options.contentType;
 	else
-		dp.ajaxPost(window.location, data, success, error);
+		options.contentType = "application/x-www-form-urlencoded; charset=UTF-8";
+
+	if ( options.get )
+		dp.ajaxGet(window.location, encodeURIComponent(JSON.stringify(data)), params.success, params.error, params.options);
+	else
+		dp.ajaxPost(window.location, data, params.success, params.error, options);
 
 };
 
@@ -39,19 +48,19 @@ window.DustPressAjax = ( function( window, document ) {
 	        } catch (e) {} // ignore when it fails.
 	};
 
-	dp.onreadystatechange = function( xmlhttp ) {
+	dp.onreadystatechange = function(xmlhttp) {
 
 	    if (xmlhttp.readyState != 4) return;
 
 	    if (xmlhttp.status != 200)
-	    	dp.error(xmlhttp, 'error', xmlhttp.statusText);
+	    	dp.error(xmlhttp, "error", xmlhttp.statusText);
 	    else	        	
-	    	dp.success(xmlhttp, 'success', xmlhttp.statusText);
+	    	dp.success(xmlhttp, "success", xmlhttp.statusText);
 	        
 	};
 
 
-	dp.ajaxGet = function(url, success, error) {
+	dp.ajaxGet = function(url, success, error, options) {
 
 	    var xmlhttp = dp.xhr();
 
@@ -60,25 +69,30 @@ window.DustPressAjax = ( function( window, document ) {
 
 	    xmlhttp.onreadystatechange = dp.onreadystatechange;
 
-	    xmlhttp.open('GET', url, true);
-	    xmlhttp.setRequestHeader("Accept", "json");
+	    xmlhttp.open("GET", url, true);
+	    xmlhttp.setRequestHeader("Content-Type", options.contentType);
 	    xmlhttp.send();
 
 	    return xmlhttp;
 	};
 	
-	dp.ajaxPost = function(url, data, success, error) {
+	dp.ajaxPost = function(url, data, success, error, options) {
 
-	    var xmlhttp = dp.xhr();
+	    var xmlhttp = dp.xhr(),
+	    	contentType;
 
-	    dp.success = success;
+	    dp.success 	= success;
 	    dp.error 	= error;
 	    
 	    xmlhttp.onreadystatechange = dp.onreadystatechange;
 
-	    xmlhttp.open('POST', url, true);
-	    xmlhttp.setRequestHeader('Content-type', 'application/json');
-	    xmlhttp.send(JSON.stringify(data));
+	    xmlhttp.open("POST", url, true);
+	    xmlhttp.setRequestHeader("Content-Type", options.contentType);
+
+	    if ("application/json" === options.contentType)
+	    	xmlhttp.send(JSON.stringify(data));
+	    else
+	    	xmlhttp.send(data);
 
 	    return xmlhttp;
 	};
