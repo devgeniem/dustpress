@@ -1242,7 +1242,8 @@ class DustPress {
 	*  @return	(boolean)
 	*/
 	private function enqueue_scripts() {
-		wp_enqueue_script( 'dustpress', get_template_directory_uri() .'/dustpress/js/dustpress.js', null, '0.0.1', false );
+		wp_enqueue_script('jquery');
+		wp_enqueue_script( 'dustpress', get_template_directory_uri() .'/dustpress/js/dustpress.js', ['jquery'], '0.0.1', false );
 	}
 }
 
