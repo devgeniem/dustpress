@@ -1100,7 +1100,7 @@ class DustPress {
 
 		// Check if the data we got from the JS side has a function path
 		if ( isset( $data["path"] ) ) {
-			$path = explode( "/", $pathstring );
+			$path = explode( "/", $data["path"] );
 
 			if ( count( $path ) > 2 ) {
 				die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );	
@@ -1115,7 +1115,7 @@ class DustPress {
 				$functions = explode( ",", $path[1] );
 
 				foreach( $functions as $function ) {
-					$runs[] = $function;								
+					$runs[] = $function;				
 				}
 			}
 		}

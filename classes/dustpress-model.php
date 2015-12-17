@@ -26,7 +26,7 @@ class DustPressModel {
 	private $template;
 
 	// List of functions that are allowed to be run via AJAX
-	private $allowed_functions = [];
+	//private $allowed_functions = [];
 
 	/**
 	*  __construct
@@ -117,7 +117,7 @@ class DustPressModel {
 					continue;
 				}
 				else {
-					if ( ! $reflection->isPublic() && ! is_function_allowed( $method_item ) ) {
+					if ( ! $reflection->isPublic() && ! $this->is_function_allowed( $method_item ) ) {
 						die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ] ) );
 					}
 					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
@@ -132,6 +132,14 @@ class DustPressModel {
 							$methods[ $index ] = array( $this, $method_item );
 						}
 					}
+				}
+			}
+			else {
+				if ( $reflection->getNumberOfParameters() > 0 ) {
+					unset( $methods[ $index ] );
+				}
+				else {
+					$methods[ $index ] = array( $this, $method_item );
 				}
 			}
 		}
@@ -245,7 +253,7 @@ class DustPressModel {
 
 	private function get_class_methods( $class_name ) {
 		$rc = new \ReflectionClass( $class_name );
-		$rmpu = $rc->getMethods( \ReflectionMethod::IS_PUBLIC );
+		$rmpu = $rc->getMethods();
 
 		$methods = array();
 		foreach ( $rmpu as $r ) {
@@ -476,6 +484,9 @@ class DustPressModel {
 	*/
 
 	private function is_function_allowed( $function ) {
+		error_log( $function );
+		error_log( print_r( $this->allowed_functions, true ) );
+
 		if ( in_array( $function, $this->allowed_functions ) ) {
 			return true;
 		}
