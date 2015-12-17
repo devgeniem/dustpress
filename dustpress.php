@@ -1039,10 +1039,6 @@ class DustPress {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			return true;
 		}
-		else if ( $postbody = file_get_contents('php://input') ) {
-			$this->postbody = $postbody;
-			return true;
-		}
 		else {
 			return false;
 		}
@@ -1066,9 +1062,7 @@ class DustPress {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			$data = $_REQUEST["dustpress_data"];
 		}
-		else {
-			$data = (array)json_decode( $this->postbody )->dustpress_data;
-		}
+		die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );	
 
 		$runs = [];
 
