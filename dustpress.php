@@ -1055,7 +1055,12 @@ class DustPress {
 	public function create_ajax_instance() {
 		global $post;
 
-		$data = $_REQUEST["dustpress_data"];
+		if ( isset( $_REQUEST["dustpress_data"] ) ) {
+			$data = $_REQUEST["dustpress_data"];
+		}
+		else {
+			$data = json_decode( file_get_contents('php://input') );
+		}
 
 		$runs = [];
 
