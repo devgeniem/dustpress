@@ -1,17 +1,18 @@
-
-var $dp = function( path, args, success, error, get = false ) {
+var $dp = function( path, args, success, error, get ) {
 	
 	var dp = window.DustPressAjax,
 		
 		data = {
-			path: path,
-			args: args
+			dustpress_data: {
+				path: path,
+				args: args
+			}
 		};
 
 	if ( get )
 		dp.ajaxGet(window.location, encodeURIComponent(JSON.stringify(data)), success, error );
 	else
-		dp.ajaxPost(window.location, data, succes, error);
+		dp.ajaxPost(window.location, data, success, error);
 
 };
 
