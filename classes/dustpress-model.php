@@ -93,7 +93,7 @@ class DustPressModel {
 	*  @param	N/A
 	*  @return	N/A
 	*/
-	public function fetch_data( $functions = null ) {
+	public function fetch_data( $functions = null, $tidy = false ) {
 		$class_name = get_class( $this );
 
 		// Create a place to store the wanted data in the global data structure.
@@ -150,6 +150,11 @@ class DustPressModel {
 		$methods = apply_filters( "dustpress/methods", $methods, $class_name );
 		$private_methods = apply_filters( "dustpress/private_methods", $private_methods, $class_name );
 
+		// If we want tidy output, init variable for that
+		if ( $tidy ) {
+			$tidy_data = (object)[];
+		}
+
 		// Loop through all public methods and run the ones we wanted to deliver the data to the views.
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) { 
@@ -162,27 +167,42 @@ class DustPressModel {
 
 					if ( "Content" == $method ) {
 						if ( ! isset( $this->data[ $class_name ]->{ $method } ) ) {
-							$this->data[ $class_name ]->{ $method } = new stdClass();
+							if ( $tidy ) {
+								$tidy_data->{ $method } = (object)[];
+							}
+							else {
+								$this->data[ $class_name ]->{ $method } = (object)[];
+							}
 						}
 
 						$data = call_user_func( $class_name . '::' . $m[1] );
 
 						if ( ! is_null( $data ) ) {
-							$this->data[ $class_name ]->{ $method } = $data;
+							if ( $tidy ) {
+								$tidy_data->{ $method } = $data;
+							}
+							else {
+								$this->data[ $class_name ]->{ $method } = $data;
+							}
 						}
 					}
 					else {
 						$data = call_user_func( $class_name . '::' . $m[1] );
-						if ( ! is_null( $data ) ) {
-							if ( $this->parent ) {
-								$content = (array) $this->data[ $class_name ];
-								$content[ $method ] = $data;
-								$this->data[ $class_name ] = (object) $content;
-							}
-							else {
-								$content = (array) $this->data[ $class_name ]->Content;
-								$content[ $method ] = $data;
-								$this->data[ $class_name ]->Content = (object) $content;
+						if ( $tidy ) {
+							$tidy_data->{ $m[1] } = $data;
+						}
+						else {
+							if ( ! is_null( $data ) ) {
+								if ( $this->parent ) {
+									$content = (array) $this->data[ $class_name ];
+									$content[ $method ] = $data;
+									$this->data[ $class_name ] = (object) $content;
+								}
+								else {
+									$content = (array) $this->data[ $class_name ]->Content;
+									$content[ $method ] = $data;
+									$this->data[ $class_name ]->Content = (object) $content;
+								}
 							}
 						}
 					}
@@ -202,15 +222,20 @@ class DustPressModel {
 				$data = call_user_func( $m );
 
 				if ( ! is_null( $data ) ) {
-					if ( "content" == strtolower( $method )  ) {
-    					$this->data[$class_name]->Content = (object) array_merge( (array) $this->data[$class_name]->Content, [ $method => $data ] );
+					if ( $tidy ) {
+						$tidy_data->{ $method } = $data;
 					}
 					else {
-						if ( $this->parent ) {
-							$this->data[ $class_name ]->{ $method } = $data;
+						if ( "content" == strtolower( $method )  ) {
+	    					$this->data[$class_name]->Content = (object) array_merge( (array) $this->data[$class_name]->Content, [ $method => $data ] );
 						}
 						else {
-							$this->data[ $class_name ]->Content->{ $method } = $data;
+							if ( $this->parent ) {
+								$this->data[ $class_name ]->{ $method } = $data;
+							}
+							else {
+								$this->data[ $class_name ]->Content->{ $method } = $data;
+							}
 						}
 					}
 				}
@@ -223,21 +248,32 @@ class DustPressModel {
 				$data = $this->run_restricted( $method );
 
 				if ( ! is_null( $data ) ) {
-					if ( $this->parent ) {
-						$content = (array) $this->data[ $class_name ];
-						$content[ $method ] = $data;
-						$this->data[ $class_name ] = (object) $content;
+					if ( $tidy ) {
+						$tidy_data->{ $method } = $data;
 					}
 					else {
-						$content = (array) $this->data[ $class_name ]->Content;
-						$content[ $method ] = $data;
-						$this->data[ $class_name ]->Content = (object) $content;
+						if ( $this->parent ) {
+							$content = (array) $this->data[ $class_name ];
+							$content[ $method ] = $data;
+							$this->data[ $class_name ] = (object) $content;
+						}
+						else {
+							$content = (array) $this->data[ $class_name ]->Content;
+							$content[ $method ] = $data;
+							$this->data[ $class_name ]->Content = (object) $content;
+						}
 					}
 				}
 			}
 		}
 
-		return $this->data[ $class_name ];
+		if ( $tidy ) {
+			$this->data = $tidy_data;
+			return $tidy_data;
+		}
+		else {
+			return $this->data[ $class_name ];
+		}
 	}
 
 	/**
@@ -486,7 +522,7 @@ class DustPressModel {
 	*/
 
 	private function is_function_allowed( $function ) {
-		if ( in_array( $function, $this->allowed_functions ) ) {
+		if ( is_array( $this->allowed_functions ) && in_array( $function, $this->allowed_functions ) ) {
 			return true;
 		}
 		else {

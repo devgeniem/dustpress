@@ -1138,11 +1138,19 @@ class DustPress {
 			$partial = $args["partial"];
 		}
 
+		// Do we want tidy output or not?
+		if ( isset( $args["tidy"] ) ) {
+			$tidy = $args["tidy"];
+		}
+		else {
+			$tidy = false;
+		}
+
 		if ( class_exists( $model ) ) {
 			$instance = new $model( $args );
 
 			// Get the data
-			$instance->fetch_data( $functions );
+			$instance->fetch_data( $functions, $tidy );
 
 			// If we don't want to render, json-encode and return just the data
 			if ( ! isset( $partial ) ) {
