@@ -29,10 +29,10 @@ function comments($helpers) {
 }
 add_action('dustpress/helpers', 'comments', 10, 1);
 
-
 class Comments_Helper {
 
 	private $params;
+	private $uniqid;
 	private $data;
 	private $input_class;
 	private $input_attrs;
@@ -41,22 +41,25 @@ class Comments_Helper {
 	private $status_div;
 	private $echo_form;	
 	private $load_comments;
+	private $pagination;
+	private $paginate;
+	private $rows;
+	private $per_page;
+	private $page_label;
+	private $page;
 	private $reply;
 	private $comment_class;
 	private $form_args;
 	private $comments_args;
 	private $reply_args;
 	private $avatar_args;
+	private $section_title;
+	private $section_id;
 	private $form_id;
 	private $threaded;
 	private $comments;
 	private $form;
 	private $output;
-	private $dp;
-
-	public function get_output() {
-		return $this->output;
-	}
 
 	public function __construct( $params ) {		
 		global $post;		
@@ -71,6 +74,10 @@ class Comments_Helper {
 			
 	}
 
+	public function get_output() {
+		return $this->output;
+	}
+
 	// fired after comment is succesfully saved in wp-comments-post.php
 	public function handle_ajax( $comment_id ) {	
 		global $dustpress;
@@ -80,16 +87,17 @@ class Comments_Helper {
 		}	
 
 		$comment 		= get_comment( $comment_id );
-		$comments_model = new Comments();
-		// TODO: korjaa yleistettäväksi
-		$comments_model->bind_Content();
-		$this->params 	= $comments_model->get_helper_params();
-		
+		$comment_data	= wp_unslash( $_POST );
+
+		// get params from session
+		$uniqid 		= $comment_data['dustpress_comments'];
+		$this->params 	= $_SESSION[ $uniqid ];
+
 		if ( $comment->comment_approved ) {
-			$this->params->message = ['success' => __( 'Comment sent.', 'DustPress-Comments' )];
+			$this->params->message = ['success' => __( 'Comment sent.', 'DustPressComments' )];
 		}
 		else {
-			$this->params->message = ['warning' => __( 'Comment is waiting for approval.', 'DustPress-Comments' )];	
+			$this->params->message = ['warning' => __( 'Comment is waiting for approval.', 'DustPressComments' )];	
 		}
 
 		$this->init();
@@ -109,30 +117,66 @@ class Comments_Helper {
 		$c_data 		 		= new stdClass();
 		$params 	 			= $this->params;
 		$this->section_title	= $params->section_title;
+		$this->section_id 		= $params->section_id ? $params->section_id : 'comments__section';
 		$this->comment_class	= $params->comment_class;
 		$this->form_args		= $params->form_args;
 		$this->comments_args	= $params->comments_args;		
 		$this->avatar_args		= $params->avatar_args;		
-		$this->post_id			= $params->post_id ? $params->post_id : $post->ID;
+		$this->post_id			= $params->post_id 				? $params->post_id 				: $post->ID;
+		$this->echo_form 		= $this->form_args['echo_form'] ? $this->form_args['echo_form'] : true;		
+
+		// store params
+		$this->uniqid 					= uniqid();
+		$session_data 					= (object)[];
+		$session_data->section_title 	= $this->section_title;
+		$session_data->comment_class 	= $this->comment_class;
+		$session_data->form_args 		= $this->form_args;
+		$session_data->comments_args 	= $this->comments_args;
+		$session_data->avatar_args 		= $this->avatar_args;
+		$session_data->post_id 			= $this->post_id;
+		$_SESSION[ $this->uniqid ] 		= $session_data;
 
 		// get_comment_reply_link functions arguments
 		$this->reply_args		= $params->reply_args;
 
 		// comments' arguments		
-		$this->load_comments  	= $this->comments_args['load_comments'] ? $this->comments_args['load_comments'] : true;
-		$this->after_comments 	= $this->comments_args['after_comments'] ? $this->comments_args['after_comments'] : null;
-		$this->reply 			= $this->comments_args['reply'] !== null ? $this->comments_args['reply'] : true;
-		$this->threaded 		= $this->comments_args['threaded'] ? $this->comments_args['threaded'] : get_option('thread_comments');
+		$this->load_comments  	= $this->comments_args['load_comments'] 	? $this->comments_args['load_comments'] 	: true;		
+		$this->after_comments 	= $this->comments_args['after_comments'] 	? $this->comments_args['after_comments'] 	: null;
+		$this->reply 			= $this->comments_args['reply'] !== null 	? $this->comments_args['reply'] 			: true;
+		$this->threaded 		= $this->comments_args['threaded'] 			? $this->comments_args['threaded'] 			: get_option('thread_comments');
+		$this->paginate 		= $this->comments_args['page_comments'] 	? $this->comments_args['page_comments'] 	: get_option( 'page_comments', true );
+		$this->per_page 		= $this->comments_args['comments_per_page']	? $this->comments_args['comments_per_page'] : get_option( 'comments_per_page', 20 );
+		$this->page_label 		= $this->comments_args['page_label']		? $this->comments_args['page_label'] 		: __( 'comment-page', 'DustPressComments' );
 
-		// form loading and modification arguments
-		$this->replacements 	= $this->form_args['replace_input'];
-		$this->remove 			= $this->form_args['remove_input'];
-		$this->status_div 		= $this->form_args['status_div'];
-		$this->status_id 		= $this->form_args['status_id'];
-		$this->input_class		= $this->form_args['input_class'];
-		$this->input_attrs		= $this->form_args['input_attrs'];
-		$this->echo_form  		= $this->form_args['echo_form'] ? $this->form_args['echo_form'] : true;
-		$this->form_id 			= $this->form_args['form_id'] ? $form_args['form_id'] : 'commentform';		
+		// trying to paginate the wp way
+		if ( $this->wp_pagination() ) {
+			return;
+		}
+		
+		// closing args
+		$this->close_old 		= $this->comments_args['close_comments_for_old_posts'] 	? $this->comments_args['close_comments_for_old_posts'] 		: get_option( 'close_comments_for_old_posts', false );		
+
+		// maybe close comments
+		if ( $this->close_old ) {
+			$this->closed_after	= $this->comments_args['close_comments_days_old'] ? $this->comments_args['close_comments_days_old'] : get_option( 'close_comments_days_old', 14 );
+
+			$closing_time = strtotime( get_the_date( 'c', $this->post_id ) ) + $this->closed_after * 86400; error_log('closing time: '.$closing_time); error_log('now: '.time());
+
+			if ( $closing_time < time() ) {
+				$this->echo_form = false;
+			}
+		}
+
+		// form loading and modification arguments		
+		if ( $this->echo_form ) {
+			$this->replacements 	= $this->form_args['replace_input'];
+			$this->remove 			= $this->form_args['remove_input'];
+			$this->status_div 		= $this->form_args['status_div'];
+			$this->status_id 		= $this->form_args['status_id'];
+			$this->input_class		= $this->form_args['input_class'];
+			$this->input_attrs		= $this->form_args['input_attrs'];			
+			$this->form_id 			= $this->form_args['form_id'] ? $form_args['form_id'] : 'commentform';
+		}
 
 		// default args
 		$reply_defaults = [
@@ -160,21 +204,20 @@ class Comments_Helper {
 		}		
 
 		// map data
-		$c_data->title 			= $this->section_title;		
-		$c_data->form 			= $this->form;
-		$c_data->comments 		= $this->comments;
-		$c_data->form_id 		= $this->form_id;
-		$c_data->message  		= $params->message;
-		$c_data->after_comments = apply_filters( 'dustpress/comments/after-comments', $this->after_comments );
+		$c_data->title 			= apply_filters( 'dustpress/comments/section_title', $this->section_title );
+		$c_data->form_id 		= apply_filters( 'dustpress/comments/form_id', $this->form_id );
+		$c_data->message  		= apply_filters( 'dustpress/comments/message', $params->message );
+		$c_data->form 			= apply_filters( 'dustpress/comments/form', $this->form );
+		$c_data->comments 		= apply_filters( 'dustpress/comments/comments', $this->comments );		
+		$c_data->after_comments = apply_filters( 'dustpress/comments/after_comments', $this->after_comments );
+
+		// set partial
+		$partial 				= apply_filters( 'dustpress/comments/partial', 'comments' );
 
 		// add data into debugger
-		$dustpress->set_debugger_data( 'Comments', $c_data );
+		$dustpress->set_debugger_data( 'Comments', $c_data );						  
 
-		// filters
-		$c_data->comments 	= apply_filters( 'dustpress/comments/comments', $c_data->comments );
-		$c_data->form 		= apply_filters( 'dustpress/comments/form', $c_data->form );		
-		$partial 			= apply_filters( 'dustpress/comments/partial', 'comments' );							  
-
+		// render helper
 		$this->output = $dustpress->render( [
 			"partial" 	=> $partial,
 			"data" 		=> $c_data,
@@ -206,7 +249,41 @@ class Comments_Helper {
 		if ( ! isset( $this->comments_args['post_id'] ) ) {
 			$this->comments_args['post_id'] = $this->post_id;
 		}
-		$this->comments = get_comments( $this->comments_args );	
+
+		$get_all = $this->get_int( __( 'all-comments', 'DustPressComments' ) );
+
+		// maybe paginate
+		if ( $get_all !== 1 && $this->paginate ) {			
+			$args 		= array_merge( $this->comments_args, [ 'count' => true ] );
+			$page 		= $this->get_int( $this->page_label );
+			$this->rows = get_comments( $args );
+			$this->page = $page ? $page : 1;
+
+			$this->comments_args['parent'] = 0;
+			$this->comments_args['offset'] = $this->page == 1 ? 0 : ( $this->page - 1 ) * $this->per_page;
+			$this->comments_args['number'] = $this->per_page;
+
+			// this is a nice undocumented feature of wp
+			$this->comments_args['hierarchical'] = true;
+
+			$this->after_comments = $this->pagination();
+		}		
+
+		$this->comments = get_comments( $this->comments_args );
+	}
+
+	private function pagination() {
+		$params = (object)[];
+
+		$params->page_label = $this->page_label;
+		$params->page 		= $this->page;
+		$params->offset 	= $this->per_page;
+		$params->rows 		= $this->rows;
+		$params->hash 		= $this->section_id;
+		
+		$this->pagination = new Pagination_Helper( $params );
+
+		return $this->pagination->get_output();
 	}
 
 	private function extend_comments() {
@@ -315,14 +392,14 @@ class Comments_Helper {
 				echo $this->loader;
 			} 
 			else {
-				echo '<div class="comments_loader"><span>' . __('Processing comments...', 'DustPress-Comments') . '<span></div>';
+				echo '<div class="comments_loader"><span>' . __('Processing comments...', 'DustPressComments') . '<span></div>';
 			}
 			echo '<div id="comment-status"></div>';
 		}
 	}
 
 	public function insert_identifier( $id_elements ) {
-		return $id_elements . "<input type='hidden' name='dustpress_comments' id='dustpress_comments_identifier' value='1' />\n";
+		return $id_elements . "<input type='hidden' name='dustpress_comments' id='dustpress_comments_identifier' value='" . $this->uniqid . "' />\n";
 	}
 
 	public function threadify_comments( $comments, $parent = 0 ) {	
@@ -361,6 +438,21 @@ class Comments_Helper {
 		];		
 
 		die( json_encode( $return ) );
+	}
+
+	private function get_int( $param ) {
+		return (int) $_GET[$param];
+	}
+
+	private function wp_pagination() {		
+		$pattern = '/\/comment-page-(\d+)\//';
+		$uri = $_SERVER['REQUEST_URI'];
+		if ( preg_match( $pattern, $uri, $matches ) ) {			
+			$uri 		= preg_replace( $pattern, '', $uri );
+			wp_redirect( $uri . '?' . __( 'all-comments', 'DustPressComments' ) . '=1' );
+			exit();
+		}
+
 	}
 
 }

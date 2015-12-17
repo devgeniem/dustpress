@@ -2,7 +2,7 @@
 <div class="pagination-centered">
 	<ul class="pagination" role="menubar" aria-label="Sivutus">
 		<li 
-			class="arrow arrow-first arrow-left{^first_page} unavailable not-used{/first_page}"	
+			class="arrow arrow-first arrow-left{?on_first_page} unavailable not-used{/on_first_page}"	
 			aria-disabled="true">
 				<a class="paginate" href="{page_link}1{hash}" data-page="{first_page}">&laquo; {S.start}</a>
 		</li>
@@ -29,7 +29,7 @@
 			<li class="arrow arrow-right-mobile"><a class="paginate" href="{page_link}{next_page}{hash}" data-page="{next_page}">&raquo;</a></li>
 		{/next_page}
 		<li 
-			class="arrow arrow-last arrow-right{^last_page} unavailable not-used{/last_page}"	
+			class="arrow arrow-last arrow-right{?on_last_page} unavailable not-used{/on_last_page}"	
 			aria-disabled="true">
 				<a class="paginate" href="{page_link}{last_page}{hash}" data-page="{last_page}">{S.end} &raquo;</a>
 		</li>
