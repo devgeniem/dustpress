@@ -103,6 +103,15 @@ class DustPressModel {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $class_name );
 
+		// Check that all asked functions exist
+		if ( is_array( $functions ) && count( $functions ) > 0 ) {
+			foreach ( $functions as $function ) {
+				if ( ! in_array( $function, $methods ) ) {
+					die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
+				}
+			}
+		}
+
 		// If we are on an AJAX call, we may want to run some private or protected functions too
 		$private_methods = [];
 
@@ -118,7 +127,7 @@ class DustPressModel {
 				}
 				else {
 					if ( ! $this->is_function_allowed( $method_item ) ) {
-						die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ] ) );
+						die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
 					}
 					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
 						$private_methods[] = $method_item;
