@@ -19,6 +19,9 @@ class DustPress {
 	// This is where the data will be stored
 	private $data;
 
+	// Possible post body
+	private $postbody;
+
 	/*
 	*  __construct
 	*
@@ -1036,6 +1039,10 @@ class DustPress {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			return true;
 		}
+		else if ( $postbody = file_get_contents('php://input') ) {
+			$this->postbody = $postbody;
+			return true;
+		}
 		else {
 			return false;
 		}
@@ -1060,7 +1067,7 @@ class DustPress {
 			$data = $_REQUEST["dustpress_data"];
 		}
 		else {
-			$data = json_decode( file_get_contents('php://input') );
+			$data = (array)json_decode( $this->postbody )->dustpress_data;
 		}
 
 		$runs = [];
