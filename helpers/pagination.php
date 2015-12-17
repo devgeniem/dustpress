@@ -3,14 +3,16 @@
 $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params) {
 	global $dustpress;
 
-	// build pagination
-	$pagination = new Pagination_Helper( $params );
+	if ( $bodies->dummy !== true ) {
+		// build pagination
+		$pagination = new Pagination_Helper( $params );
 
-	// add data into debugger
-	$dustpress->set_debugger_data( 'Pagination', $data );
+		// add data into debugger
+		$dustpress->set_debugger_data( 'Pagination', $data );
 
-	// print out rendered html
-	return $chunk->write( $pagination->get_output() );	
+		// print out rendered html
+		return $chunk->write( $pagination->get_output() );
+	}
 };
 
 

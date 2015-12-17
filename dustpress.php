@@ -1,5 +1,5 @@
 <?php
-/**
+/*
 Plugin Name: DustPress
 Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
@@ -19,7 +19,7 @@ class DustPress {
 	// This is where the data will be stored
 	private $data;
 
-	/**
+	/*
 	*  __construct
 	*
 	*  Constructor for DustPress core class.
@@ -126,12 +126,8 @@ class DustPress {
 			}
 		}
 
-		// Add hooks for helpers' ajax functions
-		$this->set_helper_hooks();
-
 		// Add create_instance to right action hook if we are not on the admin side
-		if ( $this->want_autoload() ) {
-			$this->enqueue_scripts();		
+		if ( $this->want_autoload() ) {				
 			add_action( 'shutdown', [ $this, 'create_instance' ] );
 		}
 		else if ( $this->is_dustpress_ajax() ) {
@@ -147,7 +143,7 @@ class DustPress {
 		return;
 	}
 
-	/**
+	/*
 	*  create_instance
 	*
 	*  This function creates the instance of the main model that is defined by the WordPress template
@@ -199,7 +195,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  get_template_filename
 	*
 	*  This function gets current template's filename and returns without extension or WP-template prefixes such as page- or single-.
@@ -449,42 +445,7 @@ class DustPress {
 		return "Index";
 	}
 
-	/**
-	*  set_helper_hooks
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	02/09/2015
-	*  @since	0.1.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function set_helper_hooks() {
-
-		// set hooks for comments helper
-		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {
-			
-			if ( ! defined('DOING_AJAX') ) {
-				define('DOING_AJAX', true);
-			}
-
-			// initialize helper
-			$comments_helper = new Comments_Helper( 'handle_ajax', $this );
-
-			// fires after comment is saved
-			add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
-
-			// wp error handling
-			add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
-	
-		}
-
-	}
-
-	/**
+	/*
 	*  populate_data_collection
 	*
 	*  This function populates the data collection with essential data
@@ -536,7 +497,7 @@ class DustPress {
 		return apply_filters( "dustpress/data/wp", $wp_data );
 	}
 
-	/**
+	/*
 	*  render
 	*
 	*  This function will render the given data in selected format
@@ -612,6 +573,10 @@ class DustPress {
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
 			$template = $this->get_template( $partial );
+
+			$helpers = $this->prerender( $partial );
+
+			$this->enqueue_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
 			die( "DustPress error: ". $e->getMessage() );
@@ -687,7 +652,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  get_template
 	*
 	*  This function checks whether the given partial exists and returns the contents of the file as a string
@@ -732,7 +697,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  admin_stuff
 	*
 	*  This function sets JavaScripts and styles for admin debug feature.
@@ -753,6 +718,9 @@ class DustPress {
 		// If admin and debug is set to true, enqueue JSON printing
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			wp_enqueue_script( 'jquery' );			
+			
+			// Just register the dustpress and enqueue later, if needed
+			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
 
 			// Register the debugger script
 			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, '0.0.2', true );						
@@ -763,7 +731,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  plugin_menu
 	*
 	*  This function creates the menu item for DustPress options in admin side.
@@ -780,7 +748,7 @@ class DustPress {
 		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
 	}
 
-	/**
+	/*
 	*  dustPress_options
 	*
 	*  This function creates the options page functionality in admin side.
@@ -830,7 +798,7 @@ class DustPress {
 		echo '</div>';
 	}
 
-	/**
+	/*
 	*  get_debugger_data
 	*
 	*  This function returns dustpress data from the session.
@@ -866,7 +834,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  set_debugger_data
 	*
 	*  This function sets data into global data collection.
@@ -898,7 +866,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  is_login_page
 	*
 	*  Returns true if we are on login or register page.
@@ -915,7 +883,7 @@ class DustPress {
 	    return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
 	}
 
-	/**
+	/*
 	*  is_installation_compatible
 	*
 	*  This function returns true if the WordPress configuration is suitable for DustPress.
@@ -944,7 +912,7 @@ class DustPress {
 		return $ret;
 	}
 
-	/**
+	/*
 	*  required
 	*
 	*  This function prints out admin notice for missing folders on the theme file.
@@ -971,7 +939,7 @@ class DustPress {
 		echo "</div>";
 	}
 
-	/**
+	/*
 	*  camelcase_to_dashed
 	*
 	*  This function returns given string converted from CamelCase to camel-case
@@ -995,7 +963,7 @@ class DustPress {
 	 	return implode($char, $results);
 	}
 
-	/**
+	/*
 	*  want_autoload
 	*
 	*  This function determines if we want to autoload and render the model or not.
@@ -1052,7 +1020,7 @@ class DustPress {
 		return true;
 	}
 
-	/**
+	/*
 	*  is_dustpress_ajax
 	*
 	*  This function determines if we are on a DustPress AJAX call or not.
@@ -1072,7 +1040,7 @@ class DustPress {
 		}
 	}
 
-	/**
+	/*
 	*  create_ajax_instance
 	*
 	*  This function does lots of AJAX stuff with the parameters from the JS side.
@@ -1087,7 +1055,12 @@ class DustPress {
 	public function create_ajax_instance() {
 		global $post;
 
-		$data = $_REQUEST["dustpress_data"];
+		if ( isset( $_REQUEST["dustpress_data"] ) ) {
+			$data = $_REQUEST["dustpress_data"];
+		}
+		else {
+			$data = json_decode( file_get_contents('php://input') );
+		}
 
 		$runs = [];
 
@@ -1164,6 +1137,88 @@ class DustPress {
 		}
 		else {
 			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );			
+		}
+	}
+
+	// Prerender
+	public function prerender( $partial, $already = [] ) {
+		$filename = $this->get_prerender_file( $partial );
+
+		if ( $filename == false ) return;
+
+		$file = file_get_contents( $filename );
+
+		if ( in_array( $file, $already) ) {
+			return;
+		}
+
+		$already[] = $file;
+
+		$helpers = [];
+
+		// Get helpers
+		preg_match_all("/\{@(\w+)/", $file, $findings);
+
+		$helpers = array_merge( $helpers, array_unique( $findings[1] ) );
+
+		// Get includes
+		preg_match_all("/\{>[\"']?([a-zA-z0-9\/]+)?/", $file, $includes);
+
+		foreach( $includes[1] as $include ) {
+			$include_helpers = $this->prerender( $include, $already );
+
+			if ( is_array( $include_helpers ) ) {
+				$helpers = array_merge( $helpers, array_unique( $include_helpers ) );
+			}
+		}
+
+		if ( is_array( $helpers ) ) {
+			return array_unique( $helpers );
+		}
+		else {
+			return [];
+		}
+	}
+
+	public function get_prerender_file( $partial ) {
+		$templatefile =  $partial . '.dust';
+
+		$templatepaths = array( get_template_directory() . '/partials/' );
+
+		$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+
+		foreach ( $templatepaths as $templatepath ) {
+			if ( is_readable( $templatepath ) ) {
+				foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
+					if ( strpos( $file, $templatefile ) !== false ) {
+						if ( is_readable( $file ) ) {
+							return $file;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public function enqueue_helpers( $helpers ) {
+		if ( is_array( $helpers ) ) {
+			$dummyEvaluator = new Dust\Evaluate\Evaluator( $this->dust );
+			$dummyChunk = new Dust\Evaluate\Chunk( $dummyEvaluator );
+			$dummyContext = new Dust\Evaluate\Context( $dummyEvaluator );
+			$dummySection = new Dust\Ast\Section( null );
+			$dummyBodies = new Dust\Evaluate\Bodies( $dummySection );
+			$dummyParameters = new Dust\Evaluate\Parameters( $dummyEvaluator, $dummyContext );
+
+			foreach( $this->dust->helpers as $name => $helper ) {
+				if ( in_array( $name, $helpers) ) {
+					if ( $helper instanceof \Closure ) {
+						$dummyBodies->dummy = true;
+						call_user_func( $helper, $dummyChunk, $dummyContext, $dummyBodies, $dummyParameters );
+					}
+				}
+			}
 		}
 	}
 

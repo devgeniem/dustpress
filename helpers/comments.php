@@ -20,9 +20,47 @@ function comments($helpers) {
 	$helpers['comments'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params) {
 		global $dustpress;
 
-		$handler = new Comments_Helper( $params, $dustpress );
+		if ( $bodies->dummy !== true ) {
+			$handler = new Comments_Helper( $params, $dustpress );
 
-		return $chunk->write( $handler->get_output() );
+			return $chunk->write( $handler->get_output() );
+		}
+		else {
+			// set hooks for comments helper
+			if ( isset( $_POST['dustpress_comments_ajax'] ) ) {
+				
+				if ( ! defined('DOING_AJAX') ) {
+					define('DOING_AJAX', true);
+				}
+
+				// initialize helper
+				$comments_helper = new Comments_Helper( 'handle_ajax', $this );
+
+				// fires after comment is saved
+				add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
+
+				// wp error handling
+				add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
+		
+			}
+			
+			$js_args = [
+				'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
+				'comments_per_page' => get_option('comments_per_page'),
+				'post_id'			=> $post_id 	? $post_id		: $post->ID,
+				'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
+				'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
+				'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPress-Comments')
+			];
+
+			// styles
+			wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+			
+			// js		
+			wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
+			wp_localize_script( 'dustpress-comments', 'comments', $js_args );
+			wp_enqueue_script( 'dustpress-comments' );
+		}
 	};
 
 	return $helpers;
