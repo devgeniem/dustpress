@@ -36,9 +36,9 @@ window.DustPress = ( function( window, document, $ ) {
 	dp.successHandler = function(data, textStatus, jqXHR) {
 		var parsed = $.parseJSON(data);
 		if(parsed.error === undefined)
-			dp.success(data, textStatus, jqXHR);
+			dp.success(parsed, textStatus, jqXHR);
 		else
-			dp.error(data, textStatus, jqXHR);
+			dp.error(parsed, textStatus, jqXHR);
 	};
 
 	dp.errorHandler = function(jqXHR, textStatus, errorThrown) {
