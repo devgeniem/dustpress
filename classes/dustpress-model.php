@@ -25,6 +25,9 @@ class DustPressModel {
 	// Possible wanted template
 	private $template;
 
+	// List of functions that are allowed to be run via AJAX
+	private $allowed_functions = [];
+
 	/**
 	*  __construct
 	*
@@ -90,7 +93,7 @@ class DustPressModel {
 	*  @param	N/A
 	*  @return	N/A
 	*/
-	public function fetch_data() {
+	public function fetch_data( $functions = null ) {
 		$class_name = get_class( $this );
 
 		// Create a place to store the wanted data in the global data structure.
@@ -100,20 +103,44 @@ class DustPressModel {
 		// Fetch all methods from given class.
 		$methods = $this->get_class_methods( $class_name );
 
+		// If we are on an AJAX call, we may want to run some private or protected functions too
+		$private_methods = [];
+
+		// Loop through the methods
 		foreach( $methods as $index => $method_item ) {
 			$reflection = new ReflectionMethod( $class_name, $method_item );
-			
-			if ( $reflection->getNumberOfParameters() > 0 ) {
-				unset( $methods[ $index ] );
-			}
-			else {
-				$methods[ $index ] = array( $this, $method_item );
+
+			// If we have wanted list of functions, check if we can run them and don't run
+			// anything else.
+			if ( is_array( $functions ) && count( $functions ) > 0 ) {
+				if ( ! in_array( $method_item, $functions ) ) {
+					continue;
+				}
+				else {
+					if ( ! $reflection->isPublic() && ! is_function_allowed( $method_item ) ) {
+						die( json_encode( "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ) );
+					}
+					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
+						$private_methods[] = $method_item;
+						continue;
+					}
+					else {
+						if ( $reflection->getNumberOfParameters() > 0 ) {
+							unset( $methods[ $index ] );
+						}
+						else {
+							$methods[ $index ] = array( $this, $method_item );
+						}
+					}
+				}
 			}
 		}
 
+		// Add some filters
 		$methods = apply_filters( "dustpress/methods", $methods, $class_name );
+		$private_methods = apply_filters( "dustpress/private_methods", $private_methods, $class_name );
 
-		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
+		// Loop through all public methods and run the ones we wanted to deliver the data to the views.
 		foreach( $methods as $m ) {
 			if ( is_array( $m ) ) { 
 				if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
@@ -179,6 +206,27 @@ class DustPressModel {
 				}
 			}
 		}
+
+		// If there are private methods to run, run them too.
+		if ( is_array( $private_methods ) && count( $private_methods ) > 0 ) {
+			foreach( $private_methods as $method ) {		
+				$data = $this->run_restricted( $method );
+
+				if ( ! is_null( $data ) ) {
+					if ( $this->parent ) {
+						$content = (array) $this->data[ $class_name ];
+						$content[ $method ] = $data;
+						$this->data[ $class_name ] = (object) $content;
+					}
+					else {
+						$content = (array) $this->data[ $class_name ]->Content;
+						$content[ $method ] = $data;
+						$this->data[ $class_name ]->Content = (object) $content;
+					}
+				}
+			}
+		}
+
 		return $this->data[ $class_name ];
 	}
 
@@ -411,6 +459,53 @@ class DustPressModel {
 		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
 		wp_localize_script( 'dustpress-comments', 'comments', $js_args );
 		wp_enqueue_script( 'dustpress-comments' );
+	}
 
+	/**
+	*  is_function_allowed
+	*
+	*  This functions returns true if asked private or protected functions is
+	*  allowed to be run via the run wrapper.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @param   $function (string)
+	*  @return	$allowed (boolean)
+	*/
+
+	private function is_function_allowed( $function ) {
+		if ( in_array( $function, $this->allowed_functions ) ) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	/**
+	*  run_restricted
+	*
+	*  This function runs a restricted function if it exists in the allowed functions
+	*  and returns whatever the wanted function returns.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*
+	*  @param   $function (string)
+	*  @param   $args (array)
+	*  @return	mixed
+	*/
+
+	public function run_restricted( $function ) {
+		if ( $this->is_function_allowed ) {
+			return call_user_func( [ $this, $function ] );
+		}
+		else {
+			return (object)["error" => "Wanted function does not exist in the allowed functions list."];
+		}
 	}
 }

@@ -133,6 +133,9 @@ class DustPress {
 		if ( $this->want_autoload() ) {				
 			add_action( 'shutdown', [ $this, 'create_instance' ] );
 		}
+		else if ( $this->is_dustpress_ajax() ) {
+			add_action( 'shutdown', [ $this, 'create_ajax_instance' ] );	
+		}
 
 		// Add admin menu
 		add_action( 'admin_menu', [ $this, 'plugin_menu' ] );
@@ -155,10 +158,8 @@ class DustPress {
 	*  @param   N/A
 	*  @return	N/A
 	*/
-
 	public function create_instance() {
 		global $post;
-		global $dustpress;
 
 		// Filter for wanted post ID
 		$new_post = apply_filters( "dustpress/router", $post->ID );
@@ -996,6 +997,17 @@ class DustPress {
 	 	return implode($char, $results);
 	}
 
+	/*
+	*  want_autoload
+	*
+	*  This function determines if we want to autoload and render the model or not.
+	*
+	*  @type	function
+	*  @date	10/8/2015
+	*  @since	0.2.0
+	*
+	*  @return	(boolean)
+	*/
 	private function want_autoload() {
 		$conditions = [
 			function() {
@@ -1037,6 +1049,113 @@ class DustPress {
 		}
 
 		return true;
+	}
+
+	/*
+	*  is_dustpress_ajax
+	*
+	*  This function determines if we are on a DustPress AJAX call or not.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @return	(boolean)
+	*/
+	private function is_dustpress_ajax() {
+		if ( isset( $_REQUEST["dustpress_data"] ) ) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	/*
+	*  create_ajax_instance
+	*
+	*  This function does lots of AJAX stuff with the parameters from the JS side.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @param   N/A
+	*  @return	N/A
+	*/
+	public function create_ajax_instance() {
+		global $post;
+
+		$data = $_REQUEST["dustpress_data"];
+
+		$runs = [];
+
+		// Get the args
+		if ( ! empty( $data["args"] ) ) {
+			$args = $data["args"];
+		}
+
+		// Check if the data we got from the JS side has a function path
+		if ( isset( $data["path"] ) ) {
+			$path = explode( "/", $pathstring );
+
+			if ( count( $path ) > 2 ) {
+				die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );	
+			}
+			else if ( count( $path ) == 2 ) {
+				if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
+					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );			
+				}
+
+				$model = $path[0];
+
+				$functions = explode( ",", $path[1] );
+
+				foreach( $functions as $function ) {
+					$runs[] = $function;								
+				}
+			}
+		}
+
+		// If there was not model defined in JS call, use the one we already are in.
+		if ( ! $model ) {
+			// Get current template name
+			$model = $this->get_template_filename();
+
+			$model = apply_filters( "dustpress/template", $model );
+		}
+
+		// If render is set true, set the model's default template to be used.
+		if ( isset( $args["render"] ) && $args["render"] == true ) {
+			$partial = strtolower( $this->camelcase_to_dashed( $model ) );
+		}
+
+		// Get the possible defined partial and possible override the default template.
+		if ( isset( $args["partial"] ) ) {
+			$partial = $args["partial"];
+		}
+
+		if ( class_exists( $model ) ) {
+			$instance = new $model( $args );
+
+			// Get the data
+			$instance->fetch_data( $functions );
+
+			// If we don't want to render, json-encode and return just the data
+			if ( ! isset( $partial ) ) {
+				die( json_encode( [ "success" => $instance->data ] ) );
+			}
+			else {
+				$template_override = $instance->get_template();
+
+				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $partial ) );
+
+				die( $this->render( [ "partial" => $partial, "data" => $instance->data ] ) );
+			}
+		}
+		else {
+			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );			
+		}
 	}
 }
 
