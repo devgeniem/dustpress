@@ -126,9 +126,6 @@ class DustPress {
 			}
 		}
 
-		// Add hooks for helpers' ajax functions
-		$this->set_helper_hooks();
-
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {				
 			add_action( 'shutdown', [ $this, 'create_instance' ] );
@@ -449,41 +446,6 @@ class DustPress {
 	}
 
 	/*
-	*  set_helper_hooks
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	02/09/2015
-	*  @since	0.1.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function set_helper_hooks() {
-
-		// set hooks for comments helper
-		if ( isset( $_POST['dustpress_comments_ajax'] ) ) {
-			
-			if ( ! defined('DOING_AJAX') ) {
-				define('DOING_AJAX', true);
-			}
-
-			// initialize helper
-			$comments_helper = new Comments_Helper( 'handle_ajax', $this );
-
-			// fires after comment is saved
-			add_action( 'comment_post', array( $comments_helper, 'handle_ajax' ), 2 );
-
-			// wp error handling
-			add_filter('wp_die_ajax_handler', array( $comments_helper, 'get_error_handler' ) );			
-	
-		}
-
-	}
-
-	/*
 	*  populate_data_collection
 	*
 	*  This function populates the data collection with essential data
@@ -611,6 +573,10 @@ class DustPress {
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
 			$template = $this->get_template( $partial );
+
+			$helpers = $this->prerender( $partial );
+
+			$this->enqueue_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
 			die( "DustPress error: ". $e->getMessage() );
@@ -1166,6 +1132,88 @@ class DustPress {
 		}
 		else {
 			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );			
+		}
+	}
+
+	// Prerender
+	public function prerender( $partial, $already = [] ) {
+		$filename = $this->get_prerender_file( $partial );
+
+		if ( $filename == false ) return;
+
+		$file = file_get_contents( $filename );
+
+		if ( in_array( $file, $already) ) {
+			return;
+		}
+
+		$already[] = $file;
+
+		$helpers = [];
+
+		// Get helpers
+		preg_match_all("/\{@(\w+)/", $file, $findings);
+
+		$helpers = array_merge( $helpers, array_unique( $findings[1] ) );
+
+		// Get includes
+		preg_match_all("/\{>[\"']?([a-zA-z0-9\/]+)?/", $file, $includes);
+
+		foreach( $includes[1] as $include ) {
+			$include_helpers = $this->prerender( $include, $already );
+
+			if ( is_array( $include_helpers ) ) {
+				$helpers = array_merge( $helpers, array_unique( $include_helpers ) );
+			}
+		}
+
+		if ( is_array( $helpers ) ) {
+			return array_unique( $helpers );
+		}
+		else {
+			return [];
+		}
+	}
+
+	public function get_prerender_file( $partial ) {
+		$templatefile =  $partial . '.dust';
+
+		$templatepaths = array( get_template_directory() . '/partials/' );
+
+		$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+
+		foreach ( $templatepaths as $templatepath ) {
+			if ( is_readable( $templatepath ) ) {
+				foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
+					if ( strpos( $file, $templatefile ) !== false ) {
+						if ( is_readable( $file ) ) {
+							return $file;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public function enqueue_helpers( $helpers ) {
+		if ( is_array( $helpers ) ) {
+			$dummyEvaluator = new Dust\Evaluate\Evaluator( $this->dust );
+			$dummyChunk = new Dust\Evaluate\Chunk( $dummyEvaluator );
+			$dummyContext = new Dust\Evaluate\Context( $dummyEvaluator );
+			$dummySection = new Dust\Ast\Section( null );
+			$dummyBodies = new Dust\Evaluate\Bodies( $dummySection );
+			$dummyParameters = new Dust\Evaluate\Parameters( $dummyEvaluator, $dummyContext );
+
+			foreach( $this->dust->helpers as $name => $helper ) {
+				if ( in_array( $name, $helpers) ) {
+					if ( $helper instanceof \Closure ) {
+						$dummyBodies->dummy = true;
+						call_user_func( $helper, $dummyChunk, $dummyContext, $dummyBodies, $dummyParameters );
+					}
+				}
+			}
 		}
 	}
 }

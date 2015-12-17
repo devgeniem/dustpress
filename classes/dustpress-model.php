@@ -475,39 +475,6 @@ class DustPressModel {
 	}
 
 	/**
-	*  use_comments
-	*
-	*  This function adds scripts and styles needed with the Comments-helper.
-	*
-	*  @type	function
-	*  @date	13/8/2015
-	*  @since	0.1.1
-	*
-	*  @return	N/A
-	*/
-
-	public function use_comments( $post_id = null, $form_id = null, $status_id = null, $reply_label = null ) {		
-		global $post;
-
-		$js_args = [
-			'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
-			'comments_per_page' => get_option('comments_per_page'),
-			'post_id'			=> $post_id 	? $post_id		: $post->ID,
-			'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
-			'status_id' 		=> $status_id 	? $status_id 	: 'comments__status',			
-			'reply_label' 		=> $reply_label ? $reply_label 	: __( 'Reply to comment', 'DustPress-Comments')
-		];
-
-		// styles
-		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
-		
-		// js		
-		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
-		wp_localize_script( 'dustpress-comments', 'comments', $js_args );
-		wp_enqueue_script( 'dustpress-comments' );
-	}
-
-	/**
 	*  is_function_allowed
 	*
 	*  This functions returns true if asked private or protected functions is
