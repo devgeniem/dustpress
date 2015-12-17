@@ -135,11 +135,13 @@ class DustPressModel {
 				}
 			}
 			else {
-				if ( $reflection->getNumberOfParameters() > 0 ) {
-					unset( $methods[ $index ] );
-				}
-				else {
-					$methods[ $index ] = array( $this, $method_item );
+				if ( $reflection->isPublic() ) {
+					if ( $reflection->getNumberOfParameters() > 0 ) {
+						unset( $methods[ $index ] );
+					}
+					else {
+						$methods[ $index ] = array( $this, $method_item );
+					}
 				}
 			}
 		}
