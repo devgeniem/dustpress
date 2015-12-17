@@ -1,5 +1,3 @@
-//var $dp = window.DustPress.ajax;
-
 window.DustPress = ( function( window, document, $ ) {
 
 	var dp = {};
@@ -15,6 +13,9 @@ window.DustPress = ( function( window, document, $ ) {
 
 		var post = $.extend( dp.defaults, params );
 
+		dp.success 	= success;
+		dp.error 	= error;
+
 		$.ajax({
 			url: window.location,
 			method: post.type,
@@ -27,11 +28,25 @@ window.DustPress = ( function( window, document, $ ) {
 				}
 			}
 		})
-		.done(success)
-		.fail(error);
+		.done(dp.successHandler)
+		.fail(dp.errorHandler);
 
+	};
+
+	dp.successHandler = function(data, textStatus, jqXHR) {
+		var parsed = $.parseJSON(data);
+		if(parsed.error === undefined)
+			dp.success(data, textStatus, jqXHR);
+		else
+			dp.error(data, textStatus, jqXHR);
+	};
+
+	dp.errorHandler = function(jqXHR, textStatus, errorThrown) {
+		dp.error({error: errorThrown}, textStatus, jqXHR);
 	};
 
 	return dp;
 
 })( window, document, jQuery );
+
+var dp = window.DustPress.ajax;
