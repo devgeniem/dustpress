@@ -45,7 +45,6 @@ function comments($helpers) {
 			}
 			
 			$js_args = [
-				'ajaxurl' 			=> admin_url( 'admin-ajax.php' ),
 				'comments_per_page' => get_option('comments_per_page'),
 				'post_id'			=> $post_id 	? $post_id		: $post->ID,
 				'form_id' 			=> $form_id 	? $form_id 		: 'commentform',
@@ -54,10 +53,10 @@ function comments($helpers) {
 			];
 
 			// styles
-			wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+			wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri() . '/dustpress/css/dustpress-comments.css', false, 1, all );		
 			
 			// js		
-			wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
+			wp_register_script( 'dustpress-comments', get_template_directory_uri() . '/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
 			wp_localize_script( 'dustpress-comments', 'comments', $js_args );
 			wp_enqueue_script( 'dustpress-comments' );
 		}

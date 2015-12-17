@@ -574,6 +574,16 @@ class DustPress {
 			$this->model->data['WP'] = $this->populate_data_collection();
 		}
 
+		// Ensure we have a DustPHP instance.
+		if ( isset( $this->dust ) ) {
+			$dust = $this->dust;
+		}
+		else {
+			die("DustPress error: Something very unexpected happened: there is no DustPHP.");
+		}
+
+		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
+
 		// Fetch Dust partial by given name. Throw error if there is something wrong.
 		try {
 			$template = $this->get_template( $partial );
@@ -585,16 +595,6 @@ class DustPress {
 		catch ( Exception $e ) {
 			die( "DustPress error: ". $e->getMessage() );
 		}
-
-		// Ensure we have a DustPHP instance.
-		if ( isset( $this->dust ) ) {
-			$dust = $this->dust;
-		}
-		else {
-			die("DustPress error: Something very unexpected happened: there is no DustPHP.");
-		}
-
-		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
 		// Create debug data if wanted.
 
@@ -1166,9 +1166,13 @@ class DustPress {
 		$helpers = array_merge( $helpers, array_unique( $findings[1] ) );
 
 		// Get includes
-		preg_match_all("/\{>[\"']?([a-zA-z0-9\/]+)?/", $file, $includes);
+		preg_match_all("/\{>[\"']?([-a-zA-z0-9\/]+)?/", $file, $includes);
 
 		foreach( $includes[1] as $include ) {
+			$incl_explode = explode("/", $include);
+
+			$include = array_pop( $incl_explode );
+
 			$include_helpers = $this->prerender( $include, $already );
 
 			if ( is_array( $include_helpers ) ) {
