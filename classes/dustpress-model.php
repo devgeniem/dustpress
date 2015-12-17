@@ -25,9 +25,6 @@ class DustPressModel {
 	// Possible wanted template
 	private $template;
 
-	// List of functions that are allowed to be run via AJAX
-	//private $allowed_functions = [];
-
 	/**
 	*  __construct
 	*
@@ -134,6 +131,7 @@ class DustPressModel {
 						continue;
 					}
 					else {
+						// If the method has parameters, it should be run manually
 						if ( $reflection->getNumberOfParameters() > 0 ) {
 							unset( $methods[ $index ] );
 						}
@@ -145,6 +143,7 @@ class DustPressModel {
 			}
 			else {
 				if ( $reflection->isPublic() ) {
+					// If the method has parameters, it should be run manually
 					if ( $reflection->getNumberOfParameters() > 0 ) {
 						unset( $methods[ $index ] );
 					}

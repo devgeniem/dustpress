@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.2.0
+Version: 0.3.0
 */
 
 class DustPress {
@@ -1144,7 +1144,20 @@ class DustPress {
 		}
 	}
 
-	// Prerender
+	/*
+	*  prerender
+	*
+	*  This function loops through the wanted partial and finds all helpers that are used.
+	*  It is used recursively.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @param   $partial (string)
+	*  @param   $already (array|string) (optional)
+	*  @return	$helpers (array|string)
+	*/
 	public function prerender( $partial, $already = [] ) {
 		$filename = $this->get_prerender_file( $partial );
 
@@ -1188,6 +1201,18 @@ class DustPress {
 		}
 	}
 
+	/*
+	*  prerender
+	*
+	*  This function is used to get a template file to prerender.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @param   $partial (string)
+	*  @return	$file (string)
+	*/
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
@@ -1210,6 +1235,18 @@ class DustPress {
 		return false;
 	}
 
+	/*
+	*  enqueue_helpers
+	*
+	*  This function executes dummy runs through all wanted helpers to enqueue scripts they need.
+	*
+	*  @type	function
+	*  @date	17/12/2015
+	*  @since	0.3.0
+	*
+	*  @param   $helpers (array|string)
+	*  @return	N/A
+	*/
 	public function enqueue_helpers( $helpers ) {
 		if ( is_array( $helpers ) ) {
 			$dummyEvaluator = new Dust\Evaluate\Evaluator( $this->dust );
