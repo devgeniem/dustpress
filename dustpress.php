@@ -1062,7 +1062,9 @@ class DustPress {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			$data = $_REQUEST["dustpress_data"];
 		}
-		die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );	
+		else {
+			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );	
+		}
 
 		$runs = [];
 
