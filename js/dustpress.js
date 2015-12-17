@@ -88,13 +88,7 @@ window.DustPressAjax = ( function( window, document ) {
 
 	    xmlhttp.open("POST", url, true);
 	    xmlhttp.setRequestHeader("Content-Type", options.contentType);
-
-	    if ("application/json" === options.contentType)
-	    	xmlhttp.send(JSON.stringify(data));
-	    else
-	    	xmlhttp.send(data);
-
-	    return xmlhttp;
+		xmlhttp.send(encodeURIComponent(data));
 	};
 
 	return dp;

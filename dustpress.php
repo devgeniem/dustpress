@@ -130,7 +130,8 @@ class DustPress {
 		}
 
 		// Add create_instance to right action hook if we are not on the admin side
-		if ( $this->want_autoload() ) {				
+		if ( $this->want_autoload() ) {		
+			$this->enqueue_scripts();		
 			add_action( 'shutdown', [ $this, 'create_instance' ] );
 		}
 		else if ( $this->is_dustpress_ajax() ) {
