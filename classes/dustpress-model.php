@@ -117,7 +117,7 @@ class DustPressModel {
 					continue;
 				}
 				else {
-					if ( ! $reflection->isPublic() && ! $this->is_function_allowed( $method_item ) ) {
+					if ( ! $this->is_function_allowed( $method_item ) ) {
 						die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX." ] ) );
 					}
 					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
@@ -486,9 +486,6 @@ class DustPressModel {
 	*/
 
 	private function is_function_allowed( $function ) {
-		error_log( $function );
-		error_log( print_r( $this->allowed_functions, true ) );
-
 		if ( in_array( $function, $this->allowed_functions ) ) {
 			return true;
 		}
@@ -514,8 +511,8 @@ class DustPressModel {
 	*/
 
 	public function run_restricted( $function ) {
-		if ( $this->is_function_allowed ) {
-			return call_user_func( [ $this, $function ] );
+		if ( $this->is_function_allowed( $function ) ) {
+			return $this->{$function}();
 		}
 		else {
 			return (object)["error" => "Wanted function does not exist in the allowed functions list."];
