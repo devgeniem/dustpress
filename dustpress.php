@@ -1104,21 +1104,26 @@ class DustPress {
 		}
 
 		// If render is set true, set the model's default template to be used.
-		if ( isset( $args["render"] ) && $args["render"] == true ) {
+		if ( isset( $data["render"] ) && $data["render"] === "true" ) {
 			$partial = strtolower( $this->camelcase_to_dashed( $model ) );
 		}
-
-		// Get the possible defined partial and possible override the default template.
-		if ( isset( $args["partial"] ) ) {
-			$partial = $args["partial"];
-		}
-
+		
 		// Do we want tidy output or not?
-		if ( isset( $args["tidy"] ) ) {
-			$tidy = $args["tidy"];
+		if ( isset( $data["tidy"] ) ) {
+			if ( $data["tidy"] === "false" ) {
+				$tidy = false;
+			}
+			else {
+				$tidy = true;
+			}
 		}
 		else {
 			$tidy = false;
+		}
+
+		// Get the possible defined partial and possible override the default template.
+		if ( isset( $data["partial"] ) && strlen( $data["partial"] ) > 0 ) {
+			$partial = $data["partial"];
 		}
 
 		if ( class_exists( $model ) ) {
@@ -1128,7 +1133,7 @@ class DustPress {
 			$instance->fetch_data( $functions, $tidy );
 
 			// If we don't want to render, json-encode and return just the data
-			if ( ! isset( $partial ) ) {
+			if ( empty( $partial ) ) {
 				die( json_encode( [ "success" => $instance->data ] ) );
 			}
 			else {
@@ -1136,7 +1141,7 @@ class DustPress {
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $partial ) );
 
-				die( $this->render( [ "partial" => $partial, "data" => $instance->data ] ) );
+				die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data, "echo" => false ] ) ] ) );
 			}
 		}
 		else {

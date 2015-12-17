@@ -21,10 +21,11 @@ window.DustPress = ( function( window, document, $ ) {
 			method: post.type,
 			data: {
 				dustpress_data: {
-					path: 	path,
-					args: 	post.args,
-					render: post.render,
-					tidy: 	post.tidy
+					path: 	 path,
+					args: 	 post.args,
+					render:  post.render,
+					tidy: 	 post.tidy,
+					partial: post.partial
 				}
 			}
 		})
