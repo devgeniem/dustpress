@@ -1,8 +1,8 @@
 <?php
 $this->dust->helpers['content'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	global $dustpress, $post;
-
 	if ( $bodies->dummy !== true ) {
+		global $post;
+		
 		if ( $params->data ) {		
 			$output = apply_filters( 'the_content', $params->data );
 		}

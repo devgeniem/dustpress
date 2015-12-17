@@ -1,8 +1,8 @@
 <?php
 $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params, $dummy = false ) {	
-	global $dustpress;
-
 	if ( $bodies->dummy !== true ) {
+		global $dustpress;
+		
 		if ( ! isset( $params->menu_name ) ) {
 			return $chunk->write("DustPress menu helper error: No menu specified.");
 		}
