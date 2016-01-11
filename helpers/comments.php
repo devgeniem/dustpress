@@ -68,6 +68,9 @@ class Comments_Helper {
 		if ( $params !== 'handle_ajax' ) {			
 			$this->init();
 		}
+
+		// hooks for honeybot		
+		add_filter('pre_comment_approved', array( $this, 'check_honeypot' ) );
 			
 	}
 
@@ -189,10 +192,13 @@ class Comments_Helper {
 		}
 
 		// insert status div
-		add_filter( 'comment_form_top', array( $this, 'form_status_div' ) );
+		add_action( 'comment_form_top', array( $this, 'form_status_div' ) );
 
 		// insert hidden field to identify dustpress helper
 		add_filter( 'comment_id_fields', array( $this, 'insert_identifier' ), 1 );
+
+		// insert honeybot
+		add_action( 'comment_form_top', array( $this, 'add_honeypot' ) );
 		
 		// compile form and store it
 		ob_start();
@@ -277,7 +283,7 @@ class Comments_Helper {
 				$field = preg_replace( '/<input/', '<input ' . $input_attrs, $field );							
 			}
 
-		}		
+		}
 
 		return $fields;
 	}
@@ -359,6 +365,23 @@ class Comments_Helper {
 		];		
 
 		die( json_encode( $return ) );
+	}
+
+	public function add_honeypot() {
+	    $textarea_name = 'dustpress-scam';
+		echo '<p class="dustpress-scam">';
+		echo '<label for="' . $textarea_name . '">' . __('This field is to be left empty.','DustPress-Comments') . '</label>';	
+		echo '<textarea name="' . $textarea_name . '" cols="100%" rows="10"></textarea>';		
+		echo '</p>';
+		
+	}
+
+	public function check_honeypot( $approved ) {
+	    $textarea_name = 'dustpress-scam';
+		if (!empty($_POST[$textarea_name])) { // Bot filled out the hidden textarea
+			$approved = 'spam';
+	    }
+		return $approved;
 	}
 
 }

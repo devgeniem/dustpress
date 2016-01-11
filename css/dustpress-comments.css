@@ -38,3 +38,9 @@
 .comments__form_container .alert-box a.close {
 	text-decoration: none;
 }
+
+.dustpress-scam {
+	display: none;
+	height: 0;
+	width: 0;
+}
