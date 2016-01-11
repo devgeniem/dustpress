@@ -1424,7 +1424,7 @@ class DustPress {
 		];
 
 		// styles
-		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, '0.0.2', all );		
 		
 		// js		
 		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
