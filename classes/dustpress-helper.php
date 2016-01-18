@@ -18,8 +18,8 @@ class DustPressHelper {
 	 * 
 	 */
 
-	private $post;
-	private $posts;
+	private static $post;
+	private static $posts;
 	
 	/*
 	*  get_post
@@ -38,7 +38,7 @@ class DustPressHelper {
 	*
 	*  $return  post object as an associative array with meta data
 	*/
-	public function get_post( $id, $args = array() ) {
+	public static function get_post( $id, $args = array() ) {
 		global $post;
 
 		$defaults = [
@@ -51,14 +51,14 @@ class DustPressHelper {
 
 		extract( $options );
 
-		$this->post = get_post( $id, 'ARRAY_A' );
-		if ( is_array( $this->post ) ) {
-			$this->get_post_meta( $this->post, $id, $meta_keys, $meta_type, $single );
+		self::$post = get_post( $id, 'ARRAY_A' );
+		if ( is_array( self::$post ) ) {
+			self::get_post_meta( self::$post, $id, $meta_keys, $meta_type, $single );
 		}
 
-		$this->post['permalink'] = get_permalink($id);
+		self::$post['permalink'] = get_permalink($id);
 
-		return $this->post;
+		return self::$post;
 	}
 
 	/*
@@ -79,7 +79,7 @@ class DustPressHelper {
 	*
 	*  $return  post object as an associative array with acf fields and meta data
 	*/
-	public function get_acf_post( $id, $args = array() ) {
+	public static function get_acf_post( $id, $args = array() ) {
 
 		$defaults = [
 			"meta_keys" => null,
@@ -103,7 +103,7 @@ class DustPressHelper {
 				foreach ($acfpost['fields'] as &$field) {										
 					if ( is_array($field) && isset( $field[0]->post_type ) ) {
 						for ( $i=0; $i < count( $field ); $i++ ) { 
-							$field[$i] = $this->get_acf_post( $field[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
+							$field[$i] = self::get_acf_post( $field[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
 						}
 					}
 					// a repeater field has relational posts
@@ -113,7 +113,7 @@ class DustPressHelper {
 								foreach ( $repeater as &$row ) {
 									if ( isset( $row[0]->post_type ) ) {									
 										for ( $i=0; $i < count( $row ); $i++ ) { 												
-												$row[$i] = $this->get_acf_post( $row[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
+												$row[$i] = self::get_acf_post( $row[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
 											}
 										}
 								}								
@@ -127,7 +127,7 @@ class DustPressHelper {
 					$field = get_field_object($name, $id, true);
 				}
 			}
-			$this->get_post_meta( $acfpost, $id, $meta_keys, $meta_type, $single );
+			self::get_post_meta( $acfpost, $id, $meta_keys, $meta_type, $single );
 		}
 
 		$acfpost['permalink'] = get_permalink($id);
@@ -151,7 +151,7 @@ class DustPressHelper {
 	*
 	*  @return	array of posts as an associative array with meta data
 	*/
-	public function get_posts( $args ) {
+	public static function get_posts( $args ) {
 
         $defaults = [
             "meta_keys" => null,
@@ -164,20 +164,20 @@ class DustPressHelper {
 
         extract( $options );
 
-		$this->posts = get_posts( $args );
+		self::$posts = get_posts( $args );
 
 		// cast post object to associative arrays
 		// and get the permalink of the post
-		foreach ($this->posts as &$temp) {
+		foreach (self::$posts as &$temp) {
 			$temp = (array) $temp;
 			$temp['permalink'] = get_permalink( $temp['ID'] );
 		}
 		
 		// get meta for posts
-		if ( count( $this->posts ) ) {
-			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type, $single );
+		if ( count( self::$posts ) ) {
+			self::get_meta_for_posts( self::$posts, $meta_keys, $meta_type, $single );
 			wp_reset_postdata();
-			return $this->posts;
+			return self::$posts;
 		}	
 		else
 			return false;
@@ -198,7 +198,7 @@ class DustPressHelper {
 	*
 	*  @return	array of posts as an associative array with acf fields and meta data
 	*/
-	public function get_acf_posts( $args ) {
+	public static function get_acf_posts( $args ) {
 
         $defaults = [
             "meta_keys" => null,
@@ -211,16 +211,16 @@ class DustPressHelper {
 
         extract( $options );
 
-		$this->posts = get_posts( $args );
+		self::$posts = get_posts( $args );
 
 		// cast post object to associative arrays
-		foreach ($this->posts as &$temp) {
+		foreach (self::$posts as &$temp) {
 			$temp = (array) $temp;
 		}
 
-		if ( count( $this->posts ) ) {
+		if ( count( self::$posts ) ) {
 			// loop through posts and get all acf fields
-			foreach ( $this->posts as &$p ) {								
+			foreach ( self::$posts as &$p ) {								
 				$p['fields'] = get_fields( $p['ID'] );
 				$p['permalink'] = get_permalink( $p['ID'] );
 				if( $whole_fields ) {
@@ -230,10 +230,10 @@ class DustPressHelper {
 				}
 			}
 
-			$this->get_meta_for_posts( $this->posts, $meta_keys, $meta_type, $single );
+			self::get_meta_for_posts( self::$posts, $meta_keys, $meta_type, $single );
 
 			wp_reset_postdata();
-			return $this->posts;
+			return self::$posts;
 		}	
 		else
 			return false;
@@ -315,7 +315,7 @@ class DustPressHelper {
 
             if ( $menu_items ) {
 
-                    $menu = $this->build_menu( $menu_items, $parent, null, $override );
+                    $menu = self::$build_menu( $menu_items, $parent, null, $override );
 
                     if ( $index = array_search( "active", $menu ) ) {
                             unset( $menu[$index] );
@@ -365,7 +365,7 @@ class DustPressHelper {
             if ( count( $menu_items ) > 0 ) {
                     foreach ( $menu_items as $item ) {
                             if ( $item->menu_item_parent == $parent_id ) {
-                                    $item->Submenu = $this->build_menu( $menu_items, $item->object_id, $item->object, $override );
+                                    $item->Submenu = self::$build_menu( $menu_items, $item->object_id, $item->object, $override );
 
                                     $item->classes = array();
 
