@@ -609,8 +609,9 @@ class DustPress {
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
 			
 			// jsonView jQuery plugin
+			$dependencies = apply_filters("dustpress/debugger_dependencies", ['jquery'] );
 			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', array( 'jquery' ), null, true );
+			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', $dependencies, null, true );
 
 			// Enqueued script with localized data.
 			wp_enqueue_script( 'dustpress_debugger' );
@@ -727,7 +728,8 @@ class DustPress {
 			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
 
 			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', null, '0.0.2', true );						
+			$dependencies = apply_filters("dustpress/debugger_dependencies", []);
+			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', $dependencies, '0.0.2', true );				
 
 			// Register debugger ajax hook
 			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );

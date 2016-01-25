@@ -394,7 +394,7 @@ class DustPressModel {
 						$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
 					}
 				}
-				else {					
+				else {
 					$this->data[ $class_name ]->Content->{ $key } = $data;
 				}
 			}
