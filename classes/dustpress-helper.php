@@ -315,7 +315,7 @@ class DustPressHelper {
 
             if ( $menu_items ) {
 
-                    $menu = self::$build_menu( $menu_items, $parent, null, $override );
+                    $menu = self::build_menu( $menu_items, $parent, null, $override );
 
                     if ( $index = array_search( "active", $menu ) ) {
                             unset( $menu[$index] );
@@ -365,7 +365,7 @@ class DustPressHelper {
             if ( count( $menu_items ) > 0 ) {
                     foreach ( $menu_items as $item ) {
                             if ( $item->menu_item_parent == $parent_id ) {
-                                    $item->Submenu = self::$build_menu( $menu_items, $item->object_id, $item->object, $override );
+                                    $item->Submenu = self::build_menu( $menu_items, $item->object_id, $item->object, $override );
 
                                     $item->classes = array();
 
