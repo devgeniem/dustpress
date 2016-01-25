@@ -191,13 +191,13 @@ class Comments_Helper {
 		}
 		
 		// closing args
-		$this->close_old 		= $this->comments_args['close_comments_for_old_posts'] 	? $this->comments_args['close_comments_for_old_posts'] 		: get_option( 'close_comments_for_old_posts', false );		
+		$this->close_old = $this->comments_args['close_comments_for_old_posts'] ? $this->comments_args['close_comments_for_old_posts'] : get_option( 'close_comments_for_old_posts', false );		
 
 		// maybe close comments
 		if ( $this->close_old ) {
 			$this->closed_after	= $this->comments_args['close_comments_days_old'] ? $this->comments_args['close_comments_days_old'] : get_option( 'close_comments_days_old', 14 );
 
-			$closing_time = strtotime( get_the_date( 'c', $this->post_id ) ) + $this->closed_after * 86400; error_log('closing time: '.$closing_time); error_log('now: '.time());
+			$closing_time = strtotime( get_the_date( 'c', $this->post_id ) ) + $this->closed_after * 86400;
 
 			if ( $closing_time < time() ) {
 				$this->echo_form = false;
