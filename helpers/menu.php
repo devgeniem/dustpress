@@ -45,11 +45,9 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 			$show_submenu = true;
 		}
 
-		$dp = new DustPressHelper();
-
 		$menu = new stdClass();
 
-		$menu->items = $dp->get_menu_as_items($menu_name, $parent, $override);
+		$menu->items = DustPressHelper::get_menu_as_items( $menu_name, $parent, $override );
 		$menu->ul_classes = $ul_classes;
 		$menu->ul_id = $ul_id;
 		$menu->show_submenu = $show_submenu;

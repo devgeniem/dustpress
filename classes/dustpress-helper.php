@@ -305,7 +305,7 @@ class DustPressHelper {
     *
     *  @return      array of menu items in a recursive array
     */
-    function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
+    public static function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
 
             if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
                     $menu_object = wp_get_nav_menu_object( $locations[ $menu_name ] );
@@ -345,7 +345,7 @@ class DustPressHelper {
     *  @return      array of menu items
     */        
 
-    function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
+    private static function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
             $tempItems = array();
             $parent_id = 0;
 
