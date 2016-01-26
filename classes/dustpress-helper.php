@@ -135,7 +135,6 @@ class DustPressHelper {
 
 		$acfpost['permalink'] = get_permalink($id);
 
-
 		return self::cast_post_to_type( $acfpost, $output );
 	}
 
@@ -284,7 +283,7 @@ class DustPressHelper {
 
 	private function cast_post_to_type( $post, $type ) {
 
-		if ( 'ARRAY_A' === $type ) {
+		if ( 'ARRAY_A' !== $type ) {
 
 			if ( 'OBJECT' === $type ) {
 				return (object) $post;
