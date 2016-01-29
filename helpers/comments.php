@@ -18,10 +18,9 @@
 function comments($helpers) {	
 
 	$helpers['comments'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params) {
-		global $dustpress;
 
 		if ( $bodies->dummy !== true ) {
-			$handler = new Comments_Helper( $params, $dustpress );
+			$handler = new Comments_Helper( $params, dustpress() );
 
 			return $chunk->write( $handler->get_output() );
 		}
@@ -117,7 +116,6 @@ class Comments_Helper {
 
 	// fired after comment is succesfully saved in wp-comments-post.php
 	public function handle_ajax( $comment_id ) {	
-		global $dustpress;
 
 		if ( ! defined('DUSTPRESS_AJAX') ) {
 			define("DUSTPRESS_AJAX", true);	
@@ -148,7 +146,6 @@ class Comments_Helper {
 	}
 
 	private function init() {
-		global $dustpress;
 		global $post;
 
 		$c_data 		 		= new stdClass();
@@ -252,10 +249,10 @@ class Comments_Helper {
 		$partial 				= apply_filters( 'dustpress/comments/partial', 'comments' );
 
 		// add data into debugger
-		$dustpress->set_debugger_data( 'Comments', $c_data );						  
+		dustpress()->set_debugger_data( 'Comments', $c_data );						  
 
 		// render helper
-		$this->output = $dustpress->render( [
+		$this->output = dustpress()->render( [
 			"partial" 	=> $partial,
 			"data" 		=> $c_data,
 			"type" 		=> "html",

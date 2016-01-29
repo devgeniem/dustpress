@@ -5,10 +5,13 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.3.0
+Version: 0.3.1
 */
 
-class DustPress {
+final class DustPress {
+
+	// Singleton DustPress instance
+	private static $instance;
 
 	// Instance of DustPHP
 	private $dust;
@@ -22,7 +25,17 @@ class DustPress {
 	// Possible post body
 	private $postbody;
 
-	/*
+	// DustPress options
+	private $options;
+
+	public static function instance() {
+		if ( ! isset( self::$instance ) ) {
+            self::$instance = new DustPress();            
+        }
+        return self::$instance;
+	}	
+
+	/**
 	*  __construct
 	*
 	*  Constructor for DustPress core class.
@@ -35,7 +48,7 @@ class DustPress {
 	*  @return	N/A
 	*/
 
-	public function __construct() {
+	protected function __construct() {
 
 		// start session for data storing
 		if ( session_status() == PHP_SESSION_NONE ) {
@@ -147,7 +160,7 @@ class DustPress {
 		return;
 	}
 
-	/*
+	/**
 	*  create_instance
 	*
 	*  This function creates the instance of the main model that is defined by the WordPress template
@@ -199,7 +212,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  get_template_filename
 	*
 	*  This function gets current template's filename and returns without extension or WP-template prefixes such as page- or single-.
@@ -449,7 +462,7 @@ class DustPress {
 		return "Index";
 	}
 
-	/*
+	/**
 	*  populate_data_collection
 	*
 	*  This function populates the data collection with essential data
@@ -462,8 +475,6 @@ class DustPress {
 	*  @return	N/A
 	*/
 	private function populate_data_collection() {
-		global $dustpress;
-
 		$wp_data = array();
 
 		// Insert Wordpress blog info data to collection
@@ -501,7 +512,7 @@ class DustPress {
 		return apply_filters( "dustpress/data/wp", $wp_data );
 	}
 
-	/*
+	/**
 	*  render
 	*
 	*  This function will render the given data in selected format
@@ -657,7 +668,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  get_template
 	*
 	*  This function checks whether the given partial exists and returns the contents of the file as a string
@@ -702,7 +713,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  admin_stuff
 	*
 	*  This function sets JavaScripts and styles for admin debug feature.
@@ -737,7 +748,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  plugin_menu
 	*
 	*  This function creates the menu item for DustPress options in admin side.
@@ -754,7 +765,7 @@ class DustPress {
 		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
 	}
 
-	/*
+	/**
 	*  dustPress_options
 	*
 	*  This function creates the options page functionality in admin side.
@@ -804,7 +815,33 @@ class DustPress {
 		echo '</div>';
 	}
 
-	/*
+	/**
+	*  get_setting
+	*
+	*  This function returns dustpress setting for specific key.
+	*
+	*  @type	function
+	*  @date	29/01/2016
+	*  @since	0.3.1
+	*
+	*  @return	$setting (any)
+	*/
+
+	public function get_setting( $key ) {
+
+		if ( empty( $this->settings ) ) {
+			$this->settings = get_option('dustpress_settings');
+		}
+
+		if ( isset( $settings[ $key ] ) ) {
+			return $settings[ $key ];
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
 	*  get_debugger_data
 	*
 	*  This function returns dustpress data from the session.
@@ -815,6 +852,7 @@ class DustPress {
 	*
 	*  @return	$data (json)
 	*/
+
 	public function get_debugger_data() {
 		if ( defined("DOING_AJAX") ) {
 			session_start();
@@ -840,7 +878,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  set_debugger_data
 	*
 	*  This function sets data into global data collection.
@@ -872,7 +910,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  is_login_page
 	*
 	*  Returns true if we are on login or register page.
@@ -889,7 +927,7 @@ class DustPress {
 	    return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
 	}
 
-	/*
+	/**
 	*  is_installation_compatible
 	*
 	*  This function returns true if the WordPress configuration is suitable for DustPress.
@@ -918,7 +956,7 @@ class DustPress {
 		return $ret;
 	}
 
-	/*
+	/**
 	*  required
 	*
 	*  This function prints out admin notice for missing folders on the theme file.
@@ -945,7 +983,7 @@ class DustPress {
 		echo "</div>";
 	}
 
-	/*
+	/**
 	*  camelcase_to_dashed
 	*
 	*  This function returns given string converted from CamelCase to camel-case
@@ -969,7 +1007,7 @@ class DustPress {
 	 	return implode($char, $results);
 	}
 
-	/*
+	/**
 	*  want_autoload
 	*
 	*  This function determines if we want to autoload and render the model or not.
@@ -1026,7 +1064,7 @@ class DustPress {
 		return true;
 	}
 
-	/*
+	/**
 	*  is_dustpress_ajax
 	*
 	*  This function determines if we are on a DustPress AJAX call or not.
@@ -1046,7 +1084,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  create_ajax_instance
 	*
 	*  This function does lots of AJAX stuff with the parameters from the JS side.
@@ -1147,11 +1185,11 @@ class DustPress {
 			}
 		}
 		else {
-			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );			
+			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );
 		}
 	}
 
-	/*
+	/**
 	*  prerender
 	*
 	*  This function loops through the wanted partial and finds all helpers that are used.
@@ -1208,7 +1246,7 @@ class DustPress {
 		}
 	}
 
-	/*
+	/**
 	*  prerender
 	*
 	*  This function is used to get a template file to prerender.
@@ -1242,7 +1280,7 @@ class DustPress {
 		return false;
 	}
 
-	/*
+	/**
 	*  enqueue_helpers
 	*
 	*  This function executes dummy runs through all wanted helpers to enqueue scripts they need.
@@ -1291,4 +1329,9 @@ class DustPress {
 	}
 }
 
-$dustpress = new DustPress();
+// Global function which returns the DustPress singleton
+function dustpress() {
+	return DustPress::instance();
+}
+
+dustpress();

@@ -1,14 +1,12 @@
 <?php
 
 $this->dust->helpers['pagination'] = function (\Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params) {
-	global $dustpress;
-
 	if ( $bodies->dummy !== true ) {
 		// build pagination
 		$pagination = new Pagination_Helper( $params );
 
 		// add data into debugger
-		$dustpress->set_debugger_data( 'Pagination', $data );
+		dustpress()->set_debugger_data( 'Pagination', $data );
 
 		// print out rendered html
 		return $chunk->write( $pagination->get_output() );
@@ -23,7 +21,6 @@ class Pagination_Helper {
 	private $page_label;
 
 	public function __construct( $params ) {
-		global $dustpress;
 
 		$data 				= new stdClass();
 		$pages				= array();
@@ -154,7 +151,7 @@ class Pagination_Helper {
 
 		$this->data = $data;
 
-		$this->output = $dustpress->render( [
+		$this->output = dustpress()->render( [
 			"partial" 	=> "pagination",
 			"data" 		=> $this->data,
 			"type" 		=> "html",
