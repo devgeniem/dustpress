@@ -97,25 +97,42 @@ class DustPressHelper {
 		
 		if ( is_array( $acfpost ) ) {
 			$acfpost['fields'] = get_fields( $id );
-		
+
 			// Get fields with relational post data as a whole acf object
 			if ( $recursive ) {
-				foreach ($acfpost['fields'] as &$field) {										
-					if ( is_array($field) && isset( $field[0]->post_type ) ) {
-						for ( $i=0; $i < count( $field ); $i++ ) { 
-							$field[$i] = self::get_acf_post( $field[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
-						}
+
+				// Let's avoid infinite loops by stopping recursion after one level. You may dig deeper in your view model.
+				$options['recursive'] = apply_filters( 'dustpress/dustpress_helper/infinite_recursion', false );
+
+				foreach ( $acfpost['fields'] as &$field ) {					
+
+					// No recursion for these post types
+					$ignored_types = [
+						'attachment',
+						'nav_menu_item',
+						'acf-field-group',
+						'acf-field',						
+					];
+					$ignored_types = apply_filters( 'dustpress/dustpress_helper/ignore_on_recursion', $ignored_types );
+
+					// A direct relation field
+					if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+						$field = self::get_acf_post( $field->ID, $options );
 					}
-					// a repeater field has relational posts
-					if ( is_array( $field ) && is_array( $field[0] ) ) {												
-						foreach ( $field as $idx => &$repeater ) {													
+					
+					// A repeater field has relational posts
+					if ( is_array( $field ) && is_array( $field[0] ) ) {
+						
+						// Follows the nested structure of a repeater
+						foreach ( $field as $idx => &$repeater ) {
 							if ( is_array( $repeater ) ) {
 								foreach ( $repeater as &$row ) {
-									if ( isset( $row[0]->post_type ) ) {									
-										for ( $i=0; $i < count( $row ); $i++ ) { 												
-												$row[$i] = self::get_acf_post( $row[$i]->ID, [ "meta_keys" => $meta_keys, "single" => $single, "meta_type" => $meta_type, "whole_fields" => $whole_fields, "recursive" => $recursive ] );
-											}
-										}
+
+									// Post in a repeater
+									if ( is_object( $row ) && isset( $row->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+										$row = self::get_acf_post( $row->ID, $options );
+									}
+
 								}								
 							}														
 						}
