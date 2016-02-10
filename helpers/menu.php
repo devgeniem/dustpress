@@ -1,7 +1,6 @@
 <?php
 $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params, $dummy = false ) {	
 	if ( $bodies->dummy !== true ) {
-		global $dustpress;
 		
 		if ( ! isset( $params->menu_name ) ) {
 			return $chunk->write("DustPress menu helper error: No menu specified.");
@@ -53,9 +52,9 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 		$menu->show_submenu = $show_submenu;
 
 		// add data into debugger
-		$dustpress->set_debugger_data( 'Menu', $menu );
+		dustpress()->set_debugger_data( 'Menu', $menu );
 
-		$output = $dustpress->render( [
+		$output = dustpress()->render( [
 			"partial" => "menu",
 			"data" => $menu,
 			"type" => "html",

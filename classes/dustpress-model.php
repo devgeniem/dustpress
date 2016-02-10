@@ -1,17 +1,20 @@
 <?php
 
 /**
-*  DustPress Model Class
+*	DustPress Model Class
 *
-*  Extendable class which contains basic functions for DustPress models.
+*	Extendable class which contains basic functions for DustPress models.
 *
-*  @class DustPress_Model
+*	@class DustPress_Model
 */
 
 class DustPressModel {
 
 	// The data
 	public $data;
+
+	// Class name
+	private $class_name;
 
 	// Arguments of this instance
 	private $args;
@@ -25,17 +28,20 @@ class DustPressModel {
 	// Possible wanted template
 	private $template;
 
+	// Temporary hash key
+	private $hash;
+
 	/**
-	*  __construct
+	*	__construct
 	*
-	*  Constructor for DustPress model class.
+	*	Constructor for DustPress model class.
 	*
-	*  @type	function
-	*  @date	10/8/2015
-	*  @since	0.2.0
+	*	@type	function
+	*	@date	10/8/2015
+	*	@since	0.2.0
 	*
-	*  @param	load (boolean)
-	*  @return	N/A
+	*	@param	load (boolean)
+	*	@return	N/A
 	*/
 	
 	public function __construct( $args = [], $parent = null ) {
@@ -79,26 +85,26 @@ class DustPressModel {
 	}
 
 	/**
-	*  fetch_data
+	*	fetch_data
 	*
-	*  This function gets the data from models and binds it to the global data structure
+	*	This function gets the data from models and binds it to the global data structure
 	*
-	*  @type	function
-	*  @date	15/10/2015
-	*  @since	0.2.0
+	*	@type	function
+	*	@date	15/10/2015
+	*	@since	0.2.0
 	*
-	*  @param	N/A
-	*  @return	N/A
+	*	@param	N/A
+	*	@return	N/A
 	*/
 	public function fetch_data( $functions = null, $tidy = false ) {
-		$class_name = get_class( $this );
+		$this->class_name = get_class( $this );
 
 		// Create a place to store the wanted data in the global data structure.
-		if ( ! isset( $this->data[ $class_name ] ) ) $this->data[ $class_name ] = new \StdClass();
-		if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
+		if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
+		if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
 
 		// Fetch all methods from given class.
-		$methods = $this->get_class_methods( $class_name );
+		$methods = $this->get_class_methods( $this->class_name );
 
 		// Check that all asked functions exist
 		if ( is_array( $functions ) && count( $functions ) > 0 ) {
@@ -114,7 +120,7 @@ class DustPressModel {
 
 		// Loop through the methods
 		foreach( $methods as $index => $method_item ) {
-			$reflection = new ReflectionMethod( $class_name, $method_item );
+			$reflection = new ReflectionMethod( $this->class_name, $method_item );
 
 			// If we have wanted list of functions, check if we can run them and don't run
 			// anything else.
@@ -155,8 +161,8 @@ class DustPressModel {
 		}
 
 		// Add some filters
-		$methods = apply_filters( "dustpress/methods", $methods, $class_name );
-		$private_methods = apply_filters( "dustpress/private_methods", $private_methods, $class_name );
+		$methods = apply_filters( "dustpress/methods", $methods, $this->class_name );
+		$private_methods = apply_filters( "dustpress/private_methods", $private_methods, $this->class_name );
 
 		// If we want tidy output, init variable for that
 		if ( $tidy ) {
@@ -174,42 +180,42 @@ class DustPressModel {
 					$method = str_replace( "bind_", "", $m[1] );
 
 					if ( "Content" == $method ) {
-						if ( ! isset( $this->data[ $class_name ]->{ $method } ) ) {
+						if ( ! isset( $this->data[ $this->class_name ]->{ $method } ) ) {
 							if ( $tidy ) {
 								$tidy_data->{ $method } = (object)[];
 							}
 							else {
-								$this->data[ $class_name ]->{ $method } = (object)[];
+								$this->data[ $this->class_name ]->{ $method } = (object)[];
 							}
 						}
 
-						$data = call_user_func( $class_name . '::' . $m[1] );
+						$data = $this->run_function( $m[1] );
 
 						if ( ! is_null( $data ) ) {
 							if ( $tidy ) {
 								$tidy_data->{ $method } = $data;
 							}
 							else {
-								$this->data[ $class_name ]->{ $method } = $data;
+								$this->data[ $this->class_name ]->{ $method } = $data;
 							}
 						}
 					}
 					else {
-						$data = call_user_func( $class_name . '::' . $m[1] );
+						$data = $this->run_function( $m[1] );
 						if ( $tidy ) {
 							$tidy_data->{ $m[1] } = $data;
 						}
 						else {
 							if ( ! is_null( $data ) ) {
 								if ( $this->parent ) {
-									$content = (array) $this->data[ $class_name ];
+									$content = (array) $this->data[ $this->class_name ];
 									$content[ $method ] = $data;
-									$this->data[ $class_name ] = (object) $content;
+									$this->data[ $this->class_name ] = (object) $content;
 								}
 								else {
-									$content = (array) $this->data[ $class_name ]->Content;
+									$content = (array) $this->data[ $this->class_name ]->Content;
 									$content[ $method ] = $data;
-									$this->data[ $class_name ]->Content = (object) $content;
+									$this->data[ $this->class_name ]->Content = (object) $content;
 								}
 							}
 						}
@@ -223,11 +229,11 @@ class DustPressModel {
 
 				$method = str_replace( "bind_", "", $m );
 
-				if ( ! isset( $this->data[ $class_name ]->Content->{ $method } ) ) {
-					$this->data[ $class_name ]->Content->{ $method } = [];
+				if ( ! isset( $this->data[ $this->class_name ]->Content->{ $method } ) ) {
+					$this->data[ $this->class_name ]->Content->{ $method } = [];
 				}
-
-				$data = call_user_func( $m );
+				
+				$data = $this->run_function( $m );
 
 				if ( ! is_null( $data ) ) {
 					if ( $tidy ) {
@@ -235,14 +241,14 @@ class DustPressModel {
 					}
 					else {
 						if ( "content" == strtolower( $method )  ) {
-	    					$this->data[$class_name]->Content = (object) array_merge( (array) $this->data[$class_name]->Content, [ $method => $data ] );
+	    					$this->data[$this->class_name]->Content = (object) array_merge( (array) $this->data[$this->class_name]->Content, [ $method => $data ] );
 						}
 						else {
 							if ( $this->parent ) {
-								$this->data[ $class_name ]->{ $method } = $data;
+								$this->data[ $this->class_name ]->{ $method } = $data;
 							}
 							else {
-								$this->data[ $class_name ]->Content->{ $method } = $data;
+								$this->data[ $this->class_name ]->Content->{ $method } = $data;
 							}
 						}
 					}
@@ -261,14 +267,14 @@ class DustPressModel {
 					}
 					else {
 						if ( $this->parent ) {
-							$content = (array) $this->data[ $class_name ];
+							$content = (array) $this->data[ $this->class_name ];
 							$content[ $method ] = $data;
-							$this->data[ $class_name ] = (object) $content;
+							$this->data[ $this->class_name ] = (object) $content;
 						}
 						else {
-							$content = (array) $this->data[ $class_name ]->Content;
+							$content = (array) $this->data[ $this->class_name ]->Content;
 							$content[ $method ] = $data;
-							$this->data[ $class_name ]->Content = (object) $content;
+							$this->data[ $this->class_name ]->Content = (object) $content;
 						}
 					}
 				}
@@ -280,30 +286,30 @@ class DustPressModel {
 			return $tidy_data;
 		}
 		else {
-			return $this->data[ $class_name ];
+			return $this->data[ $this->class_name ];
 		}
 	}
 
 	/**
-	*  get_class_methods
+	*	get_class_methods
 	*
-	*  This function returns all public methods from given class. Only class' own methods, no inherited.
+	*	This function returns all public methods from given class. Only class' own methods, no inherited.
 	*
-	*  @type	function
-	*  @date	19/3/2015
-	*  @since	0.0.1
+	*	@type	function
+	*	@date	19/3/2015
+	*	@since	0.0.1
 	*
-	*  @param	$class_name (string)
-	*  @return	$methods (array)
+	*	@param	$this->class_name (string)
+	*	@return	$methods (array)
 	*/
 
 	private function get_class_methods( $class_name ) {
-		$rc = new \ReflectionClass( $class_name );
+		$rc = new \ReflectionClass( $this->class_name );
 		$rmpu = $rc->getMethods();
 
 		$methods = array();
 		foreach ( $rmpu as $r ) {
-			if ( $r->class === $class_name ) {
+			if ( $r->class === $this->class_name ) {
 				$methods[] = $r->name;
 			}
 		}
@@ -312,25 +318,25 @@ class DustPressModel {
 	}
 
 	/**
-	*  bind_sub
+	*	bind_sub
 	*
-	*  This function checks if a bound submodel is wanted to run and if it is, runs it.
+	*	This function checks if a bound submodel is wanted to run and if it is, runs it.
 	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
+	*	@type	function
+	*	@date	17/3/2015
+	*	@since	0.0.1
 	*
-	*  @param	$name (string)
-	*  @param	$args (array)
+	*	@param	$name (string)
+	*	@param	$args (array)
 	*/
 
 	public function bind_sub( $name, $args = null ) {
-		$class_name = get_class( $this );
+		$this->class_name = get_class( $this );
 		$model = new $name( $args, $this );
 
 		// If the submodel is not on the root level, set it under the current submodel.
 		if ( $this->parent ) {
-			$this->data[$class_name]->{ $name } = $model->fetch_data();
+			$this->data[$this->class_name]->{ $name } = $model->fetch_data();
 		}
 		// Set submodel under the main model.
 		else {
@@ -345,24 +351,24 @@ class DustPressModel {
 	}
 
 	/**
-	*  bind_data
+	*	bind_data
 	*
-	*  This function binds the data from the models to the global data structure.
-	*  It could take a key to bind the data in, but as default creates the key from
-	*  the function name.
+	*	This function binds the data from the models to the global data structure.
+	*	It could take a key to bind the data in, but as default creates the key from
+	*	the function name.
 	*
-	*  @type	function
-	*  @date	17/3/2015
-	*  @since	0.0.1
+	*	@type	function
+	*	@date	17/3/2015
+	*	@since	0.0.1
 	*
-	*  @param	$data (N/A)
-	*  @param	$key (string)
-	*  @param   $model (string)
-	*  @return	true/false (boolean)
+	*	@param	$data (N/A)
+	*	@param	$key (string)
+	*	@param   $model (string)
+	*	@return	true/false (boolean)
 	*/
 
 	public function bind_data( $data, $key = null, $model = null ) {
-		$class_name = get_class( $this );
+		$this->class_name = get_class( $this );
 
 		if ( ! $key ) {
 			$key = $this->get_previous_function();
@@ -382,8 +388,8 @@ class DustPressModel {
 		}
 		else {
 			// Create a place to store the wanted data in the global data structure.
-			if ( ! isset( $this->data[ $class_name ] ) ) $this->data[ $class_name ] = new \StdClass();
-			if ( ! $this->parent && ! isset( $this->data[ $class_name ]->Content ) ) $this->data[ $class_name ]->Content = new \StdClass();
+			if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
+			if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
 
 			if ( ! $this->parent ) {
 				if ( "Content" == $key ) {
@@ -391,30 +397,30 @@ class DustPressModel {
 					// jos data on tyhjä, tulee php warning
 					// TODO: luo virheilmoitus
 					if ( is_array( $data ) ) {
-						$this->data[ $class_name ]->{ $key } = (object) array_merge( (array) $this->data[$class_name]->Content, $data );
+						$this->data[ $this->class_name ]->{ $key } = (object) array_merge( (array) $this->data[$this->class_name]->Content, $data );
 					}
 				}
 				else {
-					$this->data[ $class_name ]->Content->{ $key } = $data;
+					$this->data[ $this->class_name ]->Content->{ $key } = $data;
 				}
 			}
 			else {
-				$this->data[ $class_name ]->{ $key } = $data;
+				$this->data[ $this->class_name ]->{ $key } = $data;
 			}
 		}
 	}
 
 	/**
-	*  get_previous_function
+	*	get_previous_function
 	*
-	*  This function returns the function where current function was called.
+	*	This function returns the function where current function was called.
 	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
+	*	@type	function
+	*	@date	20/3/2015
+	*	@since	0.0.1
 	*
-	*  @param	N/A
-	*  @return	$function (string)
+	*	@param	N/A
+	*	@return	$function (string)
 	*/
 	public function get_previous_function() {
 		$backtrace = debug_backtrace();
@@ -433,16 +439,16 @@ class DustPressModel {
 	}
 
 	/**
-	*  get_template
+	*	get_template
 	*
-	*  This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
+	*	This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
 	*
-	*  @type	function
-	*  @date	15/10/2015
-	*  @since	0.2.0
+	*	@type	function
+	*	@date	15/10/2015
+	*	@since	0.2.0
 	*
-	*  @param	N/A
-	*  @return	mixed
+	*	@param	N/A
+	*	@return	mixed
 	*/
 
 	public function get_template() {
@@ -457,16 +463,16 @@ class DustPressModel {
 	}
 
 	/**
-	*  set_template
+	*	set_template
 	*
-	*  This function lets the developer to set the template to be used to render a page.
+	*	This function lets the developer to set the template to be used to render a page.
 	*
-	*  @type	function
-	*  @date	15/10/2015
-	*  @since	0.2.0
+	*	@type	function
+	*	@date	15/10/2015
+	*	@since	0.2.0
 	*
-	*  @param	$template (string)
-	*  @return	N/A
+	*	@param	$template (string)
+	*	@return	N/A
 	*/
 
 	public function set_template( $template ) {
@@ -483,17 +489,107 @@ class DustPressModel {
 	}
 
 	/**
-	*  is_function_allowed
+	*	run_function
 	*
-	*  This functions returns true if asked private or protected functions is
-	*  allowed to be run via the run wrapper.
+	*	This function checks whether data exists in cache (if cache is enabled) 
+	*	and returns the data or runs the function and returns its return data.
 	*
-	*  @type	function
-	*  @date	17/12/2015
-	*  @since	0.3.0
+	*	@type	function
+	*	@date	29/01/2016
+	*	@since	0.3.1
 	*
-	*  @param   $function (string)
-	*  @return	$allowed (boolean)
+	*	@param	$m (string)
+	*	@return	N/A
+	*/
+
+	private function run_function( $m ) {
+
+		if ( $cached = $this->is_cached( $m ) ) {
+			return $cached;
+		}
+
+		$data = call_user_func( $this->class_name . '::' . $m );
+
+		$this->maybe_cache( $m, $data );
+
+		return $data;
+	}
+
+	/**
+	*	is_cached
+	*
+	*	This function checks if the function is defined as cacheable and return the cache if it exists.
+	*
+	*	@type	function
+	*	@date	29/01/2016
+	*	@since	0.3.1
+	*
+	*	@param	$m (string)
+	*	@return	N/A
+	*/
+
+	private function is_cached( $m ) {		
+
+		if ( ! dustpress()->get_setting('cache') ) {
+			return false;
+		}
+
+		$args 		= $this->get_args();
+		$this->hash = $this->generate_cache_key( $this->class_name, $args, $m );
+
+		return get_transient( $this->hash );
+	}
+
+	/**
+	*	maybe_cache
+	*
+	*	This function stores data sets to transient cache if it is enabled
+	*	and indexes cache keys for model-function-pairs.
+	*
+	*	@type	function
+	*	@date	29/01/2016
+	*	@since	0.3.1
+	*
+	*	@param	$m (string), $data (any)
+	*	@return	N/A
+	*/
+
+	private function maybe_cache( $m, $data ) {		
+
+		// Check whether cache is enabled and model has ttl-settings.
+		if ( ! dustpress()->get_setting('cache') && is_array( $this->ttl ) && ! in_array( $m, $this->ttl ) ) {
+			return false;
+		}
+
+		set_transient( $this->hash, $data, $this->ttl[ $m ] );
+
+		// Index key for cache clearing
+		$index 		= $this->generate_cache_key( $this->class_name, $m );
+		$hash_index = get_transient( $index );
+
+		if ( ! is_array( $hash_index ) ) {
+			$hash_index = [];
+		}
+
+		// Set the data hash key to the index array of this model function
+		$hash_index[] = $this->hash;
+
+		// Store transien for 30 days
+		set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
+	}
+
+	/**
+	*	is_function_allowed
+	*
+	*	This functions returns true if asked private or protected functions is
+	*	allowed to be run via the run wrapper.
+	*
+	*	@type	function
+	*	@date	17/12/2015
+	*	@since	0.3.0
+	*
+	*	@param   $function (string)
+	*	@return  $allowed (boolean)
 	*/
 
 	private function is_function_allowed( $function ) {
@@ -506,24 +602,48 @@ class DustPressModel {
 	}
 
 	/**
-	*  run_restricted
+	*	generate_cache_key
 	*
-	*  This function runs a restricted function if it exists in the allowed functions
-	*  and returns whatever the wanted function returns.
+	*	This functions creates a cache key hash from parameters.
 	*
-	*  @type	function
-	*  @date	17/12/2015
-	*  @since	0.3.0
+	*	@type	function
+	*	@date	17/12/2015
+	*	@since	0.3.0
+	*
+	*	@param  $args (ellipsis)
+	*	@return	$key (string)
+	*/
+
+	private function generate_cache_key() {
+		$args = func_get_args();
+		$seed;		
+
+		foreach( $args as $arg ) {
+			$seed .= serialize( $arg );
+		}
+
+		return sha1( $seed );
+	}
+
+	/**
+	*	run_restricted
+	*
+	*	This function runs a restricted function if it exists in the allowed functions
+	*	and returns whatever the wanted function returns.
+	*
+	*	@type	function
+	*	@date	17/12/2015
+	*	@since	0.3.0
 	*
 	*
-	*  @param   $function (string)
-	*  @param   $args (array)
-	*  @return	mixed
+	*	@param   $function (string)
+	*	@param   $args (array)
+	*	@return	mixed
 	*/
 
 	public function run_restricted( $function ) {
 		if ( $this->is_function_allowed( $function ) ) {
-			return $this->{$function}();
+			return $this->run_function( $function );
 		}
 		else {
 			return (object)["error" => "Wanted function does not exist in the allowed functions list."];

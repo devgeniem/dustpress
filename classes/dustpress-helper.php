@@ -42,23 +42,25 @@ class DustPressHelper {
 		global $post;
 
 		$defaults = [
-			"meta_keys" => null,
-			"single" => false,
-			"meta_type" => "post"
+			'meta_keys' => null,
+			'single' 	=> false,
+			'meta_type' => 'post',
+			'output' 	=> 'OBJECT'
 		];
 
 		$options = array_merge( $defaults, $args );
 
 		extract( $options );
 
-		self::$post = get_post( $id, 'ARRAY_A' );
-		if ( is_array( self::$post ) ) {
-			self::get_post_meta( self::$post, $id, $meta_keys, $meta_type, $single );
+		$post = get_post( $id, 'ARRAY_A' );
+
+		if ( is_array( $post ) ) {
+			get_post_meta( $post, $id, $meta_keys, $meta_type, $single );
 		}
 
-		self::$post['permalink'] = get_permalink($id);
+		$post['permalink'] = get_permalink($id);
 
-		return self::$post;
+		return self::cast_post_to_type( $post, $output );
 	}
 
 	/*
@@ -82,11 +84,12 @@ class DustPressHelper {
 	public static function get_acf_post( $id, $args = array() ) {
 
 		$defaults = [
-			"meta_keys" => null,
-			"single" => false,
-			"meta_type" => "post",
-			"whole_fields" => false,
-			"recursive" => false
+			'meta_keys' 	=> null,
+			'single' 		=> false,
+			'meta_type' 	=> 'post',
+			'whole_fields' 	=> false,
+			'recursive' 	=> false,
+			'output' 		=> 'OBJECT'
 		];
 
 		$options = array_merge( $defaults, $args );
@@ -149,8 +152,7 @@ class DustPressHelper {
 
 		$acfpost['permalink'] = get_permalink($id);
 
-
-		return $acfpost;
+		return self::cast_post_to_type( $acfpost, $output );
 	}
 
 	/*
@@ -294,6 +296,22 @@ class DustPressHelper {
 			}
 
 		}		
+	}
+
+	private function cast_post_to_type( $post, $type ) {
+
+		if ( 'ARRAY_A' !== $type ) {
+
+			if ( 'OBJECT' === $type ) {
+				return (object) $post;
+			}
+			elseif ( 'ARRAY_N' === $type ) {
+				return array_values( $post );
+			}
+
+		}
+		
+		return $post;	
 	}
 
 	/*
