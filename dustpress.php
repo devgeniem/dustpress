@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.3.1
+Version: 0.3.2
 */
 
 final class DustPress {
@@ -381,13 +381,14 @@ final class DustPress {
 		}
 
 		if ( is_archive() ) {
-			$hierarchy["is_hierarchy"] = [
+			// Double check just to keep the function structure.
+			$hierarchy["is_archive"] = [
 				function() {
 					$post_types = get_post_types();
 
 					foreach ( $post_types as $type ) {
 						if ( is_post_type_archive( $type ) ) {
-							if( class_exists( "Archive" . ucfirst( $type ) ) ) {
+							if ( class_exists( "Archive" . ucfirst( $type ) ) ) {
 								return "Archive" . ucfirst( $type );
 							}
 							else if ( class_exists("Archive") ) {
@@ -397,10 +398,9 @@ final class DustPress {
 								return false;
 							}
 						}
-						else {
-							return false;
-						}
 					}
+
+					return false;
 				}
 			];
 		}
