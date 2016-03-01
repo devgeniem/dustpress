@@ -1,42 +1,43 @@
 <?php 
 
-/*
- *  DustPressHelper
+/**
+ * DustPressHelper
  *	
- *  Wrapper for bunch of helper functions to use
- *  with DustPress.
+ * Wrapper for bunch of helper functions to use
+ * with DustPress.
  * 
  */
 
 class DustPressHelper {
 
-	/*
-	 *  Post functions
+	/**
+	 * Post functions
 	 *	
-	 *  Simplify post queries for getting meta 
-	 *  data and ACF fields with single function call.
+	 * Simplify post queries for getting meta 
+	 * data and ACF fields with single function call.
 	 * 
 	 */
 
 	private static $post;
 	private static $posts;
+	private static $query;
 	
-	/*
-	*  get_post
+	/**
+	* get_post
 	*
-	*  This function will query single post and its meta.
-	*  The wanted meta keys should be in an array as strings.
-	*  A string 'all' returns all the meta keys and values in an associative array.
-	*  If 'single' is set to true then the functions returns only the first value of the specified meta_key.
+	* This function will query single post and its meta.
+	* The wanted meta keys should be in an array as strings.
+	* A string 'all' returns all the meta keys and values in an associative array.
+	* If 'single' is set to true then the functions returns only the first value of the specified meta_key.
 	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
+	* @type	function
+	* @date	20/3/2015
+	* @since	0.0.1
 	*
-	*  @param	$id (int)
-	*  @param	$args (array)
+	* @param	$id (int)
+	* @param	$args (array)
 	*
-	*  $return  post object as an associative array with meta data
+	* @return  post object as an associative array with meta data
 	*/
 	public static function get_post( $id, $args = array() ) {
 		global $post;
@@ -63,23 +64,23 @@ class DustPressHelper {
 		return self::cast_post_to_type( $post, $output );
 	}
 
-	/*
-	*  get_acf_post
+	/**
+	* get_acf_post
 	*
-	*  This function will query a single post and its meta.
-	*  
-	*  If the args has a key 'recursive' with the value 'true', relational 
-	*  post objects are loaded recursively to get the full object.
-	*  Meta data is handled the same way as in get_post.
+	* This function will query a single post and its meta.
+	* 
+	* If the args has a key 'recursive' with the value 'true', relational 
+	* post objects are loaded recursively to get the full object.
+	* Meta data is handled the same way as in get_post.
 	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
+	* @type	function
+	* @date	20/3/2015
+	* @since	0.0.1
 	*
-	*  @param	$id (int)
-	*  @param	$args (array)
+	* @param	$id (int)
+	* @param	$args (array)
 	*
-	*  $return  post object as an associative array with acf fields and meta data
+	* $return  post object as an associative array with acf fields and meta data
 	*/
 	public static function get_acf_post( $id, $args = array() ) {
 
@@ -136,11 +137,11 @@ class DustPressHelper {
 										$row = self::get_acf_post( $row->ID, $options );
 									}
 
-								}								
-							}														
+								}
+							}
 						}
 					}
-				}						
+				}
 			}
 			elseif ( $wholeFields ) {
 				foreach( $acfpost['fields'] as $name => &$field ) {
@@ -155,116 +156,134 @@ class DustPressHelper {
 		return self::cast_post_to_type( $acfpost, $output );
 	}
 
-	/*
-	*  get_posts
+	/**
+	* get_posts
 	*
-	*  This function will query all posts and its meta based on given arguments.
-	*  The wanted meta keys should be in an array as strings.
-	*  A string 'all' returns all the meta keys and values in an associative array.
+	* This function will query all posts and its meta based on given arguments.
+	* If you want the whole query object, set 'query_object' to 'true'.
+	* If you are using pagination, set 'no_found_rows' to 'false'. This also makes the function to return the whole query object.
+	* The wanted meta keys should be in an array as strings. 
+	* A string 'all' returns all the meta keys and values in an associative array.
 	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
+	* @type	function
+	* @date	20/3/2015
+	* @since	0.0.1
 	*
-	*  @param	$args (array)
-	*
-	*  @return	array of posts as an associative array with meta data
+	* @param	[array]					$args 	Arguments to override the defaults defined in get_wp_query_defaults.
+	* @return	[array/WP_Query object] 		Array of posts as an associative array with meta data or
 	*/
 	public static function get_posts( $args ) {
 
-        $defaults = [
-            "meta_keys" => null,
-            "single" => false,
-            "meta_type" => "post",
-            "whole_fields" => false,
-        ];
+        $defaults = self::get_wp_query_defaults();        
 
         $options = array_merge( $defaults, $args );
 
         extract( $options );
 
-		self::$posts = get_posts( $args );
+		self::$query = new WP_Query( $options );
 
-		// cast post object to associative arrays
-		// and get the permalink of the post
-		foreach (self::$posts as &$temp) {
-			$temp = (array) $temp;
-			$temp['permalink'] = get_permalink( $temp['ID'] );
+		// Get the permalink of the post
+		if ( is_array( self::$query->posts ) )
+		foreach ( self::$query->posts as &$p ) {
+			$p->permalink = get_permalink( $p->ID );
 		}
 		
-		// get meta for posts
-		if ( count( self::$posts ) ) {
-			self::get_meta_for_posts( self::$posts, $meta_keys, $meta_type, $single );
+		// Get meta for posts
+		if ( count( self::$query->posts ) ) {
+			self::get_meta_for_posts( self::$query->posts, $meta_keys, $meta_type, $single );
+
+			// Reset data just in case
 			wp_reset_postdata();
-			return self::$posts;
+
+			// Maybe return the whole query object
+			if ( $query_object || false === $no_found_rows ) {
+				return self::$query;
+			}
+			// Return only the posts
+			else {
+				return self::$query->posts;
+			}
 		}	
 		else
 			return false;
 	}
 
-	/*
-	*  get_acf_posts
+	/**
+	* get_acf_posts
 	*
-	*  This function can query multiple posts which have acf fields based on given arguments.
-	*  Returns all the acf fields as an array.
-	*  Meta data is handled the same way as in get_posts.
+	* This function queries multiple posts and returns also all the Advanced Custom Fields data set saved in the posts meta.
+	* Meta data is handled the same way as in the get_posts-function.
 	*
-	*  @type	function
-	*  @date	20/3/2015
-	*  @since	0.0.1
+	* @type	function
+	* @date	20/3/2015
+	* @since	0.0.1
 	*
-	*  @param	$args (array)
-	*
-	*  @return	array of posts as an associative array with acf fields and meta data
+	* @param	[array]		$args 	Arguments to override the defaults defined in get_wp_query_defaults.
+	* @return	[array]				array of posts as an associative array with acf fields and meta data
 	*/
 	public static function get_acf_posts( $args ) {
 
-        $defaults = [
-            "meta_keys" => null,
-            "single" => false,
-            "meta_type" => "post",
-            "whole_fields" => false,
-        ];
+		// Some redundancy, but we need these
+		$defaults = self::get_wp_query_defaults();        
 
         $options = array_merge( $defaults, $args );
 
         extract( $options );
 
-		self::$posts = get_posts( $args );
+        // Perform the basic query first
+        self::get_posts( $options );
 
-		// cast post object to associative arrays
-		foreach (self::$posts as &$temp) {
-			$temp = (array) $temp;
-		}
+		// Temporarily set 'query_object' to 'true'
+		$args['query_object'] = true;
 
-		if ( count( self::$posts ) ) {
+        self::get_posts( $args );
+
+        // Extend the posts with acf data
+		if ( is_array( self::$query->posts ) ) {
 			// loop through posts and get all acf fields
-			foreach ( self::$posts as &$p ) {								
-				$p['fields'] = get_fields( $p['ID'] );
-				$p['permalink'] = get_permalink( $p['ID'] );
-				if( $whole_fields ) {
-					foreach($p['fields'] as $name => &$field) {
-						$field = get_field_object($name, $p['ID'], true);
+			foreach ( self::$query->posts as &$p ) {								
+				
+				$p->fields = get_fields( $p->ID );
+
+				if ( $whole_fields ) {
+					foreach( $p->fields as $name => &$field ) {
+						$field = get_field_object( $name, $p->ID, true );
 					}
 				}
 			}
 
-			self::get_meta_for_posts( self::$posts, $meta_keys, $meta_type, $single );
-
-			wp_reset_postdata();
-			return self::$posts;
+			// Maybe return the whole query object
+			if ( $query_object || false === $no_found_rows ) {
+				return self::$query;
+			}
+			// Return only the posts
+			else {
+				return self::$query->posts;
+			}
 		}	
-		else
+		else {
 			return false;
+		}
 	}
 
 
-	/*
+	/**
+	 * get_post_meta
+	 * 
+	 * Get meta data for a single post.
 	 *
-	 * Private functions
-	 *
+	 * @type	function
+	 * @date	20/3/2015
+	 * @since	0.0.1
+	 * 
+	 * @param  [array]			&$post    	The queried post.
+	 * @param  [int] 			$id        	Id for the post.
+	 * @param  [array/string] 	$meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
+	 * @param  [string] 		$meta_type	Type of object metadata is for (e.g. comment, post, or user).
+	 * @param  [boolean] 		$single 	If true, return only the first value of the specified meta_key.
+	 * @return [array]          
 	 */
-    private function get_post_meta( &$post, $id, $meta_keys = NULL, $meta_type, $single ) {
+    private static function get_post_meta( &$post, $id, $meta_keys = NULL, $meta_type, $single ) {
 		$meta = array();
 
 		if ( $meta_keys === 'all' ) {
@@ -279,26 +298,56 @@ class DustPressHelper {
 		$post['meta'] = $meta;
 	}
 
-	private function get_meta_for_posts( &$posts, $meta_keys = NULL, $meta_type, $single ) {
+	/**
+	 * get_meta_for_posts
+	 * 
+	 * Get meta data for multiple posts.
+	 *
+	 * @type	function
+	 * @date	20/3/2015
+	 * @since	0.0.1
+	 * 
+	 * @param  [array]			&$posts    	The queried post.
+	 * @param  [array/string] 	$meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
+	 * @param  [string] 		$meta_type	Type of object metadata is for (e.g. comment, post, or user).
+	 * @param  [boolean] 		$single 	If true, return only the first value of the specified meta_key.
+	 * @return [array]          
+	 */
+	private static function get_meta_for_posts( &$posts, $meta_keys = NULL, $meta_type, $single ) {
 		if ( $meta_keys === 'all' ) {
-			// loop through posts and get the meta values
+			// Loop through posts and get the meta values
 			foreach ( $posts as &$post ) {
-				$post['meta'] = get_metadata( $meta_type, $post['ID'], '', $single );
+				$post->meta = get_metadata( $meta_type, $post->ID, '', $single );
 			}
 		}
 		elseif ( is_array( $meta_keys ) ) {
-			// loop through selected meta keys
-			foreach ( $meta_keys as $key ) {
-				// loop through posts and get the meta values
+			// Loop through selected meta keys
+			foreach ( $meta_keys as $key ) {				
+				// Loop through posts and get the meta values
 				foreach ( $posts as &$post ) {
-					$post['meta'][$key] = get_metadata( $meta_type, $post['ID'], $key, $single );
+					// Maybe init meta
+					if ( ! isset( $post->meta ) ) $post->meta = [];
+					// Get meta by key and options
+					$post->meta[$key] = get_metadata( $meta_type, $post->ID, $key, $single );
 				}	
 			}
 
 		}		
 	}
 
-	private function cast_post_to_type( $post, $type ) {
+	/**
+	 * cast_post_to_type
+	 * 
+	 * Used to cast posts to a desired type.
+	 * 
+	 * @type	function
+	 * @date	26/1/2016
+	 * @since	0.3.0
+	 * @param  [array] 			$post 	WP post object as an array.
+	 * @param  [string] 		$type 	The desired type.
+	 * @return [array/object]
+	 */
+	private static function cast_post_to_type( $post, $type ) {
 
 		if ( 'ARRAY_A' !== $type ) {
 
@@ -314,31 +363,49 @@ class DustPressHelper {
 		return $post;	
 	}
 
+	/**
+	 * Wrapper for wp queries' defaults.
+	 * 
+	 * @return array
+	 */
+	private static function get_wp_query_defaults() {
+		return [
+            'meta_keys' 				=> null,	// desired keys in an array or 'all' to fetch all
+            'single'					=> false,	// return only the first value for a meta key
+            'meta_type' 				=> 'post',	// which type of meta to fetch
+            'whole_fields' 				=> false,	// return the entire field object for ACF fields
+            'query_object'				=> false,	// do not return the whole WP_Query object
+            'no_found_rows' 			=> true, 	// no pagination needed
+            'update_post_meta_cache' 	=> false, 	// no post meta utilized
+            'update_post_term_cache' 	=> false, 	// no taxonomy terms utilized
+        ];
+    }
+
 	/*
-	 *  Menu functions
+	 * Menu functions
 	 *	
-	 *  These functions gather menu data to use with DustPress
-	 *  helper and developers' implementations.
+	 * These functions gather menu data to use with DustPress
+	 * helper and developers' implementations.
 	 * 
 	 */
 
-	/*
-    *  get_menu_as_items
+	/**
+    * get_menu_as_items
     *
-    *  Returns all menu items arranged in a recursive array form that's
-    *  easy to use with Dust templates. Menu_name parameter is mandatory.
-    *  Parent is used to get only submenu for certaing parent post ID.
-    *  Override is used to make some other post than the current "active".
+    * Returns all menu items arranged in a recursive array form that's
+    * easy to use with Dust templates. Menu_name parameter is mandatory.
+    * Parent is used to get only submenu for certaing parent post ID.
+    * Override is used to make some other post than the current "active".
     *
-    *  @type        function
-    *  @date        16/6/2015
-    *  @since       0.0.2
+    * @type        function
+    * @date        16/6/2015
+    * @since       0.0.2
     *
-    *  @param       $menu_name (string)
-    *  @param   	$parent (integer)
-    *  @param       $override (integer)
+    * @param       $menu_name (string)
+    * @param   	$parent (integer)
+    * @param       $override (integer)
     *
-    *  @return      array of menu items in a recursive array
+    * @return      array of menu items in a recursive array
     */
     public static function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
 
@@ -363,21 +430,21 @@ class DustPressHelper {
             }
     }
 
-    /*
-    *  build_menu
+    /**
+    * build_menu
     *
-    *  Recursive function that builds a menu downwards from an item. Calls
-    *  itself recursively in case there is a submenu under current item.
+    * Recursive function that builds a menu downwards from an item. Calls
+    * itself recursively in case there is a submenu under current item.
     *
-    *  @type        function
-    *  @date        16/6/2015
-    *  @since       0.0.2
+    * @type        function
+    * @date        16/6/2015
+    * @since       0.0.2
     *
-    *  @param       $menu_items (array)
-    *  @param       $parent (integer)
-    *  @param       $override (integer)
+    * @param       $menu_items (array)
+    * @param       $parent (integer)
+    * @param       $override (integer)
     *
-    *  @return      array of menu items
+    * @return      array of menu items
     */        
 
     private static function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
