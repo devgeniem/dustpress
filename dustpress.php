@@ -697,7 +697,7 @@ final class DustPress {
 			foreach ( $templatepaths as $templatepath ) {
 				if ( is_readable( $templatepath ) ) {
 					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
-						if ( strpos( $file, $templatefile ) !== false ) {
+						if ( basename( $templatefile ) == $file ) {
 							if ( is_readable( $file ) ) {
 								return $file;
 							}
