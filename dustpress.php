@@ -205,7 +205,7 @@ final class DustPress {
 
 			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-			$this->render( [ "partial" => $partial ] );
+			$this->render( [ "partial" => $partial, "main" => true ] );
 		}
 		else {
 			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
@@ -533,7 +533,8 @@ final class DustPress {
 		$defaults = [
 			"data" => false,
 			"type" => "default",
-			"echo" => true
+			"echo" => true,
+			"main" => false,
 		];
 
 		if ( is_array( $args ) ) {
@@ -638,7 +639,8 @@ final class DustPress {
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
 
-		$output = apply_filters( 'dustpress/output', $output );
+		// Filter output
+		$output = apply_filters( 'dustpress/output', $output, $options );
 
 		// Store data into session for debugger to fetch
 		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {									
