@@ -3,16 +3,19 @@
   "type": "wordpress-plugin",
   "description": "WordPress Theme Framework.",
   "authors": [
-  {
-      "name": "Miika Arponen",
-      "homepage": "http://geniem.com/",
-      "role": "Developer"
-  },
-  {
-      "name": "Ville Siltala",
-      "homepage": "http://geniem.com/",
-      "role": "Developer"
-  }
+    {
+        "name": "Miika Arponen",
+        "homepage": "http://geniem.com/",
+        "role": "Developer"
+    },
+    {
+        "name": "Ville Siltala",
+        "homepage": "http://geniem.com/",
+        "role": "Developer"
+    }
+  ],
+  "keywords": [
+    "wordpress", "dustjs", "dustpress", "theme", "framework", "javascript"
   ],
   "license": "GPL-3.0",
   "minimum-stability": "dev"
