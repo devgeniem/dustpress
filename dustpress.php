@@ -5,7 +5,7 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.9
+Version: 0.0.9.1
 */
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
@@ -56,7 +56,7 @@ class DustPress {
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
 		if ( ! $this->is_installation_compatible() ) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
-		
+
 			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
 		}
 
@@ -104,7 +104,7 @@ class DustPress {
 				$class = str_replace( "category", "category-", $class );
 				$class = str_replace( "taxonomy", "taxonomy-", $class );
 				$class = str_replace( "error404", "404", $class );
-				
+
 				$filename = strtolower( $class ) .".php";
 
 				foreach ( $paths as $path ) {
@@ -251,13 +251,13 @@ class DustPress {
 
 		// If admin and debug is set to true, enqueue JSON printing
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );			
-			
+			wp_enqueue_script( 'jquery' );
+
 			// Just register the dustpress and enqueue later, if needed
 			wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );						
+			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );
 		}
 	}
 
@@ -310,7 +310,7 @@ class DustPress {
 			$string = " checked=\"checked\"";
 		else
 			$string = "";
-		
+
 		echo '<div class="wrap">';
 		echo '<h2>DustPress Options</h2>';
 ?>
@@ -430,7 +430,7 @@ class DustPress {
 					die( "DustPress error: ". $e->getMessage() );
 				}
 
-				return $dust->renderTemplate( $compiled, $data );		
+				return $dust->renderTemplate( $compiled, $data );
 			},
 			"json" => function( $data, $partial, $dust ) {
 				try {
@@ -457,7 +457,7 @@ class DustPress {
 		}
 		catch ( Exception $e ) {
 			$data = array(
-				'dustPressError' => "DustPress error: ". $e->getMessage()				
+				'dustPressError' => "DustPress error: ". $e->getMessage()
 			);
 			$template = $this->get_error_template();
 			$error = true;
@@ -476,15 +476,15 @@ class DustPress {
 		// Create debug data if wanted and only if we are on the main instance.
 		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$jsondata = json_encode( $data );
-			
+
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Localize the script with new data
 			$data_array = array(
-				'jsondata' => $jsondata,				
+				'jsondata' => $jsondata,
 			);
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
-			
+
 			// jsonView jQuery - plugin
 			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
 			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, true );
@@ -631,7 +631,7 @@ class DustPress {
 				$partial = str_replace( "category", "category-", $partial );
 			}
 			else if ( is_tax() ) {
-				$partial = str_replace( "taxonomy", "taxonomy-", $partial );	
+				$partial = str_replace( "taxonomy", "taxonomy-", $partial );
 			}
 			else if ( is_archive() ) {
 				$partial = str_replace( "archive", "archive-", $partial );
@@ -657,7 +657,7 @@ class DustPress {
 					}
 				}
 			}
-			
+
 			// If we could not find such template.
 			throw new Exception( "Error loading template file: " . $template, 1 );
 		}
@@ -705,8 +705,8 @@ class DustPress {
 
 		// Insert user info to collection
 
-		$currentuser = wp_get_current_user();		
-		
+		$currentuser = wp_get_current_user();
+
 		if ( 0 === $currentuser->ID ) {
 			$WP["loggedin"] = false;
 		}
@@ -805,7 +805,7 @@ class DustPress {
 			}
 			else if ( ! $pageTemplate ) return "page";
 		}
-		
+
 		$array = explode( "/", $pageTemplate );
 
 		$filename = array_pop( $array );
@@ -922,7 +922,7 @@ class DustPress {
 		else {
 			if ( isset( $dustpress->data[$module] ) ) {
 				$dustpress->data[$module]->Content->{$key} = $data;
-			}	
+			}
 		}
 	}
 
