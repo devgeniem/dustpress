@@ -326,11 +326,10 @@ class DustPressModel {
 	*	@date	17/3/2015
 	*	@since	0.0.1
 	*
-	*	@param	$name (string)
-	*	@param	$args (array)
+	*	@param	$name (string), $args (array), $cache_sub (boolean)
 	*/
 
-	public function bind_sub( $name, $args = null ) {
+	public function bind_sub( $name, $args = null, $cache_sub = true ) {
 		$this->class_name = get_class( $this );
 		$model = new $name( $args, $this );
 
@@ -349,11 +348,14 @@ class DustPressModel {
 
 		$this->submodels->{$name} = $model;
 
-		// Store called submodels for caching purposes
-		if ( empty( $this->called_subs ) ) {
-			$this->called_subs = [];
+
+		// Store called submodels for caching purposes.
+		if ( $cache_sub ) {
+			if ( empty( $this->called_subs ) ) {
+				$this->called_subs = [];
+			}
+			$this->called_subs[] = [ 'class_name' => $name, 'args' 	=> $args ];
 		}
-		$this->called_subs[] = [ 'class_name' => $name, 'args' 	=> $args ];
 	}
 
 	/**
@@ -414,6 +416,9 @@ class DustPressModel {
 				$this->data[ $this->class_name ]->{ $key } = $data;
 			}
 		}
+
+		// Store data for cacheing purposes.
+		$this->last_bound = $data;
 	}
 
 	/**
@@ -512,11 +517,18 @@ class DustPressModel {
 		$cached = $this->get_cached( $m );
 
 		if ( $cached ) {
-			error_log('this is a cache');
+			//error_log('this is a cache: ' . $m);
 			return $cached;
 		}
 
 		$data = call_user_func( $this->class_name . '::' . $m );
+
+		if ( ! $data ) {
+			if ( $this->last_bound ) {
+				$data = $this->last_bound;
+				$this->last_bound = null;
+			}
+		}
 
 		$this->maybe_cache( $m, $data, $this->called_subs );
 
@@ -529,7 +541,7 @@ class DustPressModel {
 	/**
 	*	get_cached
 	*
-	*	This function checks if the function is defined as cacheable and return the cache if it exists.
+	*	This function checks if the function is defined as cacheable and returns the cache if it exists.
 	*
 	*	@type	function
 	*	@date	29/01/2016
@@ -542,7 +554,6 @@ class DustPressModel {
 	private function get_cached( $m ) {		
 
 		if ( ! dustpress()->get_setting('cache') ) {
-			error_log('ei cache');
 			return false;
 		}
 
@@ -551,10 +562,15 @@ class DustPressModel {
 
 		$cached = get_transient( $this->hash );
 
+		if ( false === $cached ) {
+			return false;
+		}
+
 		// Run stored submodel calls
 		if ( isset( $cached->subs ) && is_array( $cached->subs ) ) {
 			foreach ( $cached->subs as $sub_data ) {
-				$this->bind_sub( $sub_data['class_name'], $sub_data['args'] );
+				// Run submodel without cacheing it.
+				$this->bind_sub( $sub_data['class_name'], $sub_data['args'], false );
 			}
 		}
 
@@ -578,28 +594,60 @@ class DustPressModel {
 	private function maybe_cache( $m, $data, $subs ) {
 
 		// Check whether cache is enabled and model has ttl-settings.
-		if ( ! dustpress()->get_setting('cache') && is_array( $this->ttl ) && ! in_array( $m, $this->ttl ) ) {
+		if ( dustpress()->get_setting('cache') && $this->is_cacheable_function( $m ) ) {
+
+			// Extend data with submodels
+			$to_cache = (object)[ 'data' => $data, 'subs' => $subs ];
+
+			set_transient( $this->hash, $to_cache, $this->ttl[ $m ] );
+
+			// If no hash key exists, bail
+			if ( ! isset( $this->hash ) ) {
+				return;
+			}
+
+			// Index key for cache clearing
+			$index 		= $this->generate_cache_key( $this->class_name, $m );
+			$hash_index = get_transient( $index );
+
+			if ( ! is_array( $hash_index ) ) {
+				$hash_index = [];
+			}
+
+			// Set the data hash key to the index array of this model function
+			if ( ! in_array( $this->hash, $hash_index ) ) {
+				$hash_index[] = $this->hash;
+			}
+
+			// Store transient for 30 days
+			set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
+		}
+
+		return false;
+	}
+
+	/**
+	 *	is_cacheable_function
+	 *
+	 *	Checks whether the function is to be cached.
+	 *
+	 *	@param 	$m (string), $ttl (array)
+	 *  @return (boolean)
+	 */
+	private function is_cacheable_function( $m ) {
+		// No caching set
+		if ( ! isset( $this->ttl ) && ! is_array( $this->ttl ) ) {
 			return false;
 		}
+		if ( is_array( $this->ttl ) ) {
+			foreach ( $this->ttl as $key => $val ) {
+				if ( $m === $key ) {
 
-		// Extend data with submodels
-		$to_cache = (object)[ 'data' => $data, 'subs' => $subs ];
-
-		set_transient( $this->hash, $to_cache, $this->ttl[ $m ] );
-
-		// Index key for cache clearing
-		$index 		= $this->generate_cache_key( $this->class_name, $m );
-		$hash_index = get_transient( $index );
-
-		if ( ! is_array( $hash_index ) ) {
-			$hash_index = [];
+					return true;
+				}
+			}
 		}
-
-		// Set the data hash key to the index array of this model function
-		$hash_index[] = $this->hash;
-
-		// Store transien for 30 days
-		set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
+		return false;
 	}
 
 	/**
