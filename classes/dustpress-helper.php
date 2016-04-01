@@ -450,6 +450,10 @@ class DustPressHelper {
     private static function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
             $tempItems = array();
             $parent_id = 0;
+            
+            if ( empty( $type ) ) {
+                $type = "page";
+            }
 
             if ( count( $menu_items ) > 0 ) {
                     foreach ( $menu_items as $item ) {
