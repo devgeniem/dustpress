@@ -158,6 +158,9 @@ final class DustPress {
 		// Add admin stuff
 		add_action( 'after_setup_theme', [ $this, 'admin_stuff' ] );
 
+		// Initiliaze settings
+		add_action( 'init', [ $this, 'init_settings' ] );
+
 		return;
 	}
 
@@ -819,9 +822,34 @@ final class DustPress {
 	}
 
 	/**
+	*  init_settings
+	*
+	*  This function initializes DustPress settings with default values
+	*
+	*  @type    function
+	*  @date    01/04/2016
+	*  @since   0.4.0
+	*
+	*  @return  N/A
+	*/
+
+	private function init_settings() {
+		$this->settings = [
+			"cache" => false
+		];
+
+		// loop through the settings and execute possible filters from functions
+		foreach ( $this->settings as $key => $value ) {
+			$this->settings[ $key ] = apply_filters( "dustpress/settings/". $key, $value );
+		}
+
+		return null;
+	}
+
+	/**
 	*  get_setting
 	*
-	*  This function returns dustpress setting for specific key.
+	*  This function returns DustPress setting for specific key.
 	*
 	*  @type	function
 	*  @date	29/01/2016
@@ -831,13 +859,8 @@ final class DustPress {
 	*/
 
 	public function get_setting( $key ) {
-
-		if ( empty( $this->settings ) ) {
-			$this->settings = get_option('dustpress_settings');
-		}
-
-		if ( isset( $settings[ $key ] ) ) {
-			return $settings[ $key ];
+		if ( isset( $this->settings[ $key ] ) ) {
+			return $this->settings[ $key ];
 		}
 		else {
 			return null;
