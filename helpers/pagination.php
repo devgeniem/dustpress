@@ -31,14 +31,14 @@ class Pagination_Helper {
 	  	$cur_page			= (int) $params->page;
 		$prev_page			= $cur_page - 1;
 		$next_page 			= $cur_page + 1;
-		$offset 			= (int) $params->offset;
+		$per_page 			= (int) $params->per_page;
 		$rows 				= (int) $params->rows;
 		$hash				= $params->hash 		? '#' . $params->hash 	: '';
 		$this->page_label	= $params->page_label 	? $params->page_label 	: 'page';
 
-		// more rows than the set offset
-		if ( ( $rows - $offset ) > 0 ) {
-			$page_count = ceil( $rows / $offset );
+		// more rows than the set per_page
+		if ( ( $rows - $per_page ) > 0 ) {
+			$page_count = ceil( $rows / $per_page );
 
 			$first_page = 1;
 			$last_page 	= $page_count;

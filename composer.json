@@ -1,0 +1,24 @@
+{
+  "name": "devgeniem/dustpress",
+  "type": "wordpress-plugin",
+  "description": "WordPress Theme Framework.",
+  "authors": [
+    {
+        "name": "Miika Arponen",
+        "email": "miika.arponen@geniem.com",
+        "homepage": "http://geniem.com/",
+        "role": "Developer"
+    },
+    {
+        "name": "Ville Siltala",
+        "email": "ville.siltala@geniem.com",
+        "homepage": "http://geniem.com/",
+        "role": "Developer"
+    }
+  ],
+  "keywords": [
+    "wordpress", "dustjs", "dustpress", "theme", "framework", "javascript"
+  ],
+  "license": "GPL-3.0",
+  "minimum-stability": "dev"
+}
