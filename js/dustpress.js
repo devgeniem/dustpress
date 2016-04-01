@@ -39,7 +39,7 @@ window.DustPress = ( function( window, document, $ ) {
 		if(parsed.error === undefined)
 			dp.success(parsed.success, textStatus, jqXHR);
 		else
-			dp.error(parsed.error, textStatus, jqXHR);
+			dp.error(parsed, textStatus, jqXHR);
 	};
 
 	dp.errorHandler = function(jqXHR, textStatus, errorThrown) {

@@ -25,8 +25,8 @@ final class DustPress {
 	// Possible post body
 	private $postbody;
 
-	// DustPress options
-	private $options;
+	// DustPress settings
+	private $settings = [ 'cache' => true ];
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -831,6 +831,10 @@ final class DustPress {
 
 		if ( empty( $this->settings ) ) {
 			$this->settings = get_option('dustpress_settings');
+			
+			if ( ! is_array( $this->settings ) ) {
+				$this->settings = [];
+			}
 		}
 
 		if ( isset( $settings[ $key ] ) ) {
@@ -839,6 +843,30 @@ final class DustPress {
 		else {
 			return null;
 		}
+	}
+
+	/**
+	*  set_setting
+	*
+	*  This function changes dustpress settings. Changes are not stored into database.
+	*
+	*  @type	function
+	*  @date	29/01/2016
+	*  @since	0.3.1
+	*
+	*  @return	$setting (any)
+	*/
+
+	public function set_setting( $key, $data ) {
+
+		if ( empty( $this->settings ) ) {
+			$this->settings = get_option('dustpress_settings');
+			if ( ! is_array( $this->settings ) ) {
+				$this->settings = [];
+			}
+		}
+
+		$this->settings[ $key ] = $data;
 	}
 
 	/**
