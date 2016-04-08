@@ -63,7 +63,7 @@ final class DustPress {
 		    $prefix = 'Dust\\';
 
 		    // base directory for the namespace prefix
-		    $base_dir = get_template_directory() . '/dustpress/dust/';
+		    $base_dir = dirname( __FILE__ ) . '/dust/';
 
 		    // does the class use the namespace prefix?
 		    $len = strlen( $prefix );
@@ -89,7 +89,7 @@ final class DustPress {
 		// Autoload DustPress classes
 		spl_autoload_register( function( $class ) {
 			$paths = [
-				get_template_directory() . '/dustpress/classes/',
+				dirname( __FILE__ ) . '/classes/',
 				get_template_directory() . '/models',
 			];
 
@@ -126,11 +126,11 @@ final class DustPress {
 
 		// Set initial parameters
 		$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
-		$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
+		$this->dust->includedDirectories[] = dirname( __FILE__ ) . '/partials/';
 
 		// Find and include Dust helpers from DustPress plugin
 		$paths = [
-			get_template_directory() . '/dustpress/helpers',
+			dirname( __FILE__ ) . '/helpers',
 		];
 
 		foreach( $paths as $path ) {
@@ -626,8 +626,8 @@ final class DustPress {
 
 			// jsonView jQuery plugin
 			$dependencies = apply_filters("dustpress/debugger_dependencies", ['jquery'] );
-			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', $dependencies, null, true );
+			wp_enqueue_style( "jquery.jsonview", home_url() .'/vendor/devgeniem/dustpress/css/jquery.jsonview.css', null, null, null );
+			wp_enqueue_script( "jquery.jsonview",  home_url() .'/vendor/devgeniem/dustpress/js/jquery.jsonview.js', $dependencies, null, true );
 
 			// Enqueued script with localized data.
 			wp_enqueue_script( 'dustpress_debugger' );
@@ -694,7 +694,7 @@ final class DustPress {
 			$templatefile =  $partial . '.dust';
 
 			$templatepaths = [
-				get_template_directory() . '/dustpress/partials/',
+				dirname( __FILE__ ) . '/partials/',
 				get_template_directory() . '/partials/'
 			];
 
@@ -742,11 +742,11 @@ final class DustPress {
 			wp_enqueue_script( 'jquery' );
 
 			// Just register the dustpress and enqueue later, if needed
-			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
+			wp_register_script( "dustpress",  home_url() .'/vendor/devgeniem/dustpress/js/dustpress.js', null, null, true );
 
 			// Register the debugger script
 			$dependencies = apply_filters("dustpress/debugger_dependencies", []);
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', $dependencies, '0.0.2', true );
+			wp_register_script( "dustpress_debugger",  home_url() .'/vendor/devgeniem/dustpress/js/dustpress-debugger.js', $dependencies, '0.0.2', true );
 
 			// Register debugger ajax hook
 			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
@@ -1352,7 +1352,7 @@ final class DustPress {
 	*/
 	private function enqueue_scripts() {
 		wp_enqueue_script('jquery');
-		wp_enqueue_script( 'dustpress', get_template_directory_uri() .'/dustpress/js/dustpress.js', ['jquery'], '0.0.1', false );
+		wp_enqueue_script( 'dustpress', home_url() .'/vendor/devgeniem/dustpress/js/dustpress.js', ['jquery'], '0.0.1', false );
 	}
 }
 

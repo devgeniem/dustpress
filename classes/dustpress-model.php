@@ -103,7 +103,7 @@ class DustPressModel {
 		if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
 		if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
 
-		// Fetch all methods from given class.
+		// Fetch all methods from given class and in its parents.
 		$methods = $this->get_class_methods( $this->class_name );
 
 		// Check that all asked functions exist
@@ -119,42 +119,44 @@ class DustPressModel {
 		$private_methods = [];
 
 		// Loop through the methods
-		foreach( $methods as $index => $method_item ) {
-			$reflection = new ReflectionMethod( $this->class_name, $method_item );
+		foreach( $methods as $class => &$class_methods ) {
+			foreach( $class_methods as $index => $method_item ) {
+				$reflection = new ReflectionMethod( $class, $method_item );
 
-			// If we have wanted list of functions, check if we can run them and don't run
-			// anything else.
-			if ( is_array( $functions ) && count( $functions ) > 0 ) {
-				if ( ! in_array( $method_item, $functions ) ) {
-					continue;
-				}
-				else {
-					if ( ! $this->is_function_allowed( $method_item ) ) {
-						die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
-					}
-					else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
-						$private_methods[] = $method_item;
+				// If we have wanted list of functions, check if we can run them and don't run
+				// anything else.
+				if ( is_array( $functions ) && count( $functions ) > 0 ) {
+					if ( ! in_array( $method_item, $functions ) ) {
 						continue;
 					}
 					else {
-						// If the method has parameters, it should be run manually
-						if ( $reflection->getNumberOfParameters() > 0 ) {
-							unset( $methods[ $index ] );
+						if ( ! $this->is_function_allowed( $method_item ) ) {
+							die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
+						}
+						else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
+							$private_methods[] = $method_item;
+							continue;
 						}
 						else {
-							$methods[ $index ] = array( $this, $method_item );
+							// If the method has parameters, it should be run manually
+							if ( $reflection->getNumberOfParameters() > 0 ) {
+								unset( $class_methods[ $index ] );
+							}
+							else {
+								$class_methods[ $index ] = array( $class, $method_item );
+							}
 						}
 					}
 				}
-			}
-			else {
-				if ( $reflection->isPublic() ) {
-					// If the method has parameters, it should be run manually
-					if ( $reflection->getNumberOfParameters() > 0 ) {
-						unset( $methods[ $index ] );
-					}
-					else {
-						$methods[ $index ] = array( $this, $method_item );
+				else {
+					if ( $reflection->isPublic() ) {
+						// If the method has parameters, it should be run manually
+						if ( $reflection->getNumberOfParameters() > 0 ) {
+							unset( $class_methods[ $index ] );
+						}
+						else {
+							$class_methods[ $index ] = array( $class, $method_item );
+						}
 					}
 				}
 			}
@@ -169,91 +171,97 @@ class DustPressModel {
 			$tidy_data = (object)[];
 		}
 
+		$methods = array_reverse( $methods );
+
 		// Loop through all public methods and run the ones we wanted to deliver the data to the views.
-		foreach( $methods as $m ) {
-			if ( is_array( $m ) ) { 
-				if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
-					if ( $m[1] == "__construct" ) {
+		foreach( $methods as $class => $class_methods ) {
+			foreach( $class_methods as $name => $m ) {
+				if ( is_array( $m ) ) { 
+					if ( isset( $m[1] ) && is_string( $m[1] ) ) { 
+						if ( $m[1] == "__construct" ) {
+							continue;
+						} 
+
+						$method = str_replace( "bind_", "", $m[1] );
+
+						if ( "Content" == $method ) {
+							if ( ! isset( $this->data[ $class ]->{ $method } ) ) {
+								if ( $tidy ) {
+									$tidy_data->{ $method } = (object)[];
+								}
+								else {
+									$this->data[ $class ]->{ $method } = (object)[];
+								}
+							}
+
+							$data = $this->run_function( $m[1], $class );
+
+							if ( ! is_null( $data ) ) {
+								if ( $tidy ) {
+									$tidy_data->{ $method } = $data;
+								}
+								else {
+									$this->data[ $class ]->{ $method } = $data;
+								}
+							}
+						}
+						else {
+							$data = $this->run_function( $m[1], $class );
+							if ( $tidy ) {
+								$tidy_data->{ $m[1] } = $data;
+							}
+							else {
+								if ( ! is_null( $data ) ) {
+									if ( $this->parent ) {
+										$content = (array) $this->data[ $class ];
+										$content[ $method ] = $data;
+										$this->data[ $class ] = (object) $content;
+									}
+									else {
+										$content = (array) $this->data[ $class ]->Content;
+										$content[ $method ] = $data;
+										$this->data[ $class ]->Content = (object) $content;
+									}
+								}
+							}
+						}
+					}
+				}
+				else if ( is_callable( $m ) ) {
+					if ( $m == "__construct" ) {
 						continue;
 					} 
 
-					$method = str_replace( "bind_", "", $m[1] );
+					$method = str_replace( "bind_", "", $m );
 
-					if ( "Content" == $method ) {
-						if ( ! isset( $this->data[ $this->class_name ]->{ $method } ) ) {
-							if ( $tidy ) {
-								$tidy_data->{ $method } = (object)[];
-							}
-							else {
-								$this->data[ $this->class_name ]->{ $method } = (object)[];
-							}
-						}
-
-						$data = $this->run_function( $m[1] );
-
-						if ( ! is_null( $data ) ) {
-							if ( $tidy ) {
-								$tidy_data->{ $method } = $data;
-							}
-							else {
-								$this->data[ $this->class_name ]->{ $method } = $data;
-							}
-						}
+					if ( ! isset( $this->data[ $class ]->Content->{ $method } ) ) {
+						$this->data[ $class ]->Content->{ $method } = [];
 					}
-					else {
-						$data = $this->run_function( $m[1] );
+					
+					$data = $this->run_function( $m, $class );
+
+					if ( ! is_null( $data ) ) {
 						if ( $tidy ) {
-							$tidy_data->{ $m[1] } = $data;
+							$tidy_data->{ $method } = $data;
 						}
 						else {
-							if ( ! is_null( $data ) ) {
+							if ( "content" == strtolower( $method )  ) {
+		    					$this->data[ $class ]->Content = (object) array_merge( (array) $this->data[ $class ]->Content, [ $method => $data ] );
+							}
+							else {
 								if ( $this->parent ) {
-									$content = (array) $this->data[ $this->class_name ];
-									$content[ $method ] = $data;
-									$this->data[ $this->class_name ] = (object) $content;
+									$this->data[ $class ]->{ $method } = $data;
 								}
 								else {
-									$content = (array) $this->data[ $this->class_name ]->Content;
-									$content[ $method ] = $data;
-									$this->data[ $this->class_name ]->Content = (object) $content;
+									$this->data[ $class ]->Content->{ $method } = $data;
 								}
 							}
 						}
 					}
 				}
 			}
-			else if ( is_callable( $m ) ) {
-				if ( $m == "__construct" ) {
-					continue;
-				} 
 
-				$method = str_replace( "bind_", "", $m );
-
-				if ( ! isset( $this->data[ $this->class_name ]->Content->{ $method } ) ) {
-					$this->data[ $this->class_name ]->Content->{ $method } = [];
-				}
-				
-				$data = $this->run_function( $m );
-
-				if ( ! is_null( $data ) ) {
-					if ( $tidy ) {
-						$tidy_data->{ $method } = $data;
-					}
-					else {
-						if ( "content" == strtolower( $method )  ) {
-	    					$this->data[$this->class_name]->Content = (object) array_merge( (array) $this->data[$this->class_name]->Content, [ $method => $data ] );
-						}
-						else {
-							if ( $this->parent ) {
-								$this->data[ $this->class_name ]->{ $method } = $data;
-							}
-							else {
-								$this->data[ $this->class_name ]->Content->{ $method } = $data;
-							}
-						}
-					}
-				}
-			}
+			unset( $class_methods );
 		}
 
 		// If there are private methods to run, run them too.
@@ -293,7 +301,8 @@ class DustPressModel {
 	/**
 	*	get_class_methods
 	*
-	*	This function returns all public methods from given class. Only class' own methods, no inherited.
+	*	This function returns all public methods from current class and it parents up to
+	*   but not including DustPressModel.
 	*
 	*	@type	function
 	*	@date	19/3/2015
@@ -303,15 +312,29 @@ class DustPressModel {
 	*	@return	$methods (array)
 	*/
 
-	private function get_class_methods( $class_name ) {
-		$rc = new \ReflectionClass( $this->class_name );
+	private function get_class_methods( $class_name, $methods = array() ) {
+		$rc = new \ReflectionClass( $class_name );
 		$rmpu = $rc->getMethods();
 
-		$methods = array();
-		foreach ( $rmpu as $r ) {
-			if ( $r->class === $this->class_name ) {
-				$methods[] = $r->name;
+		if ( isset( $methods ) ) {
+			if ( ! isset( $methods[ $class_name ] ) ) {
+				$methods[ $class_name ] = array();
 			}
+		}
+		else {
+			$methods = array();
+		}
+
+		foreach ( $rmpu as $r ) {
+			if ( $r->class === $class_name ) {
+				$methods[ $class_name ][] = $r->name;
+			}
+		}
+
+		$parent = get_parent_class( $class_name );
+
+		if ( ! empty( $parent ) && $parent !== "DustPressModel" ) {
+			$methods = $this->get_class_methods( $parent, $methods );
 		}
 
 		return $methods;
@@ -513,15 +536,19 @@ class DustPressModel {
 	*	@return	N/A
 	*/
 
-	private function run_function( $m ) {
+	private function run_function( $m, $class = null ) {
 		$cached = $this->get_cached( $m );
+
+		if ( is_null( $class ) ) {
+			$class = $this->class_name;
+		}
 
 		if ( $cached ) {
 			//error_log('this is a cache: ' . $m);
 			return $cached;
 		}
 
-		$data = call_user_func( $this->class_name . '::' . $m );
+		$data = call_user_func( $class . '::' . $m );
 
 		if ( ! $data ) {
 			if ( $this->last_bound ) {
