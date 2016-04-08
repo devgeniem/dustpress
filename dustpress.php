@@ -612,32 +612,17 @@ final class DustPress {
 			die( "DustPress error: ". $e->getMessage() );
 		}
 
-		// Create debug data if wanted.
-
-		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			$jsondata = json_encode( $this->model->data );
-
-			$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
-			$data_array = array(
-				'ajaxurl' 	=> admin_url( 'admin-ajax.php' ),
-				'hash' 		=> $hash
-			);
-			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
-
-			// jsonView jQuery plugin
-			$dependencies = apply_filters("dustpress/debugger_dependencies", ['jquery'] );
-			wp_enqueue_style( "jquery.jsonview", home_url() .'/vendor/devgeniem/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  home_url() .'/vendor/devgeniem/dustpress/js/jquery.jsonview.js', $dependencies, null, true );
-
-			// Enqueued script with localized data.
-			wp_enqueue_script( 'dustpress_debugger' );
-		}
+		// Unique hash
+		$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
 
 		if ( $data ) {
 			$render_data = apply_filters( 'dustpress/data', $data );;
 		}
 		else {
 			$render_data = apply_filters( 'dustpress/data', $this->model->data );
+
+			// A hook for debuggers. Gets the hash that the data was saved to session with as a parameter.
+			do_action( "dustpress/debugger", $hash );
 		}
 
 		// Create output with wanted format.
@@ -646,8 +631,8 @@ final class DustPress {
 		// Filter output
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
-		// Store data into session for debugger to fetch
-		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+		// Store data into session for debugger(s) to fetch
+		if ( ! $data ) {
 			$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
 
 			$_SESSION[ $hash ] = $this->model->data;
@@ -736,22 +721,6 @@ final class DustPress {
 		global $current_user;
 
 		get_currentuserinfo();
-
-		// If admin and debug is set to true, enqueue JSON printing
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );
-
-			// Just register the dustpress and enqueue later, if needed
-			wp_register_script( "dustpress",  home_url() .'/vendor/devgeniem/dustpress/js/dustpress.js', null, null, true );
-
-			// Register the debugger script
-			$dependencies = apply_filters("dustpress/debugger_dependencies", []);
-			wp_register_script( "dustpress_debugger",  home_url() .'/vendor/devgeniem/dustpress/js/dustpress-debugger.js', $dependencies, '0.0.2', true );
-
-			// Register debugger ajax hook
-			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-		}
 	}
 
 	/**
@@ -865,43 +834,6 @@ final class DustPress {
 		}
 		else {
 			return null;
-		}
-	}
-
-	/**
-	*  get_debugger_data
-	*
-	*  This function returns dustpress data from the session.
-	*
-	*  @type	function
-	*  @date	13/8/2015
-	*  @since	0.1.1
-	*
-	*  @return	$data (json)
-	*/
-
-	public function get_debugger_data() {
-		if ( defined("DOING_AJAX") ) {
-			session_start();
-
-			$hash = $_POST['hash'];
-			$data = $_SESSION[$hash];
-
-			if ( isset( $data ) && is_array( $data ) ) {
-                unset( $_SESSION[$hash] );
-                $status = 'success';
-            } else {
-				$status = 'error';
-			}
-
-			$response = [
-				'status' 	=> $status, // 'success' || 'error'
-				'data' 		=> $data // data for js
-            ];
-
-			$output = json_encode($response);
-
-			die( $output );
 		}
 	}
 
