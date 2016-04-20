@@ -5,8 +5,11 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.9.1
+Version: 0.0.9.2
 */
+
+// Don't use dustpress in wp-cli mode
+if ( defined('WP_CLI') && WP_CLI ) { return; }
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
 require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
