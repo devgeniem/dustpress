@@ -88,6 +88,19 @@ class DustPressHelper {
 			$this->getPostMeta( $acfpost, $id, $metaKeys, $single, $metaType );
 		}
 
+		$acfpost['permalink'] = get_permalink( $id );
+		
+		if ( $featured_image_id = get_post_thumbnail_id( $id ) ) {
+	 
+			$acfpost['featured_image'] = wp_get_attachment_metadata( $featured_image_id, true );
+			$upload_dir = wp_upload_dir();
+
+			foreach ( $acfpost['featured_image']['sizes'] as $size => &$image ) {
+				$temp = wp_get_attachment_image_src( $featured_image_id, $size );
+				$image['url'] = $temp[0];
+			}
+ 
+		}
 		$acfpost['permalink'] = get_permalink($id);
 
 
@@ -113,11 +126,10 @@ class DustPressHelper {
 	*/
 	public function getPosts( $args, $metaKeys = NULL, $metaType = 'post' ) {
 
-		$this->posts = get_posts( $args );
+		$temps = get_posts( $args );
 
-		// cast post object to associative arrays
-		foreach ($this->posts as &$temp) {
-			$temp = (array) $temp;
+		foreach ($temps as $temp) {
+			$this->posts[] = (array) $temp;
 		}
 		
 		// get meta for posts
@@ -150,18 +162,30 @@ class DustPressHelper {
 	*/
 	public function getAcfPosts( $args, $metaKeys = NULL, $metaType = 'post', $wholeFields = false ) {
 
-		$this->posts = get_posts( $args );
+		$temps = get_posts( $args );
 
-		// cast post object to associative arrays
-		foreach ($this->posts as &$temp) {
-			$temp = (array) $temp;
+		foreach ($temps as $temp) {
+			$this->posts[] = (array) $temp;
 		}
-
+		
 		if ( count( $this->posts ) ) {
 			// loop through posts and get all acf fields
 			foreach ( $this->posts as &$p ) {								
 				$p['fields'] = get_fields( $p['ID'] );
 				$p['permalink'] = get_permalink( $p['ID'] );
+
+				if ( $featured_image_id = get_post_thumbnail_id( $p['ID'] ) ) {
+
+					$p['featured_image'] = wp_get_attachment_metadata( $featured_image_id, true );
+					$upload_dir = wp_upload_dir();
+					$p['featured_image']['url'] = $upload_dir['baseurl'] . '/'. $p['featured_image']['file'];
+	 
+					foreach ( $p['featured_image']['sizes'] as $size => &$image ) {
+						$temp = wp_get_attachment_image_src( $featured_image_id, $size );
+						$image['url'] = $temp[0];
+					}
+	 
+				}
 				if($wholeFields) {
 					foreach($p['fields'] as $name => &$field) {
 						$field = get_field_object($name, $p['ID'], true);
@@ -176,6 +200,31 @@ class DustPressHelper {
 		}	
 		else
 			return false;
+	}
+
+    /*
+	*  getWidget
+	*
+	*  This function will query single widget by its class.
+	*  https://codex.wordpress.org/Function_Reference/the_widget
+	*
+	*  @type	function
+	*  @date	23/4/2015
+	*  @since	0.0.1
+	*
+	*  @param	$className (string)
+	*  @param	$instance (array/string)
+	*  @param	$args (array/string)
+	*
+	*  $return  widget object as an associative array
+	*/
+	public function getWidget( $className, $instance, $args ) {
+        $widgetHtml;
+        ob_start();
+        the_widget( $className, $instance, $args );
+        $widgetHtml = ob_get_clean();
+        $this->widget = $widgetHtml;
+		return $this->widget;
 	}
 
 
@@ -215,7 +264,7 @@ class DustPressHelper {
 				}	
 			}
 
-		}		
+		}
 	}
 
 }

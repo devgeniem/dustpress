@@ -5,11 +5,8 @@ Plugin URI: http://www.geniem.com
 Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
-Version: 0.0.9.2
+Version: 0.0.9-a
 */
-
-// Don't use dustpress in wp-cli mode
-if ( defined('WP_CLI') && WP_CLI ) { return; }
 
 // Require WordPress plugin functions to have the ability to deactivate the plugin if needed.
 require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -59,7 +56,7 @@ class DustPress {
 	public function __construct( $parent = null, $args = null, $is_main = false ) {
 		if ( ! $this->is_installation_compatible() ) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
-
+		
 			wp_die( __('DustPress requires /models/ and /partials/ directories under the activated theme.') );
 		}
 
@@ -107,7 +104,7 @@ class DustPress {
 				$class = str_replace( "category", "category-", $class );
 				$class = str_replace( "taxonomy", "taxonomy-", $class );
 				$class = str_replace( "error404", "404", $class );
-
+				
 				$filename = strtolower( $class ) .".php";
 
 				foreach ( $paths as $path ) {
@@ -153,7 +150,7 @@ class DustPress {
 			$this->args = new StdClass();
 
 			// Add create_instance to right action hook if we are not on the admin side
-			if ( ! is_admin() && ! $this->is_login_page() && ! defined("DOING_AJAX") ) {
+			if ( ! is_admin() && ! $this->is_login_page() ) {
 				add_action( 'shutdown', array( $this, 'create_instance' ) );
 			}
 
@@ -191,6 +188,8 @@ class DustPress {
 			}
 			else if ( is_archive() ) {
 				$template = "archive". $template;
+			}else if ( is_search() ) {
+				$template = "search";
 			}
 
 			if ( strtolower( $template ) == strtolower( get_class( $this ) ) ) {
@@ -254,13 +253,13 @@ class DustPress {
 
 		// If admin and debug is set to true, enqueue JSON printing
 		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );
-
+			wp_enqueue_script( 'jquery' );			
+			
 			// Just register the dustpress and enqueue later, if needed
 			wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Register the debugger script
-			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );
+			wp_register_script( "dustpress_debugger",  plugin_dir_url( __FILE__ ) .'js/dustpress-debugger.js', null, null, true );						
 		}
 	}
 
@@ -313,7 +312,7 @@ class DustPress {
 			$string = " checked=\"checked\"";
 		else
 			$string = "";
-
+		
 		echo '<div class="wrap">';
 		echo '<h2>DustPress Options</h2>';
 ?>
@@ -433,7 +432,7 @@ class DustPress {
 					die( "DustPress error: ". $e->getMessage() );
 				}
 
-				return $dust->renderTemplate( $compiled, $data );
+				return $dust->renderTemplate( $compiled, $data );		
 			},
 			"json" => function( $data, $partial, $dust ) {
 				try {
@@ -447,7 +446,7 @@ class DustPress {
 			}
 		);
 
-		$types = apply_filters( 'dustpress/formats', $types );
+		$types = apply_filters( 'dustpress/output', $types );
 
 		// If no data attribute given, take contents from object data collection
 		if ( $data == -1 ) $data = $dustpress->data;
@@ -460,7 +459,7 @@ class DustPress {
 		}
 		catch ( Exception $e ) {
 			$data = array(
-				'dustPressError' => "DustPress error: ". $e->getMessage()
+				'dustPressError' => "DustPress error: ". $e->getMessage()				
 			);
 			$template = $this->get_error_template();
 			$error = true;
@@ -479,15 +478,15 @@ class DustPress {
 		// Create debug data if wanted and only if we are on the main instance.
 		if ( $this->main == true && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
 			$jsondata = json_encode( $data );
-
+			
 			//wp_register_script( "dustpress",  plugin_dir_url( __FILE__ ) .'js/dustpress.js', null, null, true );
 
 			// Localize the script with new data
 			$data_array = array(
-				'jsondata' => $jsondata,
+				'jsondata' => $jsondata,				
 			);
 			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
-
+			
 			// jsonView jQuery - plugin
 			wp_enqueue_style( "jquery.jsonview", plugin_dir_url( __FILE__ ) .'css/jquery.jsonview.css', null, null, null );
 			wp_enqueue_script( "jquery.jsonview",  plugin_dir_url( __FILE__ ) . 'js/jquery.jsonview.js', array( 'jquery' ), null, true );
@@ -499,8 +498,6 @@ class DustPress {
 
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $data, $template, $dust ) );
-
-		$output = apply_filters( 'dustpress/output', $output, $this->main );
 
 		if ( $echo ) {
 			echo $output;
@@ -634,7 +631,7 @@ class DustPress {
 				$partial = str_replace( "category", "category-", $partial );
 			}
 			else if ( is_tax() ) {
-				$partial = str_replace( "taxonomy", "taxonomy-", $partial );
+				$partial = str_replace( "taxonomy", "taxonomy-", $partial );	
 			}
 			else if ( is_archive() ) {
 				$partial = str_replace( "archive", "archive-", $partial );
@@ -660,7 +657,7 @@ class DustPress {
 					}
 				}
 			}
-
+			
 			// If we could not find such template.
 			throw new Exception( "Error loading template file: " . $template, 1 );
 		}
@@ -708,8 +705,8 @@ class DustPress {
 
 		// Insert user info to collection
 
-		$currentuser = wp_get_current_user();
-
+		$currentuser = wp_get_current_user();		
+		
 		if ( 0 === $currentuser->ID ) {
 			$WP["loggedin"] = false;
 		}
@@ -773,7 +770,9 @@ class DustPress {
 		global $post;
 
 		$pageTemplate = get_post_meta( $post->ID, '_wp_page_template', true );
-
+		if ( is_search () ) {
+			return "search";
+		}
 		if ( is_category() ) {
 			$cat = get_category( get_query_var('cat') );
 
@@ -808,7 +807,7 @@ class DustPress {
 			}
 			else if ( ! $pageTemplate ) return "page";
 		}
-
+		
 		$array = explode( "/", $pageTemplate );
 
 		$filename = array_pop( $array );
@@ -925,7 +924,7 @@ class DustPress {
 		else {
 			if ( isset( $dustpress->data[$module] ) ) {
 				$dustpress->data[$module]->Content->{$key} = $data;
-			}
+			}	
 		}
 	}
 
@@ -1150,8 +1149,16 @@ class DustPress {
 
 }
 
-// Create an instance of the plugin after checking a few things
-	// Contact Form 7 Ajax call filter
+// Create an instance of the plugin if we are on the public side
+// Contact Form 7 Ajax call filter
 	if ( !( isset( $_POST['_wpcf7_is_ajax_call'] ) || isset( $_GET['_wpcf7_is_ajax_call'] ) ) ) {
-		$dustpress = new DustPress();
+		if (strpos($_SERVER['REQUEST_URI'], 'sitemap_index.xml') !== false 
+			|| strpos($_SERVER['REQUEST_URI'], 'sitemap.xml') !== false 
+			|| strpos($_SERVER['REQUEST_URI'], 'robots.txt') !== false 
+			|| php_sapi_name() === 'cli'){
+
+		}else{
+			$dustpress = new DustPress();	
+		}
+		
 	}
