@@ -202,7 +202,7 @@ class DustPress {
 					if ( ! ( $partial = $this->get_partial() ) )
 						$partial = strtolower( $template );
 
-					if ( ! $this->get_render_status ) {
+					if ( ! $this->get_render_status() ) {
 						$this->render( $partial );
 					}
 				}
