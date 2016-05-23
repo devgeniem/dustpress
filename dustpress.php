@@ -197,22 +197,24 @@ final class DustPress {
 
 		$template = apply_filters( "dustpress/template", $template );
 
-		// If class exists with the template's name, create new instance with it.
-		// We do not throw error if the class does not exist, to ensure that you can still create
-		// templates in traditional style if needed.
-		if ( class_exists ( $template ) ) {
-			$this->model = new $template();
+		if ( ! defined("DOING_AJAX") ) { 
+			// If class exists with the template's name, create new instance with it.
+			// We do not throw error if the class does not exist, to ensure that you can still create
+			// templates in traditional style if needed.
+			if ( class_exists ( $template ) ) {
+				$this->model = new $template();
 
-			$this->model->fetch_data();
+				$this->model->fetch_data();
 
-			$template_override = $this->model->get_template();
+				$template_override = $this->model->get_template();
 
-			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
+				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-			$this->render( [ "partial" => $partial, "main" => true ] );
-		}
-		else {
-			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+				$this->render( [ "partial" => $partial, "main" => true ] );
+			}
+			else {
+				die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+			}
 		}
 	}
 
