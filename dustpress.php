@@ -152,12 +152,6 @@ final class DustPress {
 			add_action( 'shutdown', [ $this, 'create_ajax_instance' ] );
 		}
 
-		// Add admin menu
-		add_action( 'admin_menu', [ $this, 'plugin_menu' ] );
-
-		// Add admin stuff
-		add_action( 'after_setup_theme', [ $this, 'admin_stuff' ] );
-
 		// Initiliaze settings
 		add_action( 'init', [ $this, 'init_settings' ] );
 
@@ -197,22 +191,24 @@ final class DustPress {
 
 		$template = apply_filters( "dustpress/template", $template );
 
-		// If class exists with the template's name, create new instance with it.
-		// We do not throw error if the class does not exist, to ensure that you can still create
-		// templates in traditional style if needed.
-		if ( class_exists ( $template ) ) {
-			$this->model = new $template();
+		if ( ! defined("DOING_AJAX") ) {
+			// If class exists with the template's name, create new instance with it.
+			// We do not throw error if the class does not exist, to ensure that you can still create
+			// templates in traditional style if needed.
+			if ( class_exists ( $template ) ) {
+				$this->model = new $template();	
 
-			$this->model->fetch_data();
+				$this->model->fetch_data();
 
-			$template_override = $this->model->get_template();
+				$template_override = $this->model->get_template();
 
-			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
+				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-			$this->render( [ "partial" => $partial, "main" => true ] );
-		}
-		else {
-			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+				$this->render( [ "partial" => $partial, "main" => true ] );
+			}
+			else {
+				die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+			}
 		}
 	}
 
@@ -702,92 +698,6 @@ final class DustPress {
 
 			return false;
 		}
-	}
-
-	/**
-	*  admin_stuff
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function admin_stuff() {
-		global $current_user;
-
-		get_currentuserinfo();
-	}
-
-	/**
-	*  plugin_menu
-	*
-	*  This function creates the menu item for DustPress options in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function plugin_menu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
-	}
-
-	/**
-	*  dustPress_options
-	*
-	*  This function creates the options page functionality in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function dustPress_options() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
-		}
-
-		if ( isset( $_POST['dustpress_hidden_send'] ) && $_POST['dustpress_hidden_send'] == 1 ) {
-			$debug = $_POST['debug'];
-
-			update_option( 'dustpress_debug', $debug );
-
-			echo '<div class="updated"><p>Settings saved.</p></div>';
-		}
-
-		$debug_val = get_option('dustpress_debug');
-
-		if ( $debug_val )
-			$string = " checked=\"checked\"";
-		else
-			$string = "";
-
-		echo '<div class="wrap">';
-		echo '<h2>DustPress Options</h2>';
-?>
-		<form name="form1" method="post" action="">
-			<input type="hidden" name="dustpress_hidden_send" value="1"/>
-
-			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug"<?php echo $string; ?>/></p>
-
-			<p class="submit">
-				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
-			</p>
-		</form>
-<?php
-
-		echo '</div>';
 	}
 
 	/**
