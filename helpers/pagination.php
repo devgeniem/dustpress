@@ -34,7 +34,7 @@ class Pagination_Helper {
 		$per_page 			= (int) $params->per_page;
 		$rows 				= (int) $params->rows;
 		$hash				= $params->hash 		? '#' . $params->hash 	: '';
-		$this->page_label	= $params->page_label 	? $params->page_label 	: 'page';
+		$this->page_label	= $params->page_label 	? $params->page_label 	: 'paged';
 
 		// more rows than the set per_page
 		if ( ( $rows - $per_page ) > 0 ) {
