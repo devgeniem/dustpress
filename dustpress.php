@@ -6,7 +6,7 @@ Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 0.3.2
+Version: 0.3.3
 */
 
 final class DustPress {
@@ -63,7 +63,7 @@ final class DustPress {
 		    $prefix = 'Dust\\';
 
 		    // base directory for the namespace prefix
-		    $base_dir = get_template_directory() . '/dustpress/dust/';
+		    $base_dir = dirname( __FILE__ ) . '/dust/';
 
 		    // does the class use the namespace prefix?
 		    $len = strlen( $prefix );
@@ -89,7 +89,7 @@ final class DustPress {
 		// Autoload DustPress classes
 		spl_autoload_register( function( $class ) {
 			$paths = [
-				get_template_directory() . '/dustpress/classes/',
+				dirname( __FILE__ ) . '/classes/',
 				get_template_directory() . '/models',
 			];
 
@@ -126,11 +126,11 @@ final class DustPress {
 
 		// Set initial parameters
 		$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
-		$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
+		$this->dust->includedDirectories[] = dirname( __FILE__ ) . '/partials/';
 
 		// Find and include Dust helpers from DustPress plugin
 		$paths = [
-			get_template_directory() . '/dustpress/helpers',
+			dirname( __FILE__ ) . '/helpers',
 		];
 
 		foreach( $paths as $path ) {
@@ -145,18 +145,11 @@ final class DustPress {
 
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {
-			$this->enqueue_scripts();
 			add_action( 'shutdown', [ $this, 'create_instance' ] );
 		}
 		else if ( $this->is_dustpress_ajax() ) {
 			add_action( 'shutdown', [ $this, 'create_ajax_instance' ] );
 		}
-
-		// Add admin menu
-		add_action( 'admin_menu', [ $this, 'plugin_menu' ] );
-
-		// Add admin stuff
-		add_action( 'after_setup_theme', [ $this, 'admin_stuff' ] );
 
 		// Initiliaze settings
 		add_action( 'init', [ $this, 'init_settings' ] );
@@ -197,7 +190,7 @@ final class DustPress {
 
 		$template = apply_filters( "dustpress/template", $template );
 
-		if ( ! defined("DOING_AJAX") ) { 
+		if ( ! defined("DOING_AJAX") ) {
 			// If class exists with the template's name, create new instance with it.
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
@@ -614,32 +607,17 @@ final class DustPress {
 			die( "DustPress error: ". $e->getMessage() );
 		}
 
-		// Create debug data if wanted.
-
-		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			$jsondata = json_encode( $this->model->data );
-
-			$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
-			$data_array = array(
-				'ajaxurl' 	=> admin_url( 'admin-ajax.php' ),
-				'hash' 		=> $hash
-			);
-			wp_localize_script( 'dustpress_debugger', 'dustpress_debugger', $data_array );
-
-			// jsonView jQuery plugin
-			$dependencies = apply_filters("dustpress/debugger_dependencies", ['jquery'] );
-			wp_enqueue_style( "jquery.jsonview", get_template_directory_uri() .'/dustpress/css/jquery.jsonview.css', null, null, null );
-			wp_enqueue_script( "jquery.jsonview",  get_template_directory_uri() .'/dustpress/js/jquery.jsonview.js', $dependencies, null, true );
-
-			// Enqueued script with localized data.
-			wp_enqueue_script( 'dustpress_debugger' );
-		}
+		// Unique hash
+		$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
 
 		if ( $data ) {
 			$render_data = apply_filters( 'dustpress/data', $data );;
 		}
 		else {
 			$render_data = apply_filters( 'dustpress/data', $this->model->data );
+
+			// A hook for debuggers. Gets the hash that the data was saved to session with as a parameter.
+			do_action( "dustpress/debugger", $hash );
 		}
 
 		// Create output with wanted format.
@@ -648,8 +626,8 @@ final class DustPress {
 		// Filter output
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
-		// Store data into session for debugger to fetch
-		if ( ! $data && current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
+		// Store data into session for debugger(s) to fetch
+		if ( ! $data ) {
 			$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
 
 			$_SESSION[ $hash ] = $this->model->data;
@@ -696,7 +674,7 @@ final class DustPress {
 			$templatefile =  $partial . '.dust';
 
 			$templatepaths = [
-				get_template_directory() . '/dustpress/partials/',
+				dirname( __FILE__ ) . '/partials/',
 				get_template_directory() . '/partials/'
 			];
 
@@ -719,108 +697,6 @@ final class DustPress {
 
 			return false;
 		}
-	}
-
-	/**
-	*  admin_stuff
-	*
-	*  This function sets JavaScripts and styles for admin debug feature.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function admin_stuff() {
-		global $current_user;
-
-		get_currentuserinfo();
-
-		// If admin and debug is set to true, enqueue JSON printing
-		if ( current_user_can( 'manage_options') && true == get_option('dustpress_debug') ) {
-			wp_enqueue_script( 'jquery' );
-
-			// Just register the dustpress and enqueue later, if needed
-			wp_register_script( "dustpress",  get_template_directory_uri() .'/dustpress/js/dustpress.js', null, null, true );
-
-			// Register the debugger script
-			$dependencies = apply_filters("dustpress/debugger_dependencies", []);
-			wp_register_script( "dustpress_debugger",  get_template_directory_uri() .'/dustpress/js/dustpress-debugger.js', $dependencies, '0.0.2', true );
-
-			// Register debugger ajax hook
-			add_action( 'wp_ajax_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-			add_action( 'wp_ajax_nopriv_dustpress_debugger', array( $this, 'get_debugger_data' ) );
-		}
-	}
-
-	/**
-	*  plugin_menu
-	*
-	*  This function creates the menu item for DustPress options in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function plugin_menu() {
-		add_options_page( 'DustPress Options', 'DustPress', 'manage_options', 'dustPress_options', array( $this, 'dustPress_options') );
-	}
-
-	/**
-	*  dustPress_options
-	*
-	*  This function creates the options page functionality in admin side.
-	*
-	*  @type	function
-	*  @date	23/3/2015
-	*  @since	0.0.2
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function dustPress_options() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
-		}
-
-		if ( isset( $_POST['dustpress_hidden_send'] ) && $_POST['dustpress_hidden_send'] == 1 ) {
-			$debug = $_POST['debug'];
-
-			update_option( 'dustpress_debug', $debug );
-
-			echo '<div class="updated"><p>Settings saved.</p></div>';
-		}
-
-		$debug_val = get_option('dustpress_debug');
-
-		if ( $debug_val )
-			$string = " checked=\"checked\"";
-		else
-			$string = "";
-
-		echo '<div class="wrap">';
-		echo '<h2>DustPress Options</h2>';
-?>
-		<form name="form1" method="post" action="">
-			<input type="hidden" name="dustpress_hidden_send" value="1"/>
-
-			<p><label for="debug">Show debug information</label> <input type="checkbox" value="1" name="debug"<?php echo $string; ?>/></p>
-
-			<p class="submit">
-				<input type="submit" name="Submit" class="button-primary" value="Save changes"/>
-			</p>
-		</form>
-<?php
-
-		echo '</div>';
 	}
 
 	/**
@@ -867,43 +743,6 @@ final class DustPress {
 		}
 		else {
 			return null;
-		}
-	}
-
-	/**
-	*  get_debugger_data
-	*
-	*  This function returns dustpress data from the session.
-	*
-	*  @type	function
-	*  @date	13/8/2015
-	*  @since	0.1.1
-	*
-	*  @return	$data (json)
-	*/
-
-	public function get_debugger_data() {
-		if ( defined("DOING_AJAX") ) {
-			session_start();
-
-			$hash = $_POST['hash'];
-			$data = $_SESSION[$hash];
-
-			if ( isset( $data ) && is_array( $data ) ) {
-                unset( $_SESSION[$hash] );
-                $status = 'success';
-            } else {
-				$status = 'error';
-			}
-
-			$response = [
-				'status' 	=> $status, // 'success' || 'error'
-				'data' 		=> $data // data for js
-            ];
-
-			$output = json_encode($response);
-
-			die( $output );
 		}
 	}
 
@@ -1339,22 +1178,6 @@ final class DustPress {
 				}
 			}
 		}
-	}
-
-	/**
-	*  enqueue_scripts
-	*
-	*  This function enqueues front end scripts.
-	*
-	*  @type	function
-	*  @date	17/12/2015
-	*  @since	0.3.0
-	*
-	*  @return	(boolean)
-	*/
-	private function enqueue_scripts() {
-		wp_enqueue_script('jquery');
-		wp_enqueue_script( 'dustpress', get_template_directory_uri() .'/dustpress/js/dustpress.js', ['jquery'], '0.0.1', false );
 	}
 }
 

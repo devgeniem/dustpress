@@ -1,6 +1,5 @@
 {
   "name": "devgeniem/dustpress",
-  "type": "wordpress-plugin",
   "description": "WordPress Theme Framework.",
   "authors": [
     {

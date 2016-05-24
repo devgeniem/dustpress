@@ -6,17 +6,37 @@ Tested up to: 4.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-# Description
+## Description
 
 A WordPress plugin for writing template files with Dust.js templating engine and separate data models.
 
-# Installation
+## Installation
 
+### Composer
+Install with composer by running:
+
+```
+$ composer require devgeniem/dustpress
+```
+
+OR add it into your `composer.json`:
+
+```json
+{
+  "require": {
+    "devgeniem/dustpress": "*"
+  }
+}
+```
+
+### Manually
 - Install DustPress plugin to your WordPress plugin folder as usual, and activate it from the admin panel.
+
+### Activate dustpress
 - Copy exampletheme from plugin folder to your themes folder as a base for your own theme. You can of course rename it however you want.
 - That's it! You are ready to go.
 
-# Usage
+## Usage
 
 The basics of using DustPress are very simple. Unlike traditional WordPress theme development, DustPress relies on MVVM,
 or Model View ViewModel architecture, where fetching data and displaying it to the user are separated in different modules.
