@@ -1,9 +1,13 @@
 <?php
-$this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params, $dummy = false ) {	
+$this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params, $dummy = false ) {
 	if ( $bodies->dummy !== true ) {
-		
-		if ( ! isset( $params->menu_name ) ) {
+
+		if ( ! isset( $params->menu_name ) && ! isset( $params->menu_id ) ) {
 			return $chunk->write("DustPress menu helper error: No menu specified.");
+		}
+		else if ( isset( $params->menu_id ) ) {
+			$menu_id = $params->menu_id;
+			$id_given = true;
 		}
 		else {
 			$menu_name = $params->menu_name;
@@ -46,7 +50,13 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 
 		$menu = new stdClass();
 
-		$menu->items = DustPressHelper::get_menu_as_items( $menu_name, $parent, $override );
+		if ( $menu_name ) {
+			$menu->items = DustPressHelper::get_menu_as_items( $menu_name, $parent, $override );
+		}
+		else {
+			$menu->items = DustPressHelper::get_menu_as_items( $menu_id, $parent, $override, true );
+		}
+
 		$menu->ul_classes = $ul_classes;
 		$menu->ul_id = $ul_id;
 		$menu->show_submenu = $show_submenu;

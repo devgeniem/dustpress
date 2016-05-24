@@ -1,27 +1,27 @@
-<?php 
+<?php
 
 /**
  * DustPressHelper
- *	
+ *
  * Wrapper for bunch of helper functions to use
  * with DustPress.
- * 
+ *
  */
 
 class DustPressHelper {
 
 	/**
 	 * Post functions
-	 *	
-	 * Simplify post queries for getting meta 
+	 *
+	 * Simplify post queries for getting meta
 	 * data and ACF fields with single function call.
-	 * 
+	 *
 	 */
 
 	private static $post;
 	private static $posts;
 	private static $query;
-	
+
 	/**
 	* get_post
 	*
@@ -68,8 +68,8 @@ class DustPressHelper {
 	* get_acf_post
 	*
 	* This function will query a single post and its meta.
-	* 
-	* If the args has a key 'recursive' with the value 'true', relational 
+	*
+	* If the args has a key 'recursive' with the value 'true', relational
 	* post objects are loaded recursively to get the full object.
 	* Meta data is handled the same way as in get_post.
 	*
@@ -98,7 +98,7 @@ class DustPressHelper {
 		extract( $options );
 
 		$acfpost = get_post( $id, 'ARRAY_A' );
-		
+
 		if ( is_array( $acfpost ) ) {
 			$acfpost['fields'] = get_fields( $id );
 
@@ -108,14 +108,14 @@ class DustPressHelper {
 				// Let's avoid infinite loops by stopping recursion after one level. You may dig deeper in your view model.
 				$options['recursive'] = apply_filters( 'dustpress/dustpress_helper/infinite_recursion', false );
 
-				foreach ( $acfpost['fields'] as &$field ) {					
+				foreach ( $acfpost['fields'] as &$field ) {
 
 					// No recursion for these post types
 					$ignored_types = [
 						'attachment',
 						'nav_menu_item',
 						'acf-field-group',
-						'acf-field',						
+						'acf-field',
 					];
 					$ignored_types = apply_filters( 'dustpress/dustpress_helper/ignore_on_recursion', $ignored_types );
 
@@ -123,10 +123,10 @@ class DustPressHelper {
 					if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
 						$field = self::get_acf_post( $field->ID, $options );
 					}
-					
+
 					// A repeater field has relational posts
 					if ( is_array( $field ) && is_array( $field[0] ) ) {
-						
+
 						// Follows the nested structure of a repeater
 						foreach ( $field as $idx => &$repeater ) {
 							if ( is_array( $repeater ) ) {
@@ -162,7 +162,7 @@ class DustPressHelper {
 	* This function will query all posts and its meta based on given arguments.
 	* If you want the whole query object, set 'query_object' to 'true'.
 	* If you are using pagination, set 'no_found_rows' to 'false'. This also makes the function to return the whole query object.
-	* The wanted meta keys should be in an array as strings. 
+	* The wanted meta keys should be in an array as strings.
 	* A string 'all' returns all the meta keys and values in an associative array.
 	*
 	* @type	function
@@ -174,7 +174,7 @@ class DustPressHelper {
 	*/
 	public static function get_posts( $args ) {
 
-        $defaults = self::get_wp_query_defaults();        
+        $defaults = self::get_wp_query_defaults();
 
         $options = array_merge( $defaults, $args );
 
@@ -187,7 +187,7 @@ class DustPressHelper {
 		foreach ( self::$query->posts as &$p ) {
 			$p->permalink = get_permalink( $p->ID );
 		}
-		
+
 		// Get meta for posts
 		if ( count( self::$query->posts ) ) {
 			self::get_meta_for_posts( self::$query->posts, $meta_keys, $meta_type, $single );
@@ -203,7 +203,7 @@ class DustPressHelper {
 			else {
 				return self::$query->posts;
 			}
-		}	
+		}
 		else
 			return false;
 	}
@@ -224,7 +224,7 @@ class DustPressHelper {
 	public static function get_acf_posts( $args ) {
 
 		// Some redundancy, but we need these
-		$defaults = self::get_wp_query_defaults();        
+		$defaults = self::get_wp_query_defaults();
 
         $options = array_merge( $defaults, $args );
 
@@ -241,8 +241,8 @@ class DustPressHelper {
         // Extend the posts with acf data
 		if ( is_array( self::$query->posts ) ) {
 			// loop through posts and get all acf fields
-			foreach ( self::$query->posts as &$p ) {								
-				
+			foreach ( self::$query->posts as &$p ) {
+
 				$p->fields = get_fields( $p->ID );
 
 				if ( $whole_fields ) {
@@ -260,7 +260,7 @@ class DustPressHelper {
 			else {
 				return self::$query->posts;
 			}
-		}	
+		}
 		else {
 			return false;
 		}
@@ -269,19 +269,19 @@ class DustPressHelper {
 
 	/**
 	 * get_post_meta
-	 * 
+	 *
 	 * Get meta data for a single post.
 	 *
 	 * @type	function
 	 * @date	20/3/2015
 	 * @since	0.0.1
-	 * 
+	 *
 	 * @param  [array]			&$post    	The queried post.
 	 * @param  [int] 			$id        	Id for the post.
 	 * @param  [array/string] 	$meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
 	 * @param  [string] 		$meta_type	Type of object metadata is for (e.g. comment, post, or user).
 	 * @param  [boolean] 		$single 	If true, return only the first value of the specified meta_key.
-	 * @return [array]          
+	 * @return [array]
 	 */
     private static function get_post_meta( &$post, $id, $meta_keys = NULL, $meta_type, $single ) {
 		$meta = array();
@@ -300,18 +300,18 @@ class DustPressHelper {
 
 	/**
 	 * get_meta_for_posts
-	 * 
+	 *
 	 * Get meta data for multiple posts.
 	 *
 	 * @type	function
 	 * @date	20/3/2015
 	 * @since	0.0.1
-	 * 
+	 *
 	 * @param  [array]			&$posts    	The queried post.
 	 * @param  [array/string] 	$meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
 	 * @param  [string] 		$meta_type	Type of object metadata is for (e.g. comment, post, or user).
 	 * @param  [boolean] 		$single 	If true, return only the first value of the specified meta_key.
-	 * @return [array]          
+	 * @return [array]
 	 */
 	private static function get_meta_for_posts( &$posts, $meta_keys = NULL, $meta_type, $single ) {
 		if ( $meta_keys === 'all' ) {
@@ -322,24 +322,24 @@ class DustPressHelper {
 		}
 		elseif ( is_array( $meta_keys ) ) {
 			// Loop through selected meta keys
-			foreach ( $meta_keys as $key ) {				
+			foreach ( $meta_keys as $key ) {
 				// Loop through posts and get the meta values
 				foreach ( $posts as &$post ) {
 					// Maybe init meta
 					if ( ! isset( $post->meta ) ) $post->meta = [];
 					// Get meta by key and options
 					$post->meta[$key] = get_metadata( $meta_type, $post->ID, $key, $single );
-				}	
+				}
 			}
 
-		}		
+		}
 	}
 
 	/**
 	 * cast_post_to_type
-	 * 
+	 *
 	 * Used to cast posts to a desired type.
-	 * 
+	 *
 	 * @type	function
 	 * @date	26/1/2016
 	 * @since	0.3.0
@@ -359,13 +359,13 @@ class DustPressHelper {
 			}
 
 		}
-		
-		return $post;	
+
+		return $post;
 	}
 
 	/**
 	 * Wrapper for wp queries' defaults.
-	 * 
+	 *
 	 * @return array
 	 */
 	private static function get_wp_query_defaults() {
@@ -383,10 +383,10 @@ class DustPressHelper {
 
 	/*
 	 * Menu functions
-	 *	
+	 *
 	 * These functions gather menu data to use with DustPress
 	 * helper and developers' implementations.
-	 * 
+	 *
 	 */
 
 	/**
@@ -402,15 +402,21 @@ class DustPressHelper {
     * @since       0.0.2
     *
     * @param       $menu_name (string)
-    * @param   	$parent (integer)
+    * @param   	   $parent (integer)
     * @param       $override (integer)
+    * @param       $menu_id_given (boolean)
     *
     * @return      array of menu items in a recursive array
     */
-    public static function get_menu_as_items( $menu_name, $parent = 0, $override = null ) {
+    public static function get_menu_as_items( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
 
-            if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
+            if ( $menu_id_given ) {
+                $menu_object = wp_get_nav_menu_object( $menu_name );
+            }
+            else {
+                if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
                     $menu_object = wp_get_nav_menu_object( $locations[ $menu_name ] );
+                }
             }
 
             $menu_items = wp_get_nav_menu_items( $menu_object );
@@ -445,12 +451,12 @@ class DustPressHelper {
     * @param       $override (integer)
     *
     * @return      array of menu items
-    */        
+    */
 
     private static function build_menu( $menu_items, $parent = 0, $type = "page", $override = null ) {
             $tempItems = array();
             $parent_id = 0;
-            
+
             if ( empty( $type ) ) {
                 $type = "page";
             }
