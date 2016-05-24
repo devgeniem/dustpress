@@ -25,11 +25,6 @@ OR add it into your `composer.json`:
 {
   "require": {
     "devgeniem/dustpress": "*"
-  },
-  "extra": {
-    "installer-paths": {
-      "web/app/plugins/{$name}/": ["type:wordpress-plugin"]
-    }
   }
 }
 ```
