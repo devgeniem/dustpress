@@ -8,7 +8,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 ## Description
 
-A WordPress plugin for writing template files with Dust.js templating engine and separate data models.
+A WordPress theme framework for writing template files with Dust.js templating engine and separate data models.
 
 ## Installation
 
@@ -30,51 +30,43 @@ OR add it into your `composer.json`:
 ```
 
 ### Manually
-- Install DustPress plugin to your WordPress plugin folder as usual, and activate it from the admin panel.
+- Clone DustPress into you WordPress project into a directory which is not publicly accessible.
 
 ### Activate dustpress
-- Copy exampletheme from plugin folder to your themes folder as a base for your own theme. You can of course rename it however you want.
-- That's it! You are ready to go.
+You have two options for starting a DustPress project:
+1. Copy exampletheme from DustPress folder into your themes folder as a base for your own theme. You can of course rename it however you want.
+2.  Include the DustPress core file `dustpress.php` in your `functions.php` using [include](http://php.net/manual/en/function.include.php) for example.
+
+That's it! You are ready to go. DustPress will autoload all the resources needed for you to start developing.
 
 ## Usage
 
-The basics of using DustPress are very simple. Unlike traditional WordPress theme development, DustPress relies on MVVM,
-or Model View ViewModel architecture, where fetching data and displaying it to the user are separated in different modules.
+The basics of using DustPress are very simple. Unlike traditional WordPress theme development, DustPress relies on MVVM, or Model View ViewModel architecture in which fetching data and displaying it to the user are separated into different modules.
 
 ## File naming and locations
 
 ### Data models
 
-Even though implementing almost completely new development pattern to WordPress theme developers, DustPress still uses
-some of the WordPress core functions. The naming of the data models and view partials follow the naming conventions of
-traditional WordPress themes. The model for a single post should be named `single.php` etc.
+Even though implementing an almost completely new development pattern to WordPress theme developers, DustPress still uses some of the WordPress core functions. The naming of the data models and view partials follow the naming conventions of traditional WordPress themes. The model for a single post should be named `single.php` etc.
 
-In WordPress, your custom page templates could be named pretty much anything as long as you declare the name of the
-template in the comment section in the beginning of the file. This is the case in DustPress too, but the class name that you write for the model should follow certain pattern. For example if you have a `Frontpage` template with a filename `page-frontpage.php`, your class should be named PageFrontpage. The class names are case sensitive. The same goes with custom content type singles, where a single `person` file should be named `single-person.php` and the class accordingly `SinglePerson`.
+In WordPress, your custom page templates could be named pretty much anything as long as you declare the name of the template in the comment section in the beginning of the file. This is the case in DustPress too, but the class name that you write for the model should follow a certain pattern. For example if you have a `Frontpage` template with a filename `page-frontpage.php`, your class should be named PageFrontpage. The class names are case sensitive. The same goes with custom content type singles, where a single `person` file should be named `single-person.php` and the class accordingly `SinglePerson`.
 
-You still have to declare a name for the templates in the starting comment as you would have done in a traditional
-WordPress theme as well. This allows user to choose the template file to use with the page and points the controller
-to load correct model when loading the page.
+You still have to declare a name for the templates in the starting comment as you would have done in a traditional WordPress theme as well. This allows user to choose the template file to use with the page and points the DustPress core
+to load the correct model when loading the page.
 
-The models are located in the models/ directory, so that DustPress knows where to find them. They could, however, be arranged in any kind of subdirectory tree, so feel free to keep them in whatever structure you like.
+The models must be located in the `models/` directory. They could, however, be arranged in any kind of subdirectory tree, so feel free to keep them in whatever structure you like. Note that WordPress also needs to find your template file in order it to work.
 
-### Dust templates
+### Views
 
-The Dust templates are the view part of the design pattern. They get data from the DustPress controller (gathered in
-the model) and create the html from that.
+The Dust templates are the views of our design pattern. DustPress uses a fork of [DustPHP](https://github.com/devgeniem/dust-php) library for parsing the Dust templates.
 
-DustPress looks for the Dust templates in partials/ directory under the theme's root. Like models, they could be
-arranged in any kind of subdirectory hierarchy, so feel free to use whatever suits your needs.
+All the data gathered and returned by the public functions of your models are automatically passed to the view. DustPress looks for the Dust templates in the `partials/` directory under the root of the theme. Like models, they could be arranged in any kind of subdirectory hierarchy, so feel free to use whatever suits your needs.
 
-By default the Dust templatefiles follow the naming of the models. `single.php` should be paired with `single.dust`.
-That can be changed by the developer, of course. If for some unimaginable reason you would like to use `page-frontpage.dust` template with your `single.php` model, you could make use of DustPress' `set_partial()` function.
-
-Just write anywhere in the model `$this->set_partial("partial_name")` and it will be used instead of the default template.
+By default the Dust templatefiles follow the naming of the models. `single.php` should be paired with `single.dust`. This naming convention can be overwritten in your model by calling the `set_template()` function. In any of the public functions of the model write `$this->set_template("partial_name")` and it will be used instead of the default template. The `.dust` file extension is not needed.
 
 ## Data models
 
-The data models of DustPress consist of one class named the same as the file but in CamelCase instead of hyphens.
-`page-frontpage.php` should have a class named PageFrontpage that extends the DustPress class:
+The data models of DustPress consist of a class named the same as the file but in CamelCase instead of hyphens. `page-frontpage.php` should have a class named `PageFrontpage` that extends the `DustPressModel` class:
 
 ```
 <?php
@@ -88,26 +80,24 @@ class PageFrontpage extends DustPressModel {
 ?>
 ```
 
-### Method naming
+### Autoconstructing and modular usage
 
-As you probably know, classes consist of variables and methods. In DustPress, there are _no_ mandatory variables
-or methods the models should have. You can design them completely as you wish. There are however some methods
-you probably want in your model.
+As described above DustPress automatically locates your main model following the WordPress theme naming conventions and structure. The main model is loaded and constructed automatically. Lots of good stuff happen behind the scenes in the `__construct` method of the `DustPressModel` base class. _Do not overwrite it without calling `parent::__construct();` in the beginning of your own constructor._
 
-If you write a method that has a name starting with the word `bind`, DustPress executes them automatically when
-the data is being gathered. All other functions are considered as helper functions and should be executed in the
-code.
-
-Within the `bind` methods there are two special cases, `bind_Content()` and `bind_sub()`. We'll explain them later
-in detail. `bind_data()` is also a reserved name that can't be used as a method.
+Alongside the autoloading you can use DustPress models in any modular use case you can come up with. One example would be building a custom API in a file called `api.php` containing a `DustPressModel` extending class called `API` _(no need to follow the naming convention since the class is not autoconstructed)_ running all kinds of public functions rendering multiple custom templates. Yes, with DustPress you can do Dust rendering anywhere within your WordPress project! [(see the example)]() [(power up your API with DustPressJS)]()
 
 ### Binding the data
 
-DustPress has its own global data object that is passed to the view when everything is done and it's time to
-render the page. Binding data to the object is done via the `bind` methods.
+DustPress has its own global data object that is passed to the view when everything is done and it's time to render the page. Binding data to the object is done via the `return` statements in publicly accessible functions. While autoloading the main model and its submodels, all the public functions will automatically be run. If you have data you want to load inside a function and do not want to include it into the global data object, set the visibility of a function to `private`or `protected`.
 
-DustPress data object is an object named after the class it is defined in. Inside the object is an array, that
-holds a variety of objects that are user defined models. For example, if you have frontpage with a header,
+```
+public function last_posts() {
+    $args = [ 'posts_per_page' => 3 ];
+    return get_posts( $args );
+}
+```
+
+DustPress data object is an object named after the class it is defined in. Inside the object is an array, that holds a variety of objects that are user defined models. For example, if you have frontpage with a header,
 a content block, a sidebar and a footer, the data object would look like this:
 
 ```
@@ -130,12 +120,11 @@ object(stdClass)#1 (1) {
 }
 ```
 
+Note that the `Content` block is included by default inside the data block of all models. This is for template scoping purposes.
+
 #### Submodels
 
-Recurring elements like headers or footers should be created as submodels that can be included in any page.
-Submodels have their own models and are located in their own files inside the models/ directory. They are
-attached to the main model with the aforementioned `bind_sub()` method. The frontpage model could look like
-this:
+Recurring elements like headers or footers should be created as submodels that can be included in any page. Submodels have their own models which are located in their own files inside the `models/` directory. They are attached to the main model with the aforementioned `bind_sub()` method. The frontpage model could look like this:
 
 ```
 <?php
@@ -145,7 +134,7 @@ Template name: PageFrontpage
 
 class PageFrontpage extends DustPressModel {
 
-  public function bind_Submodels() {
+  public function init() {
     $this->bind_sub("Header");
     $this->bind_sub("Sidebar");
     $this->bind_sub("Footer");
@@ -154,12 +143,11 @@ class PageFrontpage extends DustPressModel {
 ?>
 ```
 
-This code fetches all three models and binds their data to the global data hierarchy under corresponding
-object. `bind_Submodels` is just an example name, the `bind_sub` function calls can be anywhere in the model
-and run inside an if block etc if needed.
+This code fetches all three models and binds their data to the global data hierarchy under corresponding object. Notice that we have created a public function `init` which is automatically run by DustPress and therefore the submodels will be included. No `init` block will be created under the global data object since we do not return anything in our function.
 
-`bind_sub()` can also take a second parameter, an array of arguments to pass to the submodel. It is then
-accessible in the submodel globally by calling `get_args()`.
+Submodel bindings  can be run anywhere in the model for example inside an `if` statement. Submodels work recursively, hence submodels can bind more submodels.
+
+`bind_sub()` can also take a second parameter, an array of arguments to be passed to the submodel. It is then accessible in the submodel globally by calling `get_args()`.
 
 #### bind_data()
 
@@ -210,8 +198,6 @@ It's also possible to give the function a third parameter, that is the model nam
 
 #### Reserved model names
 
-There is two restrictions in the model naming in addition to all the reserved class names by the WordPress itself.
-
 ##### WP
 
 WP is reserved for the essential WordPress data that is accessible in any template all the time. It is stored in
@@ -221,7 +207,7 @@ would return.
 It also contains information about the current user in WP->user and a true/false boolean if the user is logged in
 in WP->loggedin.
 
-`wp_head()` and `wp_footer()` functions' contents are available for use in helpers {@wphead /} and {@wpfooter /} respectively. They should be inserted in the corresponding places in your template file.
+Contents of the `wp_head()` and `wp_footer()` functions are available for use in helpers {@wphead /} and {@wpfooter /} respectively. They should be inserted in the corresponding places in your template file.
 
 ```
 {@wphead /}
@@ -229,7 +215,7 @@ in WP->loggedin.
 
 ## Dust templates
 
-Dust templates are 100% compatible with Dust.js templates. DustPress is based on Dust-PHP library.
+DustPHP templates are 100% compatible with Dust.js templates. See the official [Dust.js website](http://www.dustjs.com/) for documentation or the [LinkedIn Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial).
 
 All templates should start with a context block with the name of the current model, so that the variables are usable
 in the template. As for our previous example model, very simplified template could look like this:
@@ -242,7 +228,9 @@ in the template. As for our previous example model, very simplified template cou
     <h1>{WP.name}</h1>
     <h2>{WP.description}</h2>
 
-    <p>{SomeData}</p>
+    <p>{SomeString}</p>
+
+    {SomeHTML|s}
   {/Content}
 
   {">shared/sidebar" /}
@@ -251,7 +239,50 @@ in the template. As for our previous example model, very simplified template cou
 {/PageFrontpage}
 ```
 
-This template includes header.dust, sidebar.dust and footer.dust templates from partials/shared/ subdirectory.
+This template includes header.dust, sidebar.dust and footer.dust templates from `partials/shared/` subdirectory. At the end of the `Content` block we echo HTML from the `SomeHTML` variable and use the `s` filter to get it _unescaped_.  Note the `PageFrontpage` data is accessible inside the `Content` scope. See the [Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial#Sections_and_Context) for more information about sections and contexts.
+
+## DustPress Helpers
+
+Helpers extend the Dust.js templating language with more complex functionality than just data inserting (see: [Context Helpers](http://www.dustjs.com/guides/context-helpers/), [Dust Helpers](http://www.dustjs.com/guides/dust-helpers/)). With DustPress you can use all of the Dust.js Helpers within your Dust templates. We have also taken it a bit further and included some nice bits for you to use. As mentioned above there are helpers for echoing header and footer data into your templates but here is a complete list of helpers included with DustPress:
+
+### Comments Helper
+
+We made commenting super easy for your theme! Just use the Comments Helper with your desired parameters and DustPress builds an AJAX powered commenting for your posts and pages. Example usage:
+
+_Bind the data in your model._
+
+```
+public function some_comments() {
+  $data->form_args  = [
+    'title_reply' => __( 'Add a comment', 'text-domain' ),
+    'label_submit'  => __( 'Send', 'text-domain' ),
+    'class_submit'  => 'button',
+    'remove_input'  => array( 'url' ),
+    'comment_notes_before' => false,
+    'comment_notes_after' => false
+  ];
+
+    $after_comments = '<div class="comments__pagination-container"><ul class="pagination comments__pagination"></ul></div>';
+
+  $data->comments_args  = [
+    'reply'       => false,
+    'after_comments'  => $after_comments,
+  ];
+
+  $data->section_title = __('Comments', 'text-domain');
+
+  return $data;
+}
+```
+
+_Use the helper in your template._
+```
+{#some_comments}
+    {@comments form_args=form_args comments_args=comments_args section_title=section_title /}
+{/some_comments}
+```
+
+### List will continue...
 
 ## Other functionality
 
@@ -267,7 +298,36 @@ With only the partial defined, DustPress passes its global data object to the te
 
 There is also a parameter `type` that define the format the data would be rendered in. By default it's `html`, but `json` is also a possibility. You can write your own render format functions as well. That feature will be documented later, sorry for that.
 
-The last but not the least of the parameters is `echo` that takes a boolean value. By default it's set to true, so the render function echos it's output straight to browser. If it's false, it's returned as a string.
+The last but not the least of the parameters is `echo` that takes a boolean value. By default it's set to true, so the render function echoes the output straight to browser. If it's false, it's returned as a string. Here is an example usage of the render function:
+
+_in some function_
+```
+$output = dustpress()->render( [
+  "partial"   => 'my_custom_template',
+  "data"    => [
+      'some_number' => 1,
+      'some_string' => 'ABC',
+  ],
+  "type"    => "html",
+  "echo"    => false
+]);
+echo $output;
+```
+
+_my_custom_template.dust_
+```
+<ul>
+    <li>My number: {some_number}</li>
+    <li>My string: {some_string}</li>
+</ul>
+```
+_the echoed output_
+```
+<ul>
+    <li>My number: 1</li>
+    <li>My string: ABC</li>
+<ul>
+```
 
 # Additional Classes
 
@@ -313,3 +373,8 @@ DustPress comes with a debugger which displays the data loaded by your current m
 In the debugger view you can:
 * open and close data sets recursively by holding down the 'Shift' key while clicking an item.
 * close the debugger by pressing the 'Esc' key.
+
+Get the debugger from [Geniem GitHub](https://github.com/devgeniem/dustpress-debugger) or install it with Composer:
+```
+composer require devgeniem/dustpress-debugger
+```
