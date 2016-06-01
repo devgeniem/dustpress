@@ -909,6 +909,9 @@ final class DustPress {
 			function() {
 				return WP_USE_THEMES !== false;
 			},
+			function() {
+				return ! is_robots();
+			},
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],
 			$_POST['gform_ajax'],
