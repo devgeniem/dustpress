@@ -136,6 +136,7 @@ class DustPress {
 			$this->dust = new Dust\Dust();
 
 			// Set initial parameters
+			$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
 			$this->dust->includedDirectories[] = get_template_directory() . '/dustpress/partials/';
 
 			// Find and include Dust helpers from DustPress plugin
@@ -749,7 +750,7 @@ class DustPress {
 					}
 				}
 			}
-			
+
 			// If we could not find such template.
 			throw new Exception( "Error loading template file: " . $partial, 1 );
 
@@ -1428,7 +1429,7 @@ class DustPress {
 		];
 
 		// styles
-		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, 1, all );		
+		wp_enqueue_style( 'dustpress-comments-styles', get_template_directory_uri().'/dustpress/css/dustpress-comments.css', false, '0.0.2', all );		
 		
 		// js		
 		wp_register_script( 'dustpress-comments', get_template_directory_uri().'/dustpress/js/dustpress-comments.js', array('jquery'), null, true);
