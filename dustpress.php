@@ -40,6 +40,9 @@ class DustPress {
 	// Possible errors to disable
 	private $errors;
 
+	// Is DustPress disabled?
+	public $disabled;
+
 	/*
 	*  __construct
 	*
@@ -392,20 +395,22 @@ class DustPress {
 		global $post;
 		global $dustpress;
 
-		// Initialize an array for debugging.
-		$debugs = array();
+		if ( ! $this->disabled ) {
+			// Initialize an array for debugging.
+			$debugs = array();
 
-		// Get current template name tidied up a bit.
-		$template = $this->get_template_filename( $debugs );
+			// Get current template name tidied up a bit.
+			$template = $this->get_template_filename( $debugs );
 
-		// If class exists with the template's name, create new instance with it.
-		// We do not throw error if the class does not exist, to ensure that you can still create
-		// templates in traditional style if needed.
-		if ( class_exists ( $template ) ) {
-			new $template( $dustpress, null, true );
-		}
-		else {
-			die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+			// If class exists with the template's name, create new instance with it.
+			// We do not throw error if the class does not exist, to ensure that you can still create
+			// templates in traditional style if needed.
+			if ( class_exists ( $template ) ) {
+				new $template( $dustpress, null, true );
+			}
+			else {
+				die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+			}
 		}
 	}
 
@@ -1448,6 +1453,24 @@ class DustPress {
 		global $dustpress;
 
 		$dustpress->do_not_render = true;
+	}
+
+	/*
+	*  disable
+	*
+	*  Disable DustPress from doing pretty much anything.
+	*
+	*  @type	function
+	*  @date	2/6/2016
+	*  @since	0.0.9.1
+	*
+	*  @param	N/A
+	*  @return	N/A
+	*/
+	public function disable() {
+		global $dustpress;
+
+		$dustpress->disabled = true;
 	}
 
 	/*
