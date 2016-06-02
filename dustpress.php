@@ -29,6 +29,9 @@ final class DustPress {
 	// DustPress settings
 	private $settings = [ 'cache' => true ];
 
+	// Is DustPress disabled?
+	public $disabled;
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
@@ -721,6 +724,9 @@ final class DustPress {
 			$this->settings[ $key ] = apply_filters( "dustpress/settings/". $key, $value );
 		}
 
+		// A hook to prevent DustPress error to appear in Yoast's sitemap
+		add_filter( 'wpseo_build_sitemap_post_type', array( $this, 'disable' ), 1, 1 );
+
 		return null;
 	}
 
@@ -1181,6 +1187,24 @@ final class DustPress {
 				}
 			}
 		}
+	}
+
+	/**
+	*  disable
+	*
+	*  This function disables DustPress from doing pretty much anything.
+	*
+	*  @type	function
+	*  @date	02/06/2016
+	*  @since	0.3.3
+	*
+	*  @param   $param (mixed)
+	*  @return	$param
+	*/
+	public function disable( $param = null ) {
+		$this->disabled = true;
+
+		return $param;
 	}
 }
 
