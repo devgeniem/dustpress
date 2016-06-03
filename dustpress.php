@@ -96,8 +96,8 @@ final class DustPress {
 				get_template_directory() . '/models',
 			];
 
-			if ( $class == "DustPressHelper" ) {
-				$class = "dustpress-helper";
+			if ( $class == "DustPress\Query" ) {
+				$class = "query";
 			}
 			elseif ( $class == "DustPress\Model" ) {
 				$class = "model";
@@ -924,6 +924,7 @@ final class DustPress {
 			$_GET['_wpcf7_is_ajax_call'],
 			$_POST['_wpcf7_is_ajax_call'],
 			$_POST['gform_ajax'],
+			$_POST['dustpress_comments_ajax'],
 		];
 
 		$conditions = apply_filters( "dustpress/want_autoload", $conditions );
@@ -1219,5 +1220,3 @@ final class DustPress {
 function dustpress() {
 	return DustPress::instance();
 }
-
-dustpress();
