@@ -1,5 +1,7 @@
 <?php
-class Sep_DP extends \DustHelper
+namespace DustPress;
+
+class Sep extends Helper
 {
     public function init() {
         if ( isset( $this->params->end ) ) {
@@ -34,4 +36,4 @@ class Sep_DP extends \DustHelper
     }
 }
 
-$this->dust->helpers['sep'] = new Sep_DP();
+$this->dust->helpers['sep'] = new Sep();

@@ -1,16 +1,17 @@
 <?php
-class S_DP extends \DustPress\Helper
+namespace DustPress;
+
+class S extends Helper
 {
     public function output() {
-        if ( $this->bodies->dummy !== true ) {
-			if ( $this->params->s ) {
-				return __( $this->params->s );
-			}
-			else {
-				return __('Helper missing parameter "s".');
-			}
+		if ( $this->params->s ) {
+			return __( $this->params->s );
+		}
+		else {
+			return __('Helper missing parameter "s".');
 		}
     }
 }
 
-$this->dust->helpers['s'] = new S_DP();
+$this->add_helper( "s", new S() );
+//$this->dust->helpers['s'] = new S();

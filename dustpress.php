@@ -99,8 +99,8 @@ final class DustPress {
 			if ( $class == "DustPressHelper" ) {
 				$class = "dustpress-helper";
 			}
-			elseif ( $class == "DustPressModel" ) {
-				$class = "dustpress-model";
+			elseif ( $class == "DustPress\Model" ) {
+				$class = "model";
 			}
 			elseif ( $class == "DustPress\Helper" ) {
 				$class = "helper";
@@ -1208,6 +1208,10 @@ final class DustPress {
 		$this->disabled = true;
 
 		return $param;
+	}
+
+	public function add_helper( $name, $instance ) {
+		$this->dust->helpers[ $name ] = $instance;
 	}
 }
 

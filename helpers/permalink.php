@@ -1,6 +1,11 @@
 <?php
-$this->dust->helpers['permalink'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
-		return $chunk->write( get_permalink() );
+namespace DustPress;
+
+class Permalink extends Helper
+{
+    public function output() {
+		return get_permalink();
 	}
-};
+}
+
+$this->dust->helpers['permalink'] = new Permalink();

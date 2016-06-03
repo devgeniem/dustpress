@@ -8,7 +8,9 @@
 *	@class DustPress_Model
 */
 
-class DustPressModel {
+namespace DustPress;
+
+class Model {
 
 	// The data
 	public $data;
@@ -121,7 +123,7 @@ class DustPressModel {
 		// Loop through the methods
 		foreach( $methods as $class => &$class_methods ) {
 			foreach( $class_methods as $index => $method_item ) {
-				$reflection = new ReflectionMethod( $class, $method_item );
+				$reflection = new \ReflectionMethod( $class, $method_item );
 
 				// If we have wanted list of functions, check if we can run them and don't run
 				// anything else.
@@ -306,7 +308,7 @@ class DustPressModel {
 	*	get_class_methods
 	*
 	*	This function returns all public methods from current class and it parents up to
-	*   but not including DustPressModel.
+	*   but not including Model.
 	*
 	*	@type	function
 	*	@date	19/3/2015
@@ -337,7 +339,7 @@ class DustPressModel {
 
 		$parent = get_parent_class( $class_name );
 
-		if ( ! empty( $parent ) && $parent !== "DustPressModel" ) {
+		if ( ! empty( $parent ) && $parent !== "DustPress\Model" ) {
 			$methods = $this->get_class_methods( $parent, $methods );
 		}
 

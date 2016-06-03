@@ -1,5 +1,7 @@
 <?php
-class DustHelper {
+namespace DustPress;
+
+class Helper {
 	protected $chunk;
 	protected $context;
 	protected $bodies;
@@ -12,11 +14,13 @@ class DustHelper {
 		$this->bodies = $bodies;
 		$this->params = $params;
 
-		if ( function_exists( array( $this, "init" ) ) ) {
-			return $this->init();
-		}
-		else if ( function_exists( array( $this, "output" ) ) ) {
-			return $this->chunk->write( $this->output() );
+		if ( $this->bodies->dummy !== true ) {
+			if ( method_exists( $this, "init" ) ) {
+				return $this->init();
+			}
+			else if ( method_exists( $this, "output" ) ) {
+				return $this->chunk->write( $this->output() );
+			}
 		}
 	}
 }

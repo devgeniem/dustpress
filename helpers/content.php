@@ -1,19 +1,24 @@
 <?php
-$this->dust->helpers['content'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
-		global $post;
-		
-		if ( $params->data ) {		
-			$output = apply_filters( 'the_content', $params->data );
-		}
-		else {
-			ob_start();
-			setup_postdata( $post );
-			the_content();
-			wp_reset_postdata();
-			$output = ob_get_clean();
-		}
+namespace DustPress;
 
-		return $chunk->write( $output );
-	}
-};
+class Content extends Helper
+{
+    public function output() {
+        if ( $this->bodies->dummy !== true ) {
+			global $post;
+			
+			if ( $this->params->data ) {		
+				return apply_filters( 'the_content', $params->data );
+			}
+			else {
+				ob_start();
+				setup_postdata( $post );
+				the_content();
+				wp_reset_postdata();
+				return ob_get_clean();
+			}
+		}
+    }
+}
+
+$this->dust->helpers['content'] = new Content();

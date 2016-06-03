@@ -1,60 +1,62 @@
 <?php
-$this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params, $dummy = false ) {
-	if ( $bodies->dummy !== true ) {
+namespace DustPress;
 
-		if ( ! isset( $params->menu_name ) && ! isset( $params->menu_id ) ) {
-			return $chunk->write("DustPress menu helper error: No menu specified.");
+class Menu extends Helper
+{
+    public function output() {
+		if ( ! isset( $this->params->menu_name ) && ! isset( $this->params->menu_id ) ) {
+			return $this->chunk->write("DustPress menu helper error: No menu specified.");
 		}
-		else if ( isset( $params->menu_id ) ) {
-			$menu_id = $params->menu_id;
+		else if ( isset( $this->params->menu_id ) ) {
+			$menu_id = $this->params->menu_id;
 			$id_given = true;
 		}
 		else {
-			$menu_name = $params->menu_name;
+			$menu_name = $this->params->menu_name;
 		}
 
-		if ( isset( $params->parent ) ) {
-			$parent = $params->parent;
+		if ( isset( $this->params->parent ) ) {
+			$parent = $this->params->parent;
 		}
 		else {
 			$parent = 0;
 		}
 
-		if ( isset( $params->override ) ) {
-			$override = $params->override;
+		if ( isset( $this->params->override ) ) {
+			$override = $this->params->override;
 		}
 		else {
 			$override = null;
 		}
 
-		if ( isset( $params->ul_classes ) ) {
-			$ul_classes = $params->ul_classes;
+		if ( isset( $this->params->ul_classes ) ) {
+			$ul_classes = $this->params->ul_classes;
 		}
 		else {
 			$ul_classes = "";
 		}
 
-		if ( isset( $params->ul_id ) ) {
-			$ul_id = $params->ul_id;
+		if ( isset( $this->params->ul_id ) ) {
+			$ul_id = $this->params->ul_id;
 		}
 		else {
 			$ul_id = "";
 		}
 
-		if ( isset( $params->show_submenu ) ) {
-			$show_submenu = $params->show_submenu;
+		if ( isset( $this->params->show_submenu ) ) {
+			$show_submenu = $this->params->show_submenu;
 		}
 		else {
 			$show_submenu = true;
 		}
 
-		$menu = new stdClass();
+		$menu = new \stdClass();
 
 		if ( $menu_name ) {
-			$menu->items = DustPressHelper::get_menu_as_items( $menu_name, $parent, $override );
+			$menu->items = \DustPressHelper::get_menu_as_items( $menu_name, $parent, $override );
 		}
 		else {
-			$menu->items = DustPressHelper::get_menu_as_items( $menu_id, $parent, $override, true );
+			$menu->items = \DustPressHelper::get_menu_as_items( $menu_id, $parent, $override, true );
 		}
 
 		$menu->ul_classes = $ul_classes;
@@ -71,6 +73,9 @@ $this->dust->helpers['menu'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Eva
 			"echo" => false
 		]);
 
-		return $chunk->write( $output );
+		return $output;
 	}
-};
+}
+
+$this->add_helper( "menu", new Menu() );
+//$this->dust->helpers['menu'] = new Menu();
