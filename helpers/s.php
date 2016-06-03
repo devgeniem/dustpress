@@ -1,13 +1,16 @@
 <?php
-$this->dust->helpers['s'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
-		if ( $params->s ) {
-			$output = __( $params->s );
+class S_DP extends \DustPress\Helper
+{
+    public function output() {
+        if ( $this->bodies->dummy !== true ) {
+			if ( $this->params->s ) {
+				return __( $this->params->s );
+			}
+			else {
+				return __('Helper missing parameter "s".');
+			}
 		}
-		else {
-			$output = __('Helper missing parameter "s".');
-		}
+    }
+}
 
-		return $chunk->write( $output );
-	}
-};
+$this->dust->helpers['s'] = new S_DP();

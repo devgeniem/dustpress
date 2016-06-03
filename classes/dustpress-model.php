@@ -184,6 +184,10 @@ class DustPressModel {
 
 						$method = str_replace( "bind_", "", $m[1] );
 
+						if ( ! isset( $this->data[ $class ] ) ) {
+							$this->data[ $class ] = (object)[];
+						}
+
 						if ( "Content" == $method ) {
 							if ( ! isset( $this->data[ $class ]->{ $method } ) ) {
 								if ( $tidy ) {

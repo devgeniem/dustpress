@@ -102,6 +102,9 @@ final class DustPress {
 			elseif ( $class == "DustPressModel" ) {
 				$class = "dustpress-model";
 			}
+			elseif ( $class == "DustPress\Helper" ) {
+				$class = "helper";
+			}
 			else {
 				$class = $this->camelcase_to_dashed( $class, "-" );
 			}
