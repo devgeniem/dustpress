@@ -6,7 +6,7 @@ Description: Dust templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 0.3.3
+Version: 0.4.0
 */
 
 final class DustPress {
@@ -607,7 +607,7 @@ final class DustPress {
 
 			$helpers = $this->prerender( $partial );
 
-			$this->enqueue_helpers( $helpers );
+			$this->prerun_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
 			die( "DustPress error: ". $e->getMessage() );
@@ -1161,7 +1161,7 @@ final class DustPress {
 	}
 
 	/**
-	*  enqueue_helpers
+	*  prerun_helpers
 	*
 	*  This function executes dummy runs through all wanted helpers to enqueue scripts they need.
 	*
@@ -1172,7 +1172,7 @@ final class DustPress {
 	*  @param   $helpers (array|string)
 	*  @return	N/A
 	*/
-	public function enqueue_helpers( $helpers ) {
+	public function prerun_helpers( $helpers ) {
 		if ( is_array( $helpers ) ) {
 			$dummyEvaluator = new Dust\Evaluate\Evaluator( $this->dust );
 			$dummyChunk = new Dust\Evaluate\Chunk( $dummyEvaluator );
@@ -1183,7 +1183,7 @@ final class DustPress {
 
 			foreach( $this->dust->helpers as $name => $helper ) {
 				if ( in_array( $name, $helpers) ) {
-					if ( $helper instanceof \Closure ) {
+					if ( ( $helper instanceof \Closure ) || ( $helper instanceof \DustPress\Helper ) ) {
 						$dummyBodies->dummy = true;
 						call_user_func( $helper, $dummyChunk, $dummyContext, $dummyBodies, $dummyParameters );
 					}

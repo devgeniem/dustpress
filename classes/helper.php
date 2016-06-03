@@ -21,6 +21,10 @@ class Helper {
 			else if ( method_exists( $this, "output" ) ) {
 				return $this->chunk->write( $this->output() );
 			}
-		}
+		} else {
+            if ( method_exists( $this, "prerun" ) ) {
+                $this->prerun();
+            }
+        }
 	}
 }
