@@ -81,8 +81,6 @@ namespace Dust
                 "eq"          => new Helper\Eq(),
                 "any"         => new Helper\Any(),
                 "none"        => new Helper\None(),
-                "first"       => new Helper\First(),
-                "last"        => new Helper\Last(),
                 "if"          => new Helper\IfHelper(),
                 "lt"          => new Helper\Lt(),
                 "lte"         => new Helper\Lte(),
@@ -141,16 +139,6 @@ namespace Dust
                 $path .= self::FILE_EXTENSION;
             }
 
-            //now try each of the included directories
-            for($i = 0; $i < count($this->includedDirectories); $i++)
-            {
-                $possible = realpath($this->includedDirectories[ $i ] . '/' . $path);
-                if($possible !== false)
-                {
-                    return $possible;
-                }
-            }
-
             if($basePath != NULL)
             {
                 $possible = realpath($basePath . '/' . $path);
@@ -166,6 +154,16 @@ namespace Dust
             if($possible !== false)
             {
                 return $possible;
+            }
+
+            //now try each of the included directories
+            for($i = 0; $i < count($this->includedDirectories); $i++)
+            {
+                $possible = realpath($this->includedDirectories[ $i ] . '/' . $path);
+                if($possible !== false)
+                {
+                    return $possible;
+                }
             }
 
             return NULL;
