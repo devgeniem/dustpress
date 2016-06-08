@@ -1,5 +1,6 @@
 # DustPress
-- Contributors: Nomafin, villesiltala
+- Contributors: devgeniem / Nomafin, villesiltala
+- Plugin url: http://www.dustpress.com
 - Tags: dustpress, wordpress, dustjs, dust.js
 - Requires at least: 4.2.0
 - Tested up to: 4.5.2
