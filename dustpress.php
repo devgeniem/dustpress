@@ -617,7 +617,7 @@ final class DustPress {
 		$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
 
 		if ( $data ) {
-			$render_data = apply_filters( 'dustpress/data', $data );;
+			$render_data = apply_filters( 'dustpress/data', $data );
 		}
 		else {
 			$render_data = apply_filters( 'dustpress/data', $this->model->data );
