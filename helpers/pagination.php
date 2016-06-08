@@ -27,13 +27,13 @@ class Pagination extends Helper {
         $prev_page          = $cur_page - 1;
         $next_page          = $cur_page + 1;
         $per_page           = (int) $params->per_page;
-        $rows               = (int) $params->rows;
+        $items              = (int) $params->items;
         $hash               = $params->hash         ? '#' . $params->hash   : '';
         $this->page_label   = $params->page_label   ? $params->page_label   : 'paged';
 
-        // More rows than the set per_page
-        if ( ( $rows - $per_page ) > 0 ) {
-            $page_count = ceil( $rows / $per_page );
+        // More items than the set per_page
+        if ( ( $items - $per_page ) > 0 ) {
+            $page_count = ceil( $items / $per_page );
 
             $first_page = 1;
             $last_page  = $page_count;

@@ -258,8 +258,18 @@ Example:
 
 ### pagination
 
-# TERIS TEKEE
+`pagination` helper prints out a basic pagination for your template. It takes the data from your model as parameters and calculates the number of pages based on the `posts per page` value. It then prints out an `ul` element containing the page links with the corresponding page as a query parameter. The helper accepts the following parameters:
 
+- `per_page`: The number of items a single page should have.
+- `items`: The amount of items in your data set. For example this could be the post count.
+- `page_label`: The query parameter for the pagination links. The default is `paged`.
+- `hash`: The hash link to be added at the end of the pagination links.
+
+Example:
+
+```
+{@pagination per_page=10 items=item_count page_label="paged" hash="posts-section-id" }
+```
 ### permalink
 
 `permalink` helper emulates WordPress' native `get_permalink()` function. It takes one parameter, `id`, that tells it what post's permalink to give. It defaults to current post's id.
