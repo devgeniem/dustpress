@@ -52,80 +52,9 @@ final class DustPress {
 
 	protected function __construct() {
 
-		// start session for data storing
-		if ( session_status() == PHP_SESSION_NONE ) {
-    		session_start();
-		}
+		$this->register_autoloaders();
 
-		// Autoload DustPHP classes
-		spl_autoload_register( function ( $class ) {
-
-		    // project-specific namespace prefix
-		    $prefix = 'Dust\\';
-
-		    // base directory for the namespace prefix
-		    $base_dir = dirname( __FILE__ ) . '/dust/';
-
-		    // does the class use the namespace prefix?
-		    $len = strlen( $prefix );
-		    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-		        // no, move to the next registered autoloader
-		        return;
-		    }
-
-		    // get the relative class name
-		    $relative_class = substr( $class, $len );
-
-		    // replace the namespace prefix with the base directory, replace namespace
-		    // separators with directory separators in the relative class name, append
-		    // with .php
-		    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-		    // if the file exists, require it
-		    if ( file_exists( $file ) ) {
-		        require $file;
-		    }
-		});
-
-		// Autoload DustPress classes
-		spl_autoload_register( function( $class ) {
-			$paths = [
-				dirname( __FILE__ ) . '/classes/',
-				get_template_directory() . '/models',
-			];
-
-			if ( $class == "DustPress\Query" ) {
-				$class = "query";
-			}
-			elseif ( $class == "DustPress\Model" ) {
-				$class = "model";
-			}
-			elseif ( $class == "DustPress\Helper" ) {
-				$class = "helper";
-			}
-			else {
-				$class = $this->camelcase_to_dashed( $class, "-" );
-			}
-
-			$filename = strtolower( $class ) .".php";
-
-			foreach ( $paths as $path ) {
-				if ( is_readable( $path ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
-						if ( strpos( $file, $filename ) ) {
-							if ( is_readable( $file ) ) {
-								require_once( $file );
-							}
-						}
-					}
-				}
-				else {
-					die("DustPress error: Your theme does not have required directory ". $path);
-				}
-			}
-		});
-
-		// Create Dust instance
+		// Create a DustPHP instance
 		$this->dust = new Dust\Dust();
 
 		// Set initial parameters
@@ -605,6 +534,11 @@ final class DustPress {
 
 		// Unique hash
 		$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
+
+		// start session for data storing
+		if ( session_status() == PHP_SESSION_NONE ) {
+    		session_start();
+		}
 
 		if ( $data ) {
 			$render_data = apply_filters( 'dustpress/data', $data );
@@ -1134,6 +1068,86 @@ final class DustPress {
 	*/
 	public function add_helper( $name, $instance ) {
 		$this->dust->helpers[ $name ] = $instance;
+	}
+
+	/**
+	 *  This function adds autoloaders for the classes
+	 *
+	 *  @type 	function
+	 *  @date 	08/06/2016
+	 *  @since  0.04.0
+	 *
+	 *  @param  N/A
+	 *  @return N/A
+	 */
+	private function register_autoloaders() {
+		// Autoload DustPHP classes
+		spl_autoload_register( function ( $class ) {
+
+		    // project-specific namespace prefix
+		    $prefix = 'Dust\\';
+
+		    // base directory for the namespace prefix
+		    $base_dir = dirname( __FILE__ ) . '/dust/';
+
+		    // does the class use the namespace prefix?
+		    $len = strlen( $prefix );
+		    if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+		        // no, move to the next registered autoloader
+		        return;
+		    }
+
+		    // get the relative class name
+		    $relative_class = substr( $class, $len );
+
+		    // replace the namespace prefix with the base directory, replace namespace
+		    // separators with directory separators in the relative class name, append
+		    // with .php
+		    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+		    // if the file exists, require it
+		    if ( file_exists( $file ) ) {
+		        require $file;
+		    }
+		});
+
+		// Autoload DustPress classes
+		spl_autoload_register( function( $class ) {
+			$paths = [
+				dirname( __FILE__ ) . '/classes/',
+				get_template_directory() . '/models',
+			];
+
+			if ( $class == "DustPress\Query" ) {
+				$class = "query";
+			}
+			elseif ( $class == "DustPress\Model" ) {
+				$class = "model";
+			}
+			elseif ( $class == "DustPress\Helper" ) {
+				$class = "helper";
+			}
+			else {
+				$class = $this->camelcase_to_dashed( $class, "-" );
+			}
+
+			$filename = strtolower( $class ) .".php";
+
+			foreach ( $paths as $path ) {
+				if ( is_readable( $path ) ) {
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
+						if ( strpos( $file, $filename ) ) {
+							if ( is_readable( $file ) ) {
+								require_once( $file );
+							}
+						}
+					}
+				}
+				else {
+					die("DustPress error: Your theme does not have required directory ". $path);
+				}
+			}
+		});
 	}
 }
 

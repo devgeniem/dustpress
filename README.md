@@ -89,7 +89,7 @@ Alongside the autoloading you can use DustPress models in any modular use case y
 
 ### Binding the data
 
-DustPress has its own global data object that is passed to the view when everything is done and it's time to render the page. Binding data to the object is done via the `return` statements in publicly accessible functions. While autoloading the main model and its submodels, all public functions will automatically be run. If you have data you want to load inside a function and do not want to include it into the global data object, set the visibility of a function to `private` or `protected`.
+DustPress has its own global data object that is passed to the view when everything is done and it is time to render the page. Binding data to the object is done via the `return` statements in publicly accessible functions. While autoloading the main model and its submodels, all public functions will automatically be run. If you have data you want to load inside a function and do not want to include it into the global data object, set the visibility of a function to `private` or `protected`.
 
 ```
 public function last_posts() {
@@ -341,7 +341,7 @@ DustPress render function is declared public and is thus usable anywhere. It tak
 
 With only the partial defined, DustPress passes its global data object to the template. That can be changed by giving it another parameter `data` that would then be passed to the template.
 
-There is also a parameter `type` that defines the format the data would be rendered in. By default it's `html`, but `json` is also a possibility. You can write your own render format functions as well. That feature will be documented later, sorry for that.
+There is also a parameter `type` that defines the format the data would be rendered in. By default it is `html`, but `json` is also a possibility. You can write your own render format functions as well. That feature will be documented later, sorry for that.
 
 The last but not the least of the parameters is `echo` that takes a boolean value. By default it is set to true, so the render function echoes the output straight to browser. If it is false, it is returned as a string. Here is an example usage of the render function:
 
