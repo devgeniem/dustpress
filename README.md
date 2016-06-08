@@ -433,4 +433,9 @@ composer require devgeniem/dustpress-js
 
 # Comments helper
 
-# TERIS TEKEE
+If you need to make a commenting feature on your site, you can use our very easy-to-use Comments helper. It is available as a separate plugin.
+
+Get the Comments helper from [Geniem Github](https://github.com/devgeniem/dustpress-comments) or install it with Composer:
+```
+composer require devgeniem/dustpress-comments
+```
