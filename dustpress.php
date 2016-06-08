@@ -2,7 +2,7 @@
 /*
 Plugin Name: DustPress
 Plugin URI: http://www.geniem.com
-Description: Dust templating system for WordPress
+Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
@@ -27,7 +27,7 @@ final class DustPress {
 	private $postbody;
 
 	// DustPress settings
-	private $settings = [ 'cache' => true ];
+	private $settings;
 
 	// Is DustPress disabled?
 	public $disabled;
@@ -40,8 +40,6 @@ final class DustPress {
 	}
 
 	/**
-	*  __construct
-	*
 	*  Constructor for DustPress core class.
 	*
 	*  @type	function
@@ -164,8 +162,6 @@ final class DustPress {
 	}
 
 	/**
-	*  create_instance
-	*
 	*  This function creates the instance of the main model that is defined by the WordPress template
 	*
 	*  @type	function
@@ -218,8 +214,6 @@ final class DustPress {
 	}
 
 	/**
-	*  get_template_filename
-	*
 	*  This function gets current template's filename and returns without extension or WP-template prefixes such as page- or single-.
 	*
 	*  @type	function
@@ -468,8 +462,6 @@ final class DustPress {
 	}
 
 	/**
-	*  populate_data_collection
-	*
 	*  This function populates the data collection with essential data
 	*
 	*  @type	function
@@ -518,8 +510,6 @@ final class DustPress {
 	}
 
 	/**
-	*  render
-	*
 	*  This function will render the given data in selected format
 	*
 	*  @type	function
@@ -661,8 +651,6 @@ final class DustPress {
 	}
 
 	/**
-	*  get_template
-	*
 	*  This function checks whether the given partial exists and returns the contents of the file as a string
 	*
 	*  @type	function
@@ -706,8 +694,6 @@ final class DustPress {
 	}
 
 	/**
-	*  init_settings
-	*
 	*  This function initializes DustPress settings with default values
 	*
 	*  @type    function
@@ -719,7 +705,8 @@ final class DustPress {
 
 	public function init_settings() {
 		$this->settings = [
-			"cache" => false
+			"cache" => false,
+			"debug_data_block_name" => "Helper data"
 		];
 
 		// loop through the settings and execute possible filters from functions
@@ -734,8 +721,6 @@ final class DustPress {
 	}
 
 	/**
-	*  get_setting
-	*
 	*  This function returns DustPress setting for specific key.
 	*
 	*  @type	function
@@ -756,8 +741,6 @@ final class DustPress {
 	}
 
 	/**
-	*  set_debugger_data
-	*
 	*  This function sets data into global data collection.
 	*  To be used for debugging purposes.
 	*
@@ -773,23 +756,23 @@ final class DustPress {
 		if ( empty( $key ) ) {
 			die( 'You did not set a key for your debugging data collection.' );
 		} else {
+			$debug_data_block_name = $this->get_setting( "debug_data_block_name" );
+
 			if ( isset( $this->model ) ) {
-				if ( ! isset( $this->model->data['Debugger'] ) ) {
-					$this->model->data['Debugger'] = [];
+				if ( ! isset( $this->model->data[ $debug_data_block_name ] ) ) {
+					$this->model->data[ $debug_data_block_name ] = [];
 				}
 
-				if ( ! isset( $this->model->data['Debugger'][ $key ] ) ) {
-					$this->model->data['Debugger'][ $key ] = [];
+				if ( ! isset( $this->model->data[ $debug_data_block_name ][ $key ] ) ) {
+					$this->model->data[ $debug_data_block_name ][ $key ] = [];
 				}
 
-				$this->model->data['Debugger'][ $key ][] = $data;
+				$this->model->data[ $debug_data_block_name ][ $key ][] = $data;
 			}
 		}
 	}
 
 	/**
-	*  is_login_page
-	*
 	*  Returns true if we are on login or register page.
 	*
 	*  @type	function
@@ -805,64 +788,6 @@ final class DustPress {
 	}
 
 	/**
-	*  is_installation_compatible
-	*
-	*  This function returns true if the WordPress configuration is suitable for DustPress.
-	*
-	*  @type	function
-	*  @date	9/4/2015
-	*  @since	0.0.7
-	*
-	*  @param	N/A
-	*  @return	true/false (boolean)
-	*/
-
-	private function is_installation_compatible() {
-		$ret = [];
-
-		if ( ! is_readable( get_template_directory() .'/models' ) ) {
-			$ret[] = "models";
-		}
-		if ( ! is_readable(get_template_directory() .'/partials' ) ) {
-			$ret[] = "partials";
-		}
-		if ( ! defined("PHP_VERSION_ID") or PHP_VERSION_ID < 50300 ) {
-			$ret[] = "phpversion";
-		}
-
-		return $ret;
-	}
-
-	/**
-	*  required
-	*
-	*  This function prints out admin notice for missing folders on the theme file.
-	*
-	*  @type	function
-	*  @date	15/6/2015
-	*  @since	0.1.0
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-	public function required() {
-		$errors = [
-			"models" => "Directory named \"models\" is required under the activated theme's directory.",
-			"partials" => "Directory named \"partials\" is required under the activated theme's directory.",
-			"phpversion" => "Your version of PHP is too old. DustPress requires at least version 5.3 to function properly."
-		];
-
-		echo "<div class=\"update-nag\"><p><b>DustPress errors:</b></p>";
-		foreach( $this->errors as $error ) {
-			echo "<p>". $errors[$error] ."</p>";
-		}
-		echo "</div>";
-	}
-
-	/**
-	*  camelcase_to_dashed
-	*
 	*  This function returns given string converted from CamelCase to camel-case
 	*  (or probably camel_case or somethinge else, if wanted).
 	*
@@ -874,19 +799,17 @@ final class DustPress {
 	*  @param   $char (string)
 	*  @return	(string)
 	*/
-	private function camelcase_to_dashed( $string, $char = "-" ) {
-		preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches);
+	public function camelcase_to_dashed( $string, $char = "-" ) {
+		preg_match_all( '!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches );
 		$results = $matches[0];
 		foreach ( $results as &$match ) {
-	    	$match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
+	    	$match = $match == strtoupper( $match ) ? strtolower( $match ) : lcfirst( $match );
 		}
 
-	 	return implode($char, $results);
+	 	return implode( $char, $results );
 	}
 
 	/**
-	*  want_autoload
-	*
 	*  This function determines if we want to autoload and render the model or not.
 	*
 	*  @type	function
@@ -946,8 +869,6 @@ final class DustPress {
 	}
 
 	/**
-	*  is_dustpress_ajax
-	*
 	*  This function determines if we are on a DustPress AJAX call or not.
 	*
 	*  @type	function
@@ -966,8 +887,6 @@ final class DustPress {
 	}
 
 	/**
-	*  create_ajax_instance
-	*
 	*  This function does lots of AJAX stuff with the parameters from the JS side.
 	*
 	*  @type	function
@@ -1071,8 +990,6 @@ final class DustPress {
 	}
 
 	/**
-	*  prerender
-	*
 	*  This function loops through the wanted partial and finds all helpers that are used.
 	*  It is used recursively.
 	*
@@ -1128,8 +1045,6 @@ final class DustPress {
 	}
 
 	/**
-	*  prerender
-	*
 	*  This function is used to get a template file to prerender.
 	*
 	*  @type	function
@@ -1162,8 +1077,6 @@ final class DustPress {
 	}
 
 	/**
-	*  prerun_helpers
-	*
 	*  This function executes dummy runs through all wanted helpers to enqueue scripts they need.
 	*
 	*  @type	function
@@ -1194,8 +1107,6 @@ final class DustPress {
 	}
 
 	/**
-	*  disable
-	*
 	*  This function disables DustPress from doing pretty much anything.
 	*
 	*  @type	function
@@ -1211,12 +1122,22 @@ final class DustPress {
 		return $param;
 	}
 
+	/**
+	*  This function adds a helper.
+	*
+	*  @type	function
+	*  @date	08/06/2016
+	*  @since	0.4.0
+	*
+	*  @param   $param (mixed)
+	*  @return	$param
+	*/
 	public function add_helper( $name, $instance ) {
 		$this->dust->helpers[ $name ] = $instance;
 	}
 }
 
-// Global function which returns the DustPress singleton
+// Global function that returns the DustPress singleton
 function dustpress() {
 	return DustPress::instance();
 }
