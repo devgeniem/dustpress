@@ -421,3 +421,16 @@ composer require devgeniem/dustpress-debugger
 In the debugger view you can:
 * open and close data sets recursively by holding down the 'Shift' key while clicking an item.
 * close the debugger by pressing the 'Esc' key.
+
+# DustPressJS
+
+We have also created a handy DustPress.JS library for using the DustPress Model methods on the front end.
+
+Get the debugger from [Geniem Github](https://github.com/devgeniem/dustpress-js) or install it with Composer:
+```
+composer require devgeniem/dustpress-js
+```
+
+# Comments helper
+
+# TERIS TEKEE
