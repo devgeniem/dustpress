@@ -54,7 +54,7 @@ class Math
         else
         {
             //just eval body with some special state
-            return $chunk->render($bodies->block, $context->pushState(new Evaluate\State((object) ['__selectInfo' => (object) ['selectComparisonSatisfied' => false], 'key' => $result])));
+            return $chunk->render($bodies->block, $context->pushState(new Evaluate\State((object) ['__selectInfo' => (object) ['selectComparisonSatisfied' => false, 'key' => $result]])));
         }
     }
 
