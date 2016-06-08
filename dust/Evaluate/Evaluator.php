@@ -100,23 +100,25 @@ class Evaluator
             //do we have the helper?
             if(!isset($this->dust->helpers[ $section->identifier->key ]))
             {
-                $this->error($section->identifier, 'Unable to find helper: '. $section->identifier->key);
+                $chunk->write( "Dust PHP error: unable to find helper: " . $section->identifier->key );
             }
-            $helper = $this->dust->helpers[ $section->identifier->key ];
-            //build state w/ no current value
-            $state = new State(NULL);
-            //do we have an explicit context?
-            if($section->context != NULL)
-            {
-                $state->forcedParent = $ctx->resolve($section->context->identifier);
+            else {
+                $helper = $this->dust->helpers[ $section->identifier->key ];
+                //build state w/ no current value
+                $state = new State(NULL);
+                //do we have an explicit context?
+                if($section->context != NULL)
+                {
+                    $state->forcedParent = $ctx->resolve($section->context->identifier);
+                }
+                //how about params?
+                if(!empty($section->parameters))
+                {
+                    $state->params = $this->evaluateParameters($section->parameters, $ctx);
+                }
+                //now run the helper
+                $chunk = $this->handleCallback($ctx->pushState($state), $helper, $chunk, $section);
             }
-            //how about params?
-            if(!empty($section->parameters))
-            {
-                $state->params = $this->evaluateParameters($section->parameters, $ctx);
-            }
-            //now run the helper
-            $chunk = $this->handleCallback($ctx->pushState($state), $helper, $chunk, $section);
         }
         else
         {

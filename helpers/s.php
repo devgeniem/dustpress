@@ -4,8 +4,13 @@ namespace DustPress;
 class S extends Helper
 {
     public function output() {
-		if ( $this->params->s ) {
-			return __( $this->params->s );
+		if ( isset( $this->params->s ) ) {
+			if ( isset( $this->params->td ) ) {
+				return __( $this->params->s, $this->params->td );
+			}
+			else {
+				return __( $this->params->s );
+			}
 		}
 		else {
 			return __('Helper missing parameter "s".');
