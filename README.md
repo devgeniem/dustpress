@@ -380,7 +380,7 @@ _the echoed output_
 
 \DustPress\Query is a class that contains a few helper functions for common WordPress tasks. The main functionality of this class is customized post querying with the ability to bind basic WordPress metadata to the queried post objects. With a single function call you can get all the meta needed in your Dust-template. It also supports customized data fetching for __Advanced Custom Fields__ field group data in your post objects.
 
-### Quering single posts
+### Querying single posts
 
 #### get_post()
 
@@ -396,7 +396,7 @@ This function extends the `get_post()` function with automatic loading of __Adva
 
 This function has a recursive operation. If the argument with the key `recursive` is set to `true`, ACF fields with relational post object data are loaded recursively with full meta and field group data. This recursion also works within the first level of an ACF repeater field.
 
-### Quering multiple posts
+### Querying multiple posts
 
 #### get_posts()
 
