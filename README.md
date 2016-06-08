@@ -331,17 +331,17 @@ _the echoed output_
 
 # Additional Classes
 
-## DustPressHelper
+## Query
 
-DustPressHelper is a class which combines helper functions for common WordPress tasks. The main functionality of this class is customized post quering with the ability to bind basic WordPress metadata to the queried post objects. With a single function call you can get the meta needed in your Dust-template. It also supports customized data fetching for __Advanced Custom Fields__ field group data in your post objects.
+Query is a class which combines helper functions for common WordPress tasks. The main functionality of this class is customized post querying with the ability to bind basic WordPress metadata to the queried post objects. With a single function call you can get the meta needed in your Dust-template. It also supports customized data fetching for __Advanced Custom Fields__ field group data in your post objects.
 
 In this class you will also find a menu builder tailored for Dust-based menus which is described later in detail.
 
-### Quering single posts
+### Querying single posts
 
 #### get_post()
 
-With DustPressHelper you can query single WordPress posts with two different functions. The `get_post()` function accepts the following parameters:
+With Query you can query single WordPress posts with two different functions. The `get_post()` function accepts the following parameters:
 * id: The id of the post.
 * args: Arguments in an array.
 
