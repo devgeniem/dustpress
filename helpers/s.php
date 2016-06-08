@@ -14,4 +14,3 @@ class S extends Helper
 }
 
 $this->add_helper( "s", new S() );
-//$this->dust->helpers['s'] = new S();

@@ -1,10 +1,12 @@
 <?php
-$this->dust->helpers['wpfooter'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
+namespace DustPress;
+
+class WPFooter extends Helper {
+    public function output() {
 		ob_start();
 		wp_footer();
-		$output = ob_get_clean();
+		return ob_get_clean();
+    }
+}
 
-		return $chunk->write( $output );
-	}
-};
+$this->add_helper( 'wpfooter', new WPFooter() );

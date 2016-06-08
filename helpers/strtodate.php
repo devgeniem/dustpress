@@ -1,12 +1,14 @@
 <?php
-$this->dust->helpers['strtodate'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
+namespace DustPress;
+
+class Strtodate extends Helper {
+    public function output() {
 		$value 	= $params->value;
 		$format	= $params->format;
 		$now	= $params->now;
 		
-		$output = date( $format, strtotime( $value, $now ) );
+		return date( $format, strtotime( $value, $now ) );
+    }
+}
 
-		return $chunk->write( $output );
-	}
-};
+$this->add_helper( 'strtodate', new Strtodate() );

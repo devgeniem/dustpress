@@ -1,10 +1,12 @@
 <?php
-$this->dust->helpers['title'] = function ( \Dust\Evaluate\Chunk $chunk, \Dust\Evaluate\Context $ctx, \Dust\Evaluate\Bodies $bodies, \Dust\Evaluate\Parameters $params ) {
-	if ( $bodies->dummy !== true ) {
+namespace DustPress;
+
+class Title extends Helper {
+    public function output() {
 		ob_start();
 		the_title();
-		$output = ob_get_clean();
+		return ob_get_clean();
+    }
+}
 
-		return $chunk->write( $output );
-	}
-};
+$this->add_helper( 'title', new Title() );
