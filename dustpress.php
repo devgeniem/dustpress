@@ -404,7 +404,7 @@ final class DustPress {
 		$wp_data = array();
 
 		// Insert Wordpress blog info data to collection
-		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","text_direction","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","siteurl","home" );
+		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","is_rtl","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","url" );
 
 		foreach ( $infos as $info ) {
 			$wp_data[ $info ] = get_bloginfo( $info );
@@ -533,7 +533,7 @@ final class DustPress {
 		}
 
 		// Unique hash
-		$hash = md5( $_SERVER[ REQUEST_URI ] . microtime() );
+		$hash = md5( $_SERVER[ "REQUEST_URI" ] . microtime() );
 
 		// start session for data storing
 		if ( session_status() == PHP_SESSION_NONE ) {
@@ -778,10 +778,18 @@ final class DustPress {
 			function() {
 				return ! is_robots();
 			},
-			$_GET['_wpcf7_is_ajax_call'],
-			$_POST['_wpcf7_is_ajax_call'],
-			$_POST['gform_ajax'],
-			$_POST['dustpress_comments_ajax'],
+			function() {
+				return ! isset( $_GET['_wpcf7_is_ajax_call'] );
+			},
+			function() {
+				return ! isset( $_POST['_wpcf7_is_ajax_call'] );
+			},
+			function() {
+				return ! isset( $_POST['gform_ajax'] );
+			},
+			function() {
+				return ! isset( $_POST['dustpress_comments_ajax'] );
+			}
 		];
 
 		$conditions = apply_filters( "dustpress/want_autoload", $conditions );

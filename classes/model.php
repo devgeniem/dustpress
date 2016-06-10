@@ -490,7 +490,14 @@ class Model {
             }
         }
 
-        $this->maybe_cache( $m, $data, $this->called_subs );
+        if ( isset( $this->called_subs ) ) {
+            $subs = $this->called_subs;
+        }
+        else {
+            $subs = null;
+        }
+
+        $this->maybe_cache( $m, $data, $subs );
 
         // Unset called submodels for this run
         $this->called_subs = null;
