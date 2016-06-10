@@ -481,7 +481,14 @@ class Model {
             return $cached;
         }
 
-        $data = call_user_func( $class . '::' . $m );
+        $reflection = new \ReflectionMethod( $class, $m );
+
+        if ( $reflection->isStatic() ) {
+            $data = call_user_func( $class . '::' . $m );
+        }
+        else {
+            $data = $class->{$m};
+        }
 
         if ( ! $data ) {
             if ( $this->last_bound ) {
