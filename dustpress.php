@@ -532,14 +532,6 @@ final class DustPress {
 			die( "DustPress error: ". $e->getMessage() );
 		}
 
-		// Unique hash
-		$hash = md5( $_SERVER[ "REQUEST_URI" ] . microtime() );
-
-		// start session for data storing
-		if ( session_status() == PHP_SESSION_NONE ) {
-    		session_start();
-		}
-
 		if ( $data ) {
 			$render_data = apply_filters( 'dustpress/data', $data );
 		}
@@ -556,12 +548,8 @@ final class DustPress {
 		// Filter output
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
-		// Store data into session for debugger(s) to fetch
-		if ( ! $data ) {
-			$this->model->data 	= apply_filters( 'dustpress/data/after_render', $this->model->data );
-
-			$_SESSION[ $hash ] = $this->model->data;
-		}
+		// Do something with the data after rendering
+		do_action( "dustpress/data/after_render", $render_data );
 
 		if ( $echo ) {
 			if ( empty ( strlen( $output ) ) ) {
