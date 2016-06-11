@@ -547,7 +547,7 @@ final class DustPress {
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
 		// Do something with the data after rendering
-		apply_filters( "dustpress/data/after_render", $render_data );
+		apply_filters( "dustpress/data/after_render", $this->model->data );
 
 		if ( $echo ) {
 			if ( empty ( strlen( $output ) ) ) {
