@@ -487,7 +487,7 @@ class Model {
             $data = call_user_func( $class . '::' . $m );
         }
         else {
-            $data = $class->{$m};
+            $data = call_user_func( [ $this, $m ] );
         }
 
         if ( ! $data ) {
