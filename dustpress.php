@@ -537,6 +537,7 @@ final class DustPress {
 		}
 		else {
 			$render_data = apply_filters( 'dustpress/data', $this->model->data );
+			$render_data = apply_filters( 'dustpress/data/main', $render_data );
 		}
 
 		// Create output with wanted format.

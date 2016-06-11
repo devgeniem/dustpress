@@ -16,6 +16,7 @@ class Menu extends Helper {
      * @return $output (string)
      */
     public function output() {
+
         if ( ! isset( $this->params->menu_name ) && ! isset( $this->params->menu_id ) ) {
             return $this->chunk->write( 'DustPress menu helper error: No menu specified.' );
         } else if ( isset( $this->params->menu_id ) ) {
@@ -105,14 +106,14 @@ class Menu extends Helper {
     public static function get_menu_as_items( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
 
         if ( $menu_id_given ) {
-            $menu_object = wp_get_nav_menu_object( $menu_name );
+            $menu_object = \wp_get_nav_menu_object( $menu_name );
         } else {
-            if ( ( $locations = get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
-                $menu_object = wp_get_nav_menu_object( $locations[ $menu_name ] );
+            if ( ( $locations = \get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
+                $menu_object = \wp_get_nav_menu_object( $locations[ $menu_name ] );
             }
         }
 
-        $menu_items = wp_get_nav_menu_items( $menu_object );
+        $menu_items = \wp_get_nav_menu_items( $menu_object );
 
         if ( $menu_items ) {
 
@@ -161,12 +162,12 @@ class Menu extends Helper {
         }
 
         if ( is_tax() ) {
-            $term_id = get_queried_object()->term_id;
+            $term_id = \get_queried_object()->term_id;
         }
 
         if ( count( $menu_items ) > 0 ) {
-            foreach ( $menu_items as $item ) {
-                if ( $item->menu_item_parent === $parent_id ) {
+            foreach ( $menu_items as $item ) {  
+                if ( $item->menu_item_parent == $parent_id ) {
                     $item->sub_menu = self::build_menu( $menu_items, $item->object_id, $item->object, $override );
 
                     $item->classes = array();
@@ -185,7 +186,7 @@ class Menu extends Helper {
                         $temp_items[] = 'active';
                     }
 
-                    if ( $this->is_current( $item ) ) {
+                    if ( self::is_current( $item, $override ) ) {
                         $item->classes[] = 'current-menu-item';
                         $temp_items[] = 'active';
                     }
@@ -211,8 +212,8 @@ class Menu extends Helper {
      * @param  integer $override   An id to match with the current object.
      * @return boolean
      */
-    private function is_current( $item, $override ) {
-        return (    get_the_ID() === $item->object_id
+    private static function is_current( $item, $override ) {
+        return (    \get_the_ID() === $item->object_id
                 &&  'post_type' === $item->type )
                 ||  ( $item->object_id === $term_id && 'taxonomy' === $item->type )
                 ||  ( $item->object_id === $override );
