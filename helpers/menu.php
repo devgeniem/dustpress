@@ -68,8 +68,7 @@ class Menu extends Helper {
         $menu->ul_id = $ul_id;
         $menu->show_submenu = $show_submenu;
 
-        // Add data into debugger
-        dustpress()->set_debugger_data( 'Menu', $menu );
+        $menu = apply_filters( "dustpress/menu/data", $menu );
 
         $output = dustpress()->render( [
             'partial' => 'menu',
@@ -78,7 +77,7 @@ class Menu extends Helper {
             'echo' => false,
         ]);
 
-        return $output;
+        return apply_filters( "dustpress/menu/output", $output );
     }
 
     /*
@@ -126,7 +125,7 @@ class Menu extends Helper {
                         unset( $menu[0] );
                 }
 
-                return $menu;
+                return apply_filters( "dustpress/menu", $menu );
         }
     }
 
@@ -186,6 +185,10 @@ class Menu extends Helper {
                         $temp_items[] = 'active';
                     }
 
+                    if ( in_array( $item->object_id, get_post_ancestors( get_the_ID() ) ) ) {
+                        $item->classes[] = 'current-menu-parent';
+                    }
+
                     if ( self::is_current( $item, $override ) ) {
                         $item->classes[] = 'current-menu-item';
                         $temp_items[] = 'active';
@@ -194,6 +197,9 @@ class Menu extends Helper {
                     if ( is_array( $item->classes ) ) {
                         $item->classes = array_filter( $item->classes );
                     }
+
+                    $item->classes = apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
+                    $item = apply_filters( "dustpress/menu/item", $item );
 
                     $item->classes[] = 'menu-item';
                     $item->classes[] = 'menu-item-' . $item->object_id;
@@ -213,10 +219,12 @@ class Menu extends Helper {
      * @return boolean
      */
     private static function is_current( $item, $override ) {
-        return (    \get_the_ID() === $item->object_id
-                &&  'post_type' === $item->type )
-                ||  ( $item->object_id === $term_id && 'taxonomy' === $item->type )
-                ||  ( $item->object_id === $override );
+        $return = (    \get_the_ID() == $item->object_id
+                &&  'post_type' == $item->type )
+                ||  ( $item->object_id == $term_id && 'taxonomy' == $item->type )
+                ||  ( $item->object_id == $override );
+
+        return apply_filters( "dustpress/menu/is_current", $return, $item );
     }
 }
 

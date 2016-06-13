@@ -661,38 +661,6 @@ final class DustPress {
 	}
 
 	/**
-	*  This function sets data into global data collection.
-	*  To be used for debugging purposes.
-	*
-	*  @type	function
-	*  @date	13/8/2015
-	*  @since	0.1.1
-	*
-	*  @param	$key (string)
-	*  @param 	$data (N/A)
-	*  @return	$data (json)
-	*/
-	public function set_debugger_data( $key, $data ) {
-		if ( empty( $key ) ) {
-			die( 'You did not set a key for your debugging data collection.' );
-		} else {
-			$debug_data_block_name = $this->get_setting( "debug_data_block_name" );
-
-			if ( isset( $this->model ) ) {
-				if ( ! isset( $this->model->data[ $debug_data_block_name ] ) ) {
-					$this->model->data[ $debug_data_block_name ] = [];
-				}
-
-				if ( ! isset( $this->model->data[ $debug_data_block_name ][ $key ] ) ) {
-					$this->model->data[ $debug_data_block_name ][ $key ] = [];
-				}
-
-				$this->model->data[ $debug_data_block_name ][ $key ][] = $data;
-			}
-		}
-	}
-
-	/**
 	*  Returns true if we are on login or register page.
 	*
 	*  @type	function
