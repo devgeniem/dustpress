@@ -101,7 +101,6 @@ class Model {
 
         // Create a place to store the wanted data in the global data structure.
         if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
-        if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
 
         // Fetch all methods from given class and in its parents.
         $methods = $this->get_class_methods( $this->class_name );
@@ -188,45 +187,15 @@ class Model {
                             $this->data[ $class ] = (object)[];
                         }
 
-                        if ( "Content" == $method ) {
-                            if ( ! isset( $this->data[ $class ]->{ $method } ) ) {
-                                if ( $tidy ) {
-                                    $tidy_data->{ $method } = (object)[];
-                                }
-                                else {
-                                    $this->data[ $class ]->{ $method } = (object)[];
-                                }
-                            }
-
-                            $data = $this->run_function( $m[1], $class );
-
-                            if ( ! is_null( $data ) ) {
-                                if ( $tidy ) {
-                                    $tidy_data->{ $method } = $data;
-                                }
-                                else {
-                                    $this->data[ $class ]->{ $method } = $data;
-                                }
-                            }
+                        $data = $this->run_function( $m[1], $class );
+                        if ( $tidy ) {
+                            $tidy_data->{ $m[1] } = $data;
                         }
                         else {
-                            $data = $this->run_function( $m[1], $class );
-                            if ( $tidy ) {
-                                $tidy_data->{ $m[1] } = $data;
-                            }
-                            else {
-                                if ( ! is_null( $data ) ) {
-                                    if ( $this->parent ) {
-                                        $content = (array) $this->data[ $class ];
-                                        $content[ $method ] = $data;
-                                        $this->data[ $class ] = (object) $content;
-                                    }
-                                    else {
-                                        $content = (array) $this->data[ $class ]->Content;
-                                        $content[ $method ] = $data;
-                                        $this->data[ $class ]->Content = (object) $content;
-                                    }
-                                }
+                            if ( ! is_null( $data ) ) {
+                                $content = (array) $this->data[ $class ];
+                                $content[ $method ] = $data;
+                                $this->data[ $class ] = (object) $content;
                             }
                         }
                     }
@@ -238,8 +207,8 @@ class Model {
 
                     $method = str_replace( "bind_", "", $m );
 
-                    if ( ! isset( $this->data[ $class ]->Content->{ $method } ) ) {
-                        $this->data[ $class ]->Content->{ $method } = [];
+                    if ( ! isset( $this->data[ $class ]->{ $method } ) ) {
+                        $this->data[ $class ]->{ $method } = [];
                     }
 
                     $data = $this->run_function( $m, $class );
@@ -249,17 +218,7 @@ class Model {
                             $tidy_data->{ $method } = $data;
                         }
                         else {
-                            if ( "content" == strtolower( $method )  ) {
-                                $this->data[ $class ]->Content = (object) array_merge( (array) $this->data[ $class ]->Content, [ $method => $data ] );
-                            }
-                            else {
-                                if ( $this->parent ) {
-                                    $this->data[ $class ]->{ $method } = $data;
-                                }
-                                else {
-                                    $this->data[ $class ]->Content->{ $method } = $data;
-                                }
-                            }
+                            $this->data[ $class ]->{ $method } = $data;
                         }
                     }
                 }
@@ -278,16 +237,9 @@ class Model {
                         $tidy_data->{ $method } = $data;
                     }
                     else {
-                        if ( $this->parent ) {
-                            $content = (array) $this->data[ $this->class_name ];
-                            $content[ $method ] = $data;
-                            $this->data[ $this->class_name ] = (object) $content;
-                        }
-                        else {
-                            $content = (array) $this->data[ $this->class_name ]->Content;
-                            $content[ $method ] = $data;
-                            $this->data[ $this->class_name ]->Content = (object) $content;
-                        }
+                        $content = (array) $this->data[ $this->class_name ];
+                        $content[ $method ] = $data;
+                        $this->data[ $this->class_name ] = (object) $content;
                     }
                 }
             }
