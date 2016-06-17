@@ -962,7 +962,7 @@ final class DustPress {
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
-		$templatepaths = $this->get_template_paths();
+		$templatepaths = $this->get_template_paths("partials");
 
 		foreach ( $templatepaths as $templatepath ) {
 			if ( is_readable( $templatepath ) ) {
@@ -1112,7 +1112,9 @@ final class DustPress {
 					}
 				}
 				else {
-					die("DustPress error: Your theme does not have required directory ". $path);
+					if ( dirname( __FILE__ ) ."/models" !== $path ) {
+						die("DustPress error: Your theme does not have required directory ". $path);
+					}
 				}
 			}
 		});
@@ -1125,13 +1127,13 @@ final class DustPress {
 	private function get_template_paths( $append ) {
 		$templatepaths = $this->paths;
 
-		if ( $append ) {
-			array_walk( $templatepaths, function( $path ) {
+		if ( isset( $append ) ) {
+			array_walk( $templatepaths, function( $path ) use ( $append ) {
 				$path .= "/" . $append;
 			});
 		}
 
-		$templatepaths[] = dirname( __FILE__ ) . $append;
+		$templatepaths[] = dirname( __FILE__ ) ."/". $append;
 
 		return apply_filters( "dustpress" . $append ? "/" . $append : "", $templatepaths );
 	}
