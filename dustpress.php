@@ -32,6 +32,9 @@ final class DustPress {
 	// Is DustPress disabled?
 	public $disabled;
 
+	// Paths for locating files
+	private $paths;
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
@@ -57,8 +60,19 @@ final class DustPress {
 		// Create a DustPHP instance
 		$this->dust = new Dust\Dust();
 
+		// Set paths for where to look for partials and models
+		$this->paths = [
+			get_stylesheet_directory(),
+			get_template_directory()
+		];
+
+		$this->paths = array_unique( $this->paths );
+
 		// Set initial parameters
-		$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
+		foreach( $this->paths as $path ) {
+			$this->dust->includedDirectories[] = $path . '/partials/';
+		}
+
 		$this->dust->includedDirectories[] = dirname( __FILE__ ) . '/partials/';
 
 		// Find and include Dust helpers from DustPress plugin
@@ -587,12 +601,7 @@ final class DustPress {
 		else {
 			$templatefile =  $partial . '.dust';
 
-			$templatepaths = [
-				dirname( __FILE__ ) . '/partials/',
-				get_template_directory() . '/partials/'
-			];
-
-			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+			$templatepaths = $this->get_template_paths("partials");
 
 			foreach ( $templatepaths as $templatepath ) {
 				if ( is_readable( $templatepath ) ) {
@@ -953,9 +962,7 @@ final class DustPress {
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
-		$templatepaths = array( get_template_directory() . '/partials/' );
-
-		$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+		$templatepaths = $this->get_template_paths();
 
 		foreach ( $templatepaths as $templatepath ) {
 			if ( is_readable( $templatepath ) ) {
@@ -1075,10 +1082,9 @@ final class DustPress {
 
 		// Autoload DustPress classes
 		spl_autoload_register( function( $class ) {
-			$paths = [
-				dirname( __FILE__ ) . '/classes/',
-				get_template_directory() . '/models',
-			];
+			$paths = $this->get_template_paths("models");
+
+			$paths[] = dirname( __FILE__ ) . "/classes";
 
 			if ( $class == "DustPress\Query" ) {
 				$class = "query";
@@ -1110,6 +1116,24 @@ final class DustPress {
 				}
 			}
 		});
+	}
+
+	/**
+	 * This functions returns the paths for 
+	 * @return array   list of paths to look for 
+	 */
+	private function get_template_paths( $append ) {
+		$templatepaths = $this->paths;
+
+		if ( $append ) {
+			array_walk( $templatepaths, function( $path ) {
+				$path .= "/" . $append;
+			});
+		}
+
+		$templatepaths[] = dirname( __FILE__ ) . $append;
+
+		return apply_filters( "dustpress" . $append ? "/" . $append : "", $templatepaths );
 	}
 }
 
