@@ -155,32 +155,33 @@ class Pagination extends Helper {
     }
 
     public function build_page_link() {
-        $query_string   = $_SERVER['QUERY_STRING'];
+        $query_string   = filter_input( INPUT_SERVER, 'QUERY_STRING' );
         $page_link      = '?';
-        // user passed get parameters
+        // User passed get parameters
         if ( $query_string ) {
-            // a page queried
+            // A page queried
             if ( strpos( $query_string, $this->page_label ) !== false ) {
                 $idx = 1;
                 foreach ( $_GET as $key => $value ) {
                     if ( $key != $this->page_label ) {
-                        if ( $idx == 1 ) {
-                            $page_link .= $key . '=' . $value;
-                        }
-                        else {
-                            $page_link .= '&' . $key . '=' . $value;
+                        if ( is_array( $value ) ) {
+                            foreach ( $value as $v ) {
+                                $page_link .= urlencode( $key ) . '%5B%5D=' . urlencode( $v ) . '&';
+                            }
+                        } else {
+                            $page_link .= urlencode( $key ) . '=' . urlencode( $value ) . '&';
                         }
                     }
                     $idx++;
                 }
-                $page_link .= '&' . $this->page_label . '=';
+                $page_link .= $this->page_label . '=';
             }
-            // no page queried
+            // No page queried
             else {
                 $page_link .= $query_string . '&' . $this->page_label . '=';
             }
         }
-        // no get parameters
+        // No get parameters
         else {
             $page_link .= $this->page_label . '=';
         }
