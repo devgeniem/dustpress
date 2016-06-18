@@ -264,13 +264,13 @@ Example:
 
 - `per_page`: The number of items a single page should have.
 - `items`: The amount of items in your data set. For example this could be the post count.
-- `page_label`: The query parameter for the pagination links. The default is `paged`.
+- `page_var`: The query parameter for the pagination links. The default is `paged`.
 - `hash`: The hash link to be added at the end of the pagination links.
 
 Example:
 
 ```
-{@pagination per_page=10 items=item_count page_label="paged" hash="posts-section-id" }
+{@pagination per_page=10 items=item_count page_var="paged" hash="posts-section-id" }
 ```
 ### permalink
 
