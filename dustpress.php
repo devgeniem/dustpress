@@ -1128,14 +1128,20 @@ final class DustPress {
 		$templatepaths = $this->paths;
 
 		if ( isset( $append ) ) {
-			array_walk( $templatepaths, function( $path ) use ( $append ) {
+			array_walk( $templatepaths, function( &$path ) use ( $append ) {
 				$path .= "/" . $append;
 			});
 		}
 
 		$templatepaths[] = dirname( __FILE__ ) ."/". $append;
 
-		return apply_filters( "dustpress" . $append ? "/" . $append : "", $templatepaths );
+		$tag = $append ? "dustpress/" . $append : false;
+
+		if ( $tag ) {
+			$return = apply_filters( $tag, $templatepaths );
+		}
+
+		return array_reverse( $return );
 	}
 }
 
