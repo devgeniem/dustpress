@@ -12,7 +12,7 @@ class Pagination extends Helper {
 
     private $data;
     private $output;
-    private $page_label;
+    private $page_var;
 
     public function output() {
 
@@ -29,7 +29,7 @@ class Pagination extends Helper {
         $per_page           = (int) $params->per_page;
         $items              = (int) $params->items;
         $hash               = $params->hash         ? '#' . $params->hash   : '';
-        $this->page_label   = $params->page_label   ? $params->page_label   : 'paged';
+        $this->page_var     = $params->page_var     ? $params->page_var     : 'paged';
 
         // More items than the set per_page
         if ( ( $items - $per_page ) > 0 ) {
@@ -135,7 +135,7 @@ class Pagination extends Helper {
         $data->next_page            = $next_page;
         $data->prev_page            = $prev_page;
         $data->hash                 = $hash;
-        $data->page_label           = $this->page_label;
+        $data->page_var           = $this->page_var;
         $data->page_link            = apply_filters( 'dustpress/pagination/page_link', $page_link );
 
         $data->S                    = (object)[];
@@ -155,34 +155,35 @@ class Pagination extends Helper {
     }
 
     public function build_page_link() {
-        $query_string   = $_SERVER['QUERY_STRING'];
+        $query_string   = filter_input( INPUT_SERVER, 'QUERY_STRING' );
         $page_link      = '?';
-        // user passed get parameters
+        // User passed get parameters
         if ( $query_string ) {
-            // a page queried
-            if ( strpos( $query_string, $this->page_label ) !== false ) {
+            // A page queried
+            if ( strpos( $query_string, $this->page_var ) !== false ) {
                 $idx = 1;
                 foreach ( $_GET as $key => $value ) {
-                    if ( $key != $this->page_label ) {
-                        if ( $idx == 1 ) {
-                            $page_link .= $key . '=' . $value;
-                        }
-                        else {
-                            $page_link .= '&' . $key . '=' . $value;
+                    if ( $key != $this->page_var ) {
+                        if ( is_array( $value ) ) {
+                            foreach ( $value as $v ) {
+                                $page_link .= urlencode( $key ) . '%5B%5D=' . urlencode( $v ) . '&';
+                            }
+                        } else {
+                            $page_link .= urlencode( $key ) . '=' . urlencode( $value ) . '&';
                         }
                     }
                     $idx++;
                 }
-                $page_link .= '&' . $this->page_label . '=';
+                $page_link .= $this->page_var . '=';
             }
-            // no page queried
+            // No page queried
             else {
-                $page_link .= $query_string . '&' . $this->page_label . '=';
+                $page_link .= $query_string . '&' . $this->page_var . '=';
             }
         }
-        // no get parameters
+        // No get parameters
         else {
-            $page_link .= $this->page_label . '=';
+            $page_link .= $this->page_var . '=';
         }
 
         return $page_link;
