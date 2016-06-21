@@ -443,7 +443,7 @@ class Model {
         }
 
         if ( ! $data ) {
-            if ( $this->last_bound ) {
+            if ( isset( $this->last_bound ) ) {
                 $data = $this->last_bound;
                 $this->last_bound = null;
             }
