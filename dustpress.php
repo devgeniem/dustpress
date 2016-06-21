@@ -1141,7 +1141,7 @@ final class DustPress {
 			$return = apply_filters( $tag, $templatepaths );
 		}
 
-		return array_reverse( $return );
+		return $return;
 	}
 }
 
