@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 0.4.0.4
+Version: 0.4.0.5
 */
 
 final class DustPress {
@@ -1084,16 +1084,16 @@ final class DustPress {
 		spl_autoload_register( function( $class ) {
 			$paths = $this->get_template_paths("models");
 
-			$paths[] = dirname( __FILE__ ) . "/classes";
+			$paths[] = dirname( __FILE__ );
 
 			if ( $class == "DustPress\Query" ) {
-				$class = "query";
+				$class = "classes/query";
 			}
 			elseif ( $class == "DustPress\Model" ) {
-				$class = "model";
+				$class = "classes/model";
 			}
 			elseif ( $class == "DustPress\Helper" ) {
-				$class = "helper";
+				$class = "classes/helper";
 			}
 			else {
 				$class = $this->camelcase_to_dashed( $class, "-" );
