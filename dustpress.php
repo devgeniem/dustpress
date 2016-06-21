@@ -1107,6 +1107,7 @@ final class DustPress {
 						if ( strpos( $file, $filename ) ) {
 							if ( is_readable( $file ) ) {
 								require_once( $file );
+								return;
 							}
 						}
 					}
