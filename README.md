@@ -231,6 +231,18 @@ This template includes header.dust, sidebar.dust and footer.dust templates from 
 
 Helpers extend the Dust.js templating language with more complex functionality than just data inserting (see: [Context Helpers](http://www.dustjs.com/guides/context-helpers/), [Dust Helpers](http://www.dustjs.com/guides/dust-helpers/)). With DustPress you can use all Dust.js Helpers within your Dust templates. We have also taken it a bit further and included some nice bits for you to use. As mentioned above there are helpers for echoing header and footer data into your templates but here is a complete list of helpers included with DustPress:
 
+### contains
+
+`contains` is a conditional helper. It can be used to determine if an array contains wanted item, so it works like PHP's `in_array`. It can also have an else condition.
+
+Example:
+```
+{@contains key=haystack value="needle"}
+  Found it! :)
+{:else}
+  Didn't find it. :(
+{/contains}
+
 ### content
 
 `content` helper has two functions. If it is run without parameters, it emulates the use of WordPress' native `the_content()` function and displays the current post's content.

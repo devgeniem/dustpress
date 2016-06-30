@@ -160,10 +160,6 @@ class Menu extends Helper {
             }
         }
 
-        if ( is_tax() ) {
-            $term_id = \get_queried_object()->term_id;
-        }
-
         if ( count( $menu_items ) > 0 ) {
             foreach ( $menu_items as $item ) {  
                 if ( $item->menu_item_parent == $parent_id ) {
@@ -219,6 +215,13 @@ class Menu extends Helper {
      * @return boolean
      */
     private static function is_current( $item, $override ) {
+        if ( is_tax() ) {
+            $term_id = \get_queried_object()->term_id;
+        }
+        else {
+            $term_id = null;
+        }
+
         $return = (    \get_the_ID() == $item->object_id
                 &&  'post_type' == $item->type )
                 ||  ( $item->object_id == $term_id && 'taxonomy' == $item->type )
