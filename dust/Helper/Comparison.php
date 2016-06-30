@@ -28,6 +28,11 @@ class Comparison
         {
             $chunk->setError('Must be in select or have key parameter');
         }
+
+        if ( $bodies->block === null ) {
+            $bodies->block = new \Dust\Ast\Body(0);
+        }
+
         //check
         if($this->isValid($key, $value))
         {

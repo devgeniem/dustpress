@@ -33,30 +33,32 @@ class Evaluator
         {
             $ctx->currentFilePath = $body->filePath;
         }
-        foreach($body->parts as $part)
-        {
-            if($part instanceof Ast\Comment)
+        if ( is_array( $body->parts ) ) {
+            foreach($body->parts as $part)
             {
-            }
-            elseif($part instanceof Ast\Section)
-            {
-                $chunk = $this->evaluateSection($part, $ctx, $chunk);
-            }
-            elseif($part instanceof Ast\Partial)
-            {
-                $chunk = $this->evaluatePartial($part, $ctx, $chunk);
-            }
-            elseif($part instanceof Ast\Special)
-            {
-                $chunk = $this->evaluateSpecial($part, $ctx, $chunk);
-            }
-            elseif($part instanceof Ast\Reference)
-            {
-                $chunk = $this->evaluateReference($part, $ctx, $chunk);
-            }
-            elseif($part instanceof Ast\Buffer)
-            {
-                $chunk = $this->evaluateBuffer($part, $ctx, $chunk);
+                if($part instanceof Ast\Comment)
+                {
+                }
+                elseif($part instanceof Ast\Section)
+                {
+                    $chunk = $this->evaluateSection($part, $ctx, $chunk);
+                }
+                elseif($part instanceof Ast\Partial)
+                {
+                    $chunk = $this->evaluatePartial($part, $ctx, $chunk);
+                }
+                elseif($part instanceof Ast\Special)
+                {
+                    $chunk = $this->evaluateSpecial($part, $ctx, $chunk);
+                }
+                elseif($part instanceof Ast\Reference)
+                {
+                    $chunk = $this->evaluateReference($part, $ctx, $chunk);
+                }
+                elseif($part instanceof Ast\Buffer)
+                {
+                    $chunk = $this->evaluateBuffer($part, $ctx, $chunk);
+                }
             }
         }
 
