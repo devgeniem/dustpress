@@ -139,15 +139,6 @@ namespace Dust
                 $path .= self::FILE_EXTENSION;
             }
 
-            if($basePath != NULL)
-            {
-                $possible = realpath($basePath . '/' . $path);
-                if($possible !== false)
-                {
-                    return $possible;
-                }
-            }
-
             //try the current path
             $possible = realpath($path);
 

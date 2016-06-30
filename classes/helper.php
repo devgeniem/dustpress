@@ -14,7 +14,7 @@ class Helper {
 		$this->bodies = $bodies;
 		$this->params = $params;
 
-		if ( $this->bodies->dummy !== true ) {
+		if ( ! isset( $this->bodies->dummy ) ) {
 			if ( method_exists( $this, "init" ) ) {
 				return $this->init();
 			}

@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 0.4.0.4
+Version: 1.0.0
 */
 
 final class DustPress {
@@ -31,6 +31,9 @@ final class DustPress {
 
 	// Is DustPress disabled?
 	public $disabled;
+
+	// Paths for locating files
+	private $paths;
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -57,8 +60,19 @@ final class DustPress {
 		// Create a DustPHP instance
 		$this->dust = new Dust\Dust();
 
+		// Set paths for where to look for partials and models
+		$this->paths = [
+			get_stylesheet_directory(),
+			get_template_directory()
+		];
+
+		$this->paths = array_unique( $this->paths );
+
 		// Set initial parameters
-		$this->dust->includedDirectories[] = get_template_directory() . '/partials/';
+		foreach( $this->paths as $path ) {
+			$this->dust->includedDirectories[] = $path . '/partials/';
+		}
+
 		$this->dust->includedDirectories[] = dirname( __FILE__ ) . '/partials/';
 
 		// Find and include Dust helpers from DustPress plugin
@@ -587,12 +601,7 @@ final class DustPress {
 		else {
 			$templatefile =  $partial . '.dust';
 
-			$templatepaths = [
-				dirname( __FILE__ ) . '/partials/',
-				get_template_directory() . '/partials/'
-			];
-
-			$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+			$templatepaths = $this->get_template_paths("partials");
 
 			foreach ( $templatepaths as $templatepath ) {
 				if ( is_readable( $templatepath ) ) {
@@ -953,9 +962,7 @@ final class DustPress {
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
-		$templatepaths = array( get_template_directory() . '/partials/' );
-
-		$templatepaths = array_reverse( apply_filters( 'dustpress/partials', $templatepaths ) );
+		$templatepaths = $this->get_template_paths("partials");
 
 		foreach ( $templatepaths as $templatepath ) {
 			if ( is_readable( $templatepath ) ) {
@@ -1075,19 +1082,18 @@ final class DustPress {
 
 		// Autoload DustPress classes
 		spl_autoload_register( function( $class ) {
-			$paths = [
-				dirname( __FILE__ ) . '/classes/',
-				get_template_directory() . '/models',
-			];
+			$paths = $this->get_template_paths("models");
+
+			$paths[] = dirname( __FILE__ );
 
 			if ( $class == "DustPress\Query" ) {
-				$class = "query";
+				$class = "classes/query";
 			}
 			elseif ( $class == "DustPress\Model" ) {
-				$class = "model";
+				$class = "classes/model";
 			}
 			elseif ( $class == "DustPress\Helper" ) {
-				$class = "helper";
+				$class = "classes/helper";
 			}
 			else {
 				$class = $this->camelcase_to_dashed( $class, "-" );
@@ -1101,15 +1107,42 @@ final class DustPress {
 						if ( strpos( $file, $filename ) ) {
 							if ( is_readable( $file ) ) {
 								require_once( $file );
+								return;
 							}
 						}
 					}
 				}
 				else {
-					die("DustPress error: Your theme does not have required directory ". $path);
+					if ( dirname( __FILE__ ) ."/models" !== $path ) {
+						die("DustPress error: Your theme does not have required directory ". $path);
+					}
 				}
 			}
 		});
+	}
+
+	/**
+	 * This functions returns the paths for 
+	 * @return array   list of paths to look for 
+	 */
+	private function get_template_paths( $append ) {
+		$templatepaths = $this->paths;
+
+		if ( isset( $append ) ) {
+			array_walk( $templatepaths, function( &$path ) use ( $append ) {
+				$path .= "/" . $append;
+			});
+		}
+
+		$templatepaths[] = dirname( __FILE__ ) ."/". $append;
+
+		$tag = $append ? "dustpress/" . $append : false;
+
+		if ( $tag ) {
+			$return = apply_filters( $tag, $templatepaths );
+		}
+
+		return $return;
 	}
 }
 
