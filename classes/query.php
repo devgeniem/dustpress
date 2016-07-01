@@ -107,35 +107,37 @@ class Query {
 				// Let's avoid infinite loops by stopping recursion after one level. You may dig deeper in your view model.
 				$options['recursive'] = apply_filters( 'dustpress/dustpress_helper/infinite_recursion', false );
 
-				foreach ( $acfpost['fields'] as &$field ) {
+				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
+					foreach ( $acfpost['fields'] as &$field ) {
 
-					// No recursion for these post types
-					$ignored_types = [
-						'attachment',
-						'nav_menu_item',
-						'acf-field-group',
-						'acf-field',
-					];
-					$ignored_types = apply_filters( 'dustpress/dustpress_helper/ignore_on_recursion', $ignored_types );
+						// No recursion for these post types
+						$ignored_types = [
+							'attachment',
+							'nav_menu_item',
+							'acf-field-group',
+							'acf-field',
+						];
+						$ignored_types = apply_filters( 'dustpress/dustpress_helper/ignore_on_recursion', $ignored_types );
 
-					// A direct relation field
-					if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
-						$field = self::get_acf_post( $field->ID, $options );
-					}
+						// A direct relation field
+						if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+							$field = self::get_acf_post( $field->ID, $options );
+						}
 
-					// A repeater field has relational posts
-					if ( is_array( $field ) && is_array( $field[0] ) ) {
+						// A repeater field has relational posts
+						if ( is_array( $field ) && is_array( $field[0] ) ) {
 
-						// Follows the nested structure of a repeater
-						foreach ( $field as $idx => &$repeater ) {
-							if ( is_array( $repeater ) ) {
-								foreach ( $repeater as &$row ) {
+							// Follows the nested structure of a repeater
+							foreach ( $field as $idx => &$repeater ) {
+								if ( is_array( $repeater ) ) {
+									foreach ( $repeater as &$row ) {
 
-									// Post in a repeater
-									if ( is_object( $row ) && isset( $row->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
-										$row = self::get_acf_post( $row->ID, $options );
+										// Post in a repeater
+										if ( is_object( $row ) && isset( $row->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+											$row = self::get_acf_post( $row->ID, $options );
+										}
+
 									}
-
 								}
 							}
 						}
@@ -143,8 +145,10 @@ class Query {
 				}
 			}
 			elseif ( isset( $wholeFields ) ) {
-				foreach( $acfpost['fields'] as $name => &$field ) {
-					$field = get_field_object($name, $id, true);
+				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
+					foreach( $acfpost['fields'] as $name => &$field ) {
+						$field = get_field_object($name, $id, true);
+					}
 				}
 			}
 			self::get_post_meta( $acfpost, $id, $meta_keys, $meta_type, $single );
@@ -182,9 +186,10 @@ class Query {
 		self::$query = new WP_Query( $options );
 
 		// Get the permalink of the post
-		if ( is_array( self::$query->posts ) )
-		foreach ( self::$query->posts as &$p ) {
-			$p->permalink = get_permalink( $p->ID );
+		if ( is_array( self::$query->posts ) && count( self::$query->posts ) > 0 ) {
+			foreach ( self::$query->posts as &$p ) {
+				$p->permalink = get_permalink( $p->ID );
+			}
 		}
 
 		// Get meta for posts
