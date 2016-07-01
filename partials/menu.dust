@@ -1,5 +1,6 @@
-<ul{?ul_classes} class="{ul_classes}"{/ul_classes}{?ul_id} id="{ul_id}"{/ul_id}>
+<ul class="menu-depth-1{?ul_classes} {ul_classes}{/ul_classes}"{?ul_id} id="{ul_id}"{/ul_id}>
 	{#items}
-		{>menuitem /}
+		{@set key="depth_now" value=1 /}
+		{>"{menuitem_partial}" /}
 	{/items}
 </ul>
