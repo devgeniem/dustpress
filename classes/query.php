@@ -125,7 +125,7 @@ class Query {
 						}
 
 						// A repeater field has relational posts
-						if ( is_array( $field ) && is_array( $field[0] ) ) {
+						if ( is_array( $field ) && count( $field ) > 0 && is_array( $field[0] ) ) {
 
 							// Follows the nested structure of a repeater
 							foreach ( $field as $idx => &$repeater ) {
