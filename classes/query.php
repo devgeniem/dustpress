@@ -142,7 +142,7 @@ class Query {
 					}
 				}
 			}
-			elseif ( $wholeFields ) {
+			elseif ( isset( $wholeFields ) ) {
 				foreach( $acfpost['fields'] as $name => &$field ) {
 					$field = get_field_object($name, $id, true);
 				}
