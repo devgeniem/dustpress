@@ -32,6 +32,12 @@ class Menu extends Helper {
             $parent = 0;
         }
 
+        if ( isset( $this->params->depth ) ) {
+            $depth = $this->params->depth;
+        } else {
+            $depth = PHP_INT_MAX;
+        }
+
         if ( isset( $this->params->override ) ) {
             $override = $this->params->override;
         } else {
