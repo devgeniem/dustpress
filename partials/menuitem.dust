@@ -2,10 +2,18 @@
 <a href="{url}">{title|s}</a>
 
 {?show_submenu}
-	{?sub_menu}<ul class="sub-menu">{/sub_menu}
-	{#sub_menu}
-		{>menuitem /}
-	{/sub_menu}
-	{?sub_menu}</ul>{/sub_menu}
+	{@eq key=depth value=depth_now}
+	{:else}
+		{?sub_menu}
+			{@set key="depth_now" add=1 /}
+			<ul class="sub-menu menu-depth-{depth_now}">
+		{/sub_menu}
+		{#sub_menu}
+			{>"{menuitem_partial}" /}
+		{/sub_menu}
+		{?sub_menu}
+			</ul>
+		{/sub_menu}
+	{/eq}
 {/show_submenu}
 </li>

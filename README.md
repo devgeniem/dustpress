@@ -105,10 +105,7 @@ DustPress data object holds a variety of other objects that are user defined mod
 ```
 object(stdClass)#1 (5) {
   ["PageFrontpage"]=>
-    array(1) {
-      ["Content"]=>
-      object(stdClass)#2 (0) {
-    }
+  object(stdClass)#2 (0) {
   }
   ["Header"]=>
   object(stdClass)#2 (0) {
@@ -121,8 +118,6 @@ object(stdClass)#1 (5) {
   }
 }
 ```
-
-Note that the `Content` block is included by default inside the data block of all models. This is for template scoping purposes.
 
 #### Submodels
 
@@ -145,7 +140,7 @@ class PageFrontpage extends \DustPress\Model {
 ?>
 ```
 
-This code fetches all three models and binds their data to the global data hierarchy under the corresponding object. Notice that we have created a public function `init` which is automatically run by DustPress and therefore the submodels will be included. No `init` block will be created under the `Content` object since we do not return anything in our function.
+This code fetches all three models and binds their data to the global data hierarchy under the corresponding object. Notice that we have created a public function `init` which is automatically run by DustPress and therefore the submodels will be included. No `init` block will be created in the data tree since we do not return anything in our function.
 
 Submodel bindings can be run anywhere in the model for example inside an `if` statement. Submodels work recursively, hence submodels can bind more submodels.
 
@@ -153,7 +148,7 @@ Submodel bindings can be run anywhere in the model for example inside an `if` st
 
 #### Binding the data
 
-The actual passing of the data to inside the methods happens via user defined functions. DustPress runs through all public methods in the model and puts their return data to the global data object under current model's branch of the tree. It goes under `Content` object and in a container named after the method.
+The actual passing of the data to inside the methods happens via user defined functions. DustPress runs through all public methods in the model and puts their return data to the global data object under current model's branch of the tree. It goes in a object named after the method.
 
 ```
 public function SomeData() {
@@ -167,11 +162,9 @@ If this code is located in our PageFrontpage class, the result in the data objec
 object(stdClass)#1 (5) {
   ["PageFrontpage"]=>
     array(1) {
-      ["Content"]=>
-      object(stdClass)#3 (1) {
-        ["SomeData"]=>
-        string(13) "This is data."
-      }
+      ["SomeData"]=>
+      string(13) "This is data."
+    }
   }
   ["Header"]=>
   object(stdClass)#2 (0) {
@@ -210,14 +203,12 @@ All templates should have a context block with the name of the current model, so
 {">shared/header" /}
 
 {#PageFrontpage}
-  {#Content}
-    <h1>{WP.name}</h1>
-    <h2>{WP.description}</h2>
+  <h1>{WP.name}</h1>
+  <h2>{WP.description}</h2>
 
-    <p>{SomeString}</p>
+  <p>{SomeString}</p>
 
-    {SomeHTML|s}
-  {/Content}
+  {SomeHTML|s}
 
   {">shared/sidebar" /}
 {/PageFrontpage}
@@ -225,7 +216,7 @@ All templates should have a context block with the name of the current model, so
 {">shared/footer" /}
 ```
 
-This template includes header.dust, sidebar.dust and footer.dust templates from `partials/shared/` subdirectory. At the end of the `Content` block we echo HTML from the `SomeHTML` variable and use the `s` filter to get it _unescaped_.  Note that the `PageFrontpage` data is accessible inside the `Content` scope. See the [Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial#Sections_and_Context) for more information about sections and contexts.
+This template includes header.dust, sidebar.dust and footer.dust templates from `partials/shared/` subdirectory. At the end of the `PageFrontpage` block we echo HTML from the `SomeHTML` variable and use the `s` filter to get it _unescaped_.  See the [Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial#Sections_and_Context) for more information about sections and contexts.
 
 ## DustPress Helpers
 
@@ -259,11 +250,14 @@ Example:
 `menu` helper does what it name suggests: it creates a menu. It has several parameters that are explained below:
 
 - `menu_id` / `menu_name`: Defines the menu to show. Either is mandatory.
+- `depth`: Only show submenus to the level this parameter defines. Defaults to infinite (or PHP_INT_MAX, really).
 - `parent`: If parent parameter is defined, the menu features only the subpages of a post with the parameter's value as its ID. Defaults to 0 - all items will be shown.
 - `override`: With this parameter you can override what menu item (post ID) will be shown as active (WordPress' default current-menu-item class). Defaults to current post's ID.
-- `ul_classes` Classes that are given to the `ul` element separated with spaces. Per default this is empty.
-- `ul_id` ID that is given to the `ul` element. Per default this is empty.
-- `show_submenu` A boolean value if submenus are shown or not. Defaults to true.
+- `ul_classes`: Classes that are given to the `ul` element separated with spaces. Per default this is empty.
+- `ul_id`: ID that is given to the `ul` element. Per default this is empty.
+- `show_submenu`: A boolean value if submenus are shown or not. Defaults to true.
+- `menu_partial`: Use another partial instead of the default `menu.dust`. You can use a custom partial by creating your own `menu.dust` inside your theme, and DustPress will use that instead of the one from its core.
+- `menuitem_partial`: Use another partial instead of the default `menuitem.dust`. You can use a custom partial by creating your own `menuitem.dust` inside your theme, and DustPress will use that instead of the one from its core.
 
 Example:
 ```
@@ -316,6 +310,32 @@ The participants are {#names}{@last}and {/last}{.}{@sep start=0 end=2}, {/sep}{/
 The result could be:
 ```
 The participants are Bob, Samantha, Michael and Alice.
+```
+
+### set and unset
+
+`set` helper can be used to set and alter the data tree in the Dust template. You can create your own variables and assign them values either hardcoded or from the data. You can also perform several mathematic operations on them.
+
+Parameters
+- `key`: This parameter is required. It is the name of the variable you want to create or alter.
+- `value`: If you want to create a new variable or overwrite a value of another one, give the value you want to give it here.
+- `add`: Used to perform mathematical _add_ operation to the value of the variable.
+- `subtract`: Used to perform mathematical _subtract_ operation to the value of the variable.
+- `multiply`: Used to perform mathematical _multiply_ operation to the value of the variable.
+- `divide`: Used to perform mathematical _divide_ operation to the value of the variable.
+- `mod`: Used to perform mathematical _modulo_ operation to the value of the variable.
+
+Examples:
+```
+{@set key="my_variable" value="some_value" /}
+{@set key="another_variable" value=path.to.data /}
+{@set key="saved_index" value=$idx /}
+{@set key="counter" add=1 /}
+```
+
+`unset` is used to unset a variable. Usage:
+```
+{@unset key="my_variable" /}
 ```
 
 ### strtodate

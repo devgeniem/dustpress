@@ -32,6 +32,12 @@ class Menu extends Helper {
             $parent = 0;
         }
 
+        if ( isset( $this->params->depth ) ) {
+            $depth = $this->params->depth;
+        } else {
+            $depth = PHP_INT_MAX;
+        }
+
         if ( isset( $this->params->override ) ) {
             $override = $this->params->override;
         } else {
@@ -56,6 +62,18 @@ class Menu extends Helper {
             $show_submenu = true;
         }
 
+        if ( isset( $this->params->menu_partial ) ) {
+            $menu_partial = $this->params->menu_partial;
+        } else {
+            $menu_partial = "menu";
+        }
+
+        if ( isset( $this->params->menuitem_partial ) ) {
+            $menuitem_partial = $this->params->menuitem_partial;
+        } else {
+            $menuitem_partial = "menuitem";
+        }
+
         $menu = new \stdClass();
 
         if ( $menu_name ) {
@@ -68,10 +86,13 @@ class Menu extends Helper {
         $menu->ul_id = $ul_id;
         $menu->show_submenu = $show_submenu;
 
+        $menu->menuitem_partial = $menuitem_partial;
+        $menu->depth = $depth;
+
         $menu = apply_filters( "dustpress/menu/data", $menu );
 
         $output = dustpress()->render( [
-            'partial' => 'menu',
+            'partial' => $menu_partial,
             'data' => $menu,
             'type' => 'html',
             'echo' => false,
