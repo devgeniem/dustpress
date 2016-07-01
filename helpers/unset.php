@@ -1,7 +1,7 @@
 <?php
 namespace DustPress;
 
-class Unset extends Helper {
+class Unset_Helper extends Helper {
     public function init() {
         // Let's find the root of the data tree to store our variable there
         $root = $this->find_root( $this->context );
@@ -39,4 +39,4 @@ class Unset extends Helper {
     }
 }
 
-$this->add_helper( 'unset', new Unset() );
+$this->add_helper( 'unset', new Unset_Helper() );
