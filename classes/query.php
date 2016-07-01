@@ -102,7 +102,7 @@ class Query {
 			$acfpost['fields'] = get_fields( $id );
 
 			// Get fields with relational post data as a whole acf object
-			if ( $recursive ) {
+			if ( isset( $recursive ) ) {
 
 				// Let's avoid infinite loops by stopping recursion after one level. You may dig deeper in your view model.
 				$options['recursive'] = apply_filters( 'dustpress/dustpress_helper/infinite_recursion', false );
