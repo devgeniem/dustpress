@@ -84,12 +84,13 @@ class Query {
 	public static function get_acf_post( $id, $args = array() ) {
 
 		$defaults = [
-			'meta_keys' 	=> null,
-			'single' 		=> false,
-			'meta_type' 	=> 'post',
-			'whole_fields' 	=> false,
-			'recursive' 	=> false,
-			'output' 		=> 'OBJECT'
+			'meta_keys' 				=> null,
+			'single' 					=> false,
+			'meta_type' 				=> 'post',
+			'whole_fields' 				=> false,
+			'max_recursion_level' 		=> 0,
+			'current_recursion_level'	=> 0,
+			'output' 					=> 'OBJECT'
 		];
 
 		$options = array_merge( $defaults, $args );
@@ -102,10 +103,10 @@ class Query {
 			$acfpost['fields'] = get_fields( $id );
 
 			// Get fields with relational post data as a whole acf object
-			if ( isset( $recursive ) ) {
+			if ( $current_recursion_level < $max_recursion_level ) {
 
-				// Let's avoid infinite loops by stopping recursion after one level. You may dig deeper in your view model.
-				$options['recursive'] = apply_filters( 'dustpress/dustpress_helper/infinite_recursion', false );
+				// Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
+				$options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
 
 				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
 					foreach ( $acfpost['fields'] as &$field ) {
@@ -117,7 +118,8 @@ class Query {
 							'acf-field-group',
 							'acf-field',
 						];
-						$ignored_types = apply_filters( 'dustpress/dustpress_helper/ignore_on_recursion', $ignored_types );
+						
+						$ignored_types = apply_filters( 'dustpress/query/ignore_on_recursion', $ignored_types );
 
 						// A direct relation field
 						if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
@@ -133,7 +135,7 @@ class Query {
 									foreach ( $repeater as &$row ) {
 
 										// Post in a repeater
-										if ( is_object( $row ) && isset( $row->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+										if ( is_object( $row ) && isset( $row->post_type ) && is_object( $field ) && isset( $field->post_type ) && is_array( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
 											$row = self::get_acf_post( $row->ID, $options );
 										}
 
@@ -144,7 +146,7 @@ class Query {
 					}
 				}
 			}
-			elseif ( isset( $wholeFields ) ) {
+			elseif ( true == $whole_fields ) {
 				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
 					foreach( $acfpost['fields'] as $name => &$field ) {
 						$field = get_field_object($name, $id, true);
