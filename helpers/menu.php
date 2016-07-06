@@ -174,7 +174,7 @@ class Menu extends Helper {
 
         if ( count( $menu_items ) > 0 ) {
             foreach ( $menu_items as $item ) {
-                if ( $item->object_id === $parent && $item->object === $type ) {
+                if ( $item->object_id == $parent && $item->object == $type ) {
                     $parent_id = $item->ID;
                     break;
                 }
