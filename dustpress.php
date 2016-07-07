@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.0.8
+Version: 1.0.9
 */
 
 final class DustPress {
@@ -110,8 +110,15 @@ final class DustPress {
 	public function create_instance() {
 		global $post;
 
+		if ( is_object( $post ) && isset( $post->ID ) ) {
+			$post_id = $post->ID;
+		}
+		else {
+			$post_id = null;
+		}
+
 		// Filter for wanted post ID
-		$new_post = apply_filters( "dustpress/router", $post->ID );
+		$new_post = apply_filters( "dustpress/router", $post_id );
 
 		// If developer wanted a post ID, make it happen
 		if ( ! is_null( $new_post ) ) {
@@ -163,21 +170,26 @@ final class DustPress {
 	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
-		$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
+		if ( is_object( $post ) && isset( $post->ID ) ) {
+			$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
+			
+			if ( $page_template ) {
+				$array = explode( "/", $page_template );
 
-		if ( $page_template ) {
-			$array = explode( "/", $page_template );
+				$template = array_pop( $array );
 
-			$template = array_pop( $array );
+				// strip out .php
+				$template = str_replace( ".php", "", $template );
 
-			// strip out .php
-			$template = str_replace( ".php", "", $template );
+				// strip out page-, single-
+				$template = str_replace( "page-", "", $template );
+				$template = str_replace( "single-", "", $template );
 
-			// strip out page-, single-
-			$template = str_replace( "page-", "", $template );
-			$template = str_replace( "single-", "", $template );
-
-			if ( $template == "default" ) $template = "page";
+				if ( $template == "default" ) $template = "page";
+			}
+			else {
+				$template = "default";
+			}
 		}
 		else {
 			$template = "default";

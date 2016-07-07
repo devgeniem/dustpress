@@ -133,7 +133,12 @@ class Menu extends Helper {
             }
         }
 
-        $menu_items = \wp_get_nav_menu_items( $menu_object );
+        if ( isset( $menu_object) ) {
+            $menu_items = \wp_get_nav_menu_items( $menu_object );
+        }
+        else {
+            return null;
+        }
 
         if ( $menu_items ) {
 
