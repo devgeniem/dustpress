@@ -233,6 +233,7 @@ Example:
 {:else}
   Didn't find it. :(
 {/contains}
+```
 
 ### content
 

@@ -135,7 +135,7 @@ class Query {
 									foreach ( $repeater as &$row ) {
 
 										// Post in a repeater
-										if ( is_object( $row ) && isset( $row->post_type ) && is_object( $field ) && isset( $field->post_type ) && is_array( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+										if ( is_object( $row ) && isset( $row->post_type ) && isset( $row->post_type ) && ! in_array( $row->post_type, $ignored_types ) ) {
 											$row = self::get_acf_post( $row->ID, $options );
 										}
 
