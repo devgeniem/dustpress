@@ -157,6 +157,9 @@ class Model {
                             $class_methods[ $index ] = array( $class, $method_item );
                         }
                     }
+                    else {
+                        unset( $class_methods[ $index ] );
+                    }
                 }
             }
         }
@@ -188,6 +191,7 @@ class Model {
                         }
 
                         $data = $this->run_function( $m[1], $class );
+
                         if ( $tidy ) {
                             $tidy_data->{ $m[1] } = $data;
                         }
@@ -336,29 +340,50 @@ class Model {
     }
 
     /**
-    * This function returns the function where current function was called.
+    *   bind_data
     *
-    * @type   function
-    * @date   20/3/2015
-    * @since  0.0.1
+    *   This function binds the data from the models to the global data structure.
+    *   It could take a key to bind the data in, but by default it creates the key from
+    *   the function name.
     *
-    * @param  N/A
-    * @return $function (string)
+    *   @type   function
+    *   @date   17/3/2015
+    *   @since  0.0.1
+    *
+    *   @param  $data (N/A)
+    *   @param  $key (string)
+    *   @param   $model (string)
+    *   @return true/false (boolean)
     */
-    public function get_previous_function() {
-        $backtrace = debug_backtrace();
-
-        if ( isset( $backtrace[2] ) ) {
-            $function = $backtrace[2]["function"];
-
-            // strip out extra or get to get the block
-            $function = str_replace ( "bind_", "bind", $function );
-            $function = str_replace ( "bind", "", $function );
-            return $function;
+    public function bind_data( $data, $key = null, $model = null ) {
+        $this->class_name = get_class( $this );
+        if ( ! $key ) {
+            die("DustPress error: You need to specify the key if you use bind_data(). Use return if you want to use the function name.");
+        }
+        if ( $model ) {
+            // Create a place to store the wanted data in the global data structure.
+            if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \StdClass();
+            if ( ! $this->parent && ! isset( $this->data[ $model ]->Content ) ) $this->data[ $model ]->Content = new \StdClass();
+            if ( !isset( $this->data[ $model ] ) ) {
+                $this->data[ $model ] = (object)[];
+            }
+            $this->data[ $model ]->{ $key } = $data;
         }
         else {
-            return false;
+            // Create a place to store the wanted data in the global data structure.
+            if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
+            if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
+            if ( ! $this->parent ) {
+                if ( is_array( $data ) ) {
+                    $this->data[ $this->class_name ]->{ $key } = (object) array_merge( (array) $this->data[$this->class_name], $data );
+                }
+            }
+            else {
+                $this->data[ $this->class_name ]->{ $key } = $data;
+            }
         }
+        // Store data for cacheing purposes.
+        $this->last_bound = $data;
     }
 
     /**

@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.0.10
+Version: 1.1.0
 */
 
 final class DustPress {
@@ -1111,7 +1111,7 @@ final class DustPress {
 			foreach ( $paths as $path ) {
 				if ( is_readable( $path ) ) {
 					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
-						if ( strpos( $file, $filename ) ) {
+						if ( strpos( $file, "/" . $filename ) ) {
 							if ( is_readable( $file ) ) {
 								require_once( $file );
 								return;

@@ -15,8 +15,10 @@ A WordPress theme framework for writing template files with Dust.js templating e
 
 ## Installation
 
+We recommend that you install DustPress with Composer, but it is also possible to do it manually.
+
 ### Composer
-Install with composer by running:
+Install with composer:
 
 ```
 $ composer require devgeniem/dustpress
@@ -32,17 +34,17 @@ OR add it into your `composer.json`:
 }
 ```
 
+DustPress supports Composer's autoload feature. If you have it enabled, you don't have to do anything else to use DustPress. If not, you need to require `dustpress.php` in your `functions.php`.
+
 ### Manually
-- Clone DustPress into you WordPress project into a directory which is not publicly accessible.
 
-### Activate dustpress
-1.  Require the DustPress core file `dustpress.php` in your `functions.php` using [require](http://php.net/manual/en/function.require.php) for example.
-2.  Initialize DustPress by running `dustpress()` function right after the require.
-3.  Create directories called `models` and `partials` in your theme directory. They are mandatory when running a DustPress powered theme.
-
-That's it! You are ready to go. DustPress will autoload all the resources needed for you to start developing.
+- Clone this repository somewhere in your project and require the `dustpress.php` file in your `functions.php`.
 
 ## Usage
+
+You need to call `dustpress();` in your `functions.php` to enable DustPress. It must be naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
+
+Within your theme there must be two directories called `models` and `partials` to use DustPress. Their purpose will be explained later in this file.
 
 The basics of using DustPress are very simple. Unlike traditional WordPress theme development, DustPress relies on MVVM, or Model View ViewModel architecture in which fetching data and displaying it to the user are separated into different modules.
 
@@ -165,6 +167,72 @@ object(stdClass)#1 (5) {
       ["SomeData"]=>
       string(13) "This is data."
     }
+  }
+  ["Header"]=>
+  object(stdClass)#2 (0) {
+  }
+  ["Sidebar"]=>
+  object(stdClass)#2 (0) {
+  }
+  ["Footer"]=>
+  object(stdClass)#2 (0) {
+  }
+}
+```
+
+There is also a function called `bind_data` within the model class. If you want to bind multiple data blocks inside one method, you can use it like so:
+
+```
+public function SomeMethod() {
+  $data = "This is another piece of data.";
+
+  $this->bind_data( $data, "SomethingElse" );
+}
+```
+
+The result would be as follows:
+
+```
+object(stdClass)#1 (5) {
+  ["PageFrontpage"]=>
+    array(1) {
+      ["SomethingElse"]=>
+      string(13) "This is another piece of data."
+    }
+  }
+  ["Header"]=>
+  object(stdClass)#2 (0) {
+  }
+  ["Sidebar"]=>
+  object(stdClass)#2 (0) {
+  }
+  ["Footer"]=>
+  object(stdClass)#2 (0) {
+  }
+}
+```
+
+`bind_data` can also take a third parameter to create a new primary data block:
+
+```
+public function SomeMethod() {
+  $data = "This is yet another piece of data.";
+
+  $this->bind_data( $data, "Method", "PrimaryBlock" );
+}
+```
+
+The result would be as follows:
+
+```
+object(stdClass)#1 (5) {
+  ["PageFrontpage"]=>
+  object(stdClass)#2 (0) {
+  }
+  ["PrimaryBlock"] =>
+  array(1) {
+      ["SomethingElse"]=>
+      string(13) "This is yet another piece of data."
   }
   ["Header"]=>
   object(stdClass)#2 (0) {
