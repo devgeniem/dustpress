@@ -340,11 +340,10 @@ class Model {
     }
 
     /**
-    *   bind_data
+    *   bind
     *
     *   This function binds the data from the models to the global data structure.
-    *   It could take a key to bind the data in, but by default it creates the key from
-    *   the function name.
+    *   It takes the data key as second parameter and optional data block name as third.
     *
     *   @type   function
     *   @date   17/3/2015
@@ -352,10 +351,10 @@ class Model {
     *
     *   @param  $data (N/A)
     *   @param  $key (string)
-    *   @param   $model (string)
+    *   @param  $model (string)
     *   @return true/false (boolean)
     */
-    public function bind_data( $data, $key = null, $model = null ) {
+    public function bind( $data, $key = null, $model = null ) {
         $this->class_name = get_class( $this );
         if ( ! $key ) {
             die("DustPress error: You need to specify the key if you use bind_data(). Use return if you want to use the function name.");
@@ -363,8 +362,8 @@ class Model {
         if ( $model ) {
             // Create a place to store the wanted data in the global data structure.
             if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \StdClass();
-            if ( ! $this->parent && ! isset( $this->data[ $model ]->Content ) ) $this->data[ $model ]->Content = new \StdClass();
-            if ( !isset( $this->data[ $model ] ) ) {
+
+            if ( ! isset( $this->data[ $model ] ) ) {
                 $this->data[ $model ] = (object)[];
             }
             $this->data[ $model ]->{ $key } = $data;
@@ -372,10 +371,13 @@ class Model {
         else {
             // Create a place to store the wanted data in the global data structure.
             if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
-            if ( ! $this->parent && ! isset( $this->data[ $this->class_name ]->Content ) ) $this->data[ $this->class_name ]->Content = new \StdClass();
+            
             if ( ! $this->parent ) {
                 if ( is_array( $data ) ) {
-                    $this->data[ $this->class_name ]->{ $key } = (object) array_merge( (array) $this->data[$this->class_name], $data );
+                    $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[$this->class_name], $data );
+                }
+                else {
+                    $this->data[ $this->class_name ]->{ $key } = $data;   
                 }
             }
             else {

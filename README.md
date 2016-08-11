@@ -180,13 +180,13 @@ object(stdClass)#1 (5) {
 }
 ```
 
-There is also a function called `bind_data` within the model class. If you want to bind multiple data blocks inside one method, you can use it like so:
+There is also a function called `bind` within the model class. If you want to bind multiple data blocks inside one method, you can use it like so:
 
 ```
 public function SomeMethod() {
   $data = "This is another piece of data.";
 
-  $this->bind_data( $data, "SomethingElse" );
+  $this->bind( $data, "SomethingElse" );
 }
 ```
 
@@ -212,13 +212,13 @@ object(stdClass)#1 (5) {
 }
 ```
 
-`bind_data` can also take a third parameter to create a new primary data block:
+`bind` can also take a third parameter to create a new primary data block:
 
 ```
 public function SomeMethod() {
   $data = "This is yet another piece of data.";
 
-  $this->bind_data( $data, "Method", "PrimaryBlock" );
+  $this->bind( $data, "Method", "PrimaryBlock" );
 }
 ```
 
