@@ -172,7 +172,7 @@ final class DustPress {
 
 		if ( is_object( $post ) && isset( $post->ID ) ) {
 			$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
-			
+
 			if ( $page_template ) {
 				$array = explode( "/", $page_template );
 
