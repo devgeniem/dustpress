@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.3
+Version: 1.1.4
 */
 
 final class DustPress {
@@ -135,7 +135,7 @@ final class DustPress {
 
 		$template = apply_filters( "dustpress/template", $template );
 
-		if ( ! defined("DOING_AJAX") ) {
+		if ( ! defined("DOING_AJAX") && ! $this->disabled ) {
 			// If class exists with the template's name, create new instance with it.
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
@@ -656,6 +656,9 @@ final class DustPress {
 
 		// A hook to prevent DustPress error to appear in Yoast's sitemap
 		add_filter( 'wpseo_build_sitemap_post_type', array( $this, 'disable' ), 1, 1 );
+
+		// A hook to prevent DustPress error to appear when using WP Rest API
+		add_action( 'rest_api_init', array( $this, 'disable' ), 1, 1 );
 
 		return null;
 	}
