@@ -76,7 +76,7 @@ class Menu extends Helper {
 
         $menu = new \stdClass();
 
-        if ( $menu_name ) {
+        if ( isset( $menu_name ) ) {
             $menu->items = self::get_menu_as_items( $menu_name, $parent, $override );
         } else {
             $menu->items = self::get_menu_as_items( $menu_id, $parent, $override, true );

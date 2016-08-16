@@ -110,39 +110,7 @@ class Query {
 
 				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
 					foreach ( $acfpost['fields'] as &$field ) {
-
-						// No recursion for these post types
-						$ignored_types = [
-							'attachment',
-							'nav_menu_item',
-							'acf-field-group',
-							'acf-field',
-						];
-						
-						$ignored_types = apply_filters( 'dustpress/query/ignore_on_recursion', $ignored_types );
-
-						// A direct relation field
-						if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
-							$field = self::get_acf_post( $field->ID, $options );
-						}
-
-						// A repeater field has relational posts
-						if ( is_array( $field ) && count( $field ) > 0 && is_array( $field[0] ) ) {
-
-							// Follows the nested structure of a repeater
-							foreach ( $field as $idx => &$repeater ) {
-								if ( is_array( $repeater ) ) {
-									foreach ( $repeater as &$row ) {
-
-										// Post in a repeater
-										if ( is_object( $row ) && isset( $row->post_type ) && isset( $row->post_type ) && ! in_array( $row->post_type, $ignored_types ) ) {
-											$row = self::get_acf_post( $row->ID, $options );
-										}
-
-									}
-								}
-							}
-						}
+						$field = self::handle_field( $field, $options );
 					}
 				}
 			}
@@ -156,9 +124,69 @@ class Query {
 			self::get_post_meta( $acfpost, $id, $meta_keys, $meta_type, $single );
 		}
 
-		$acfpost['permalink'] = get_permalink($id);
+		$acfpost['permalink'] = get_permalink( $id );
+
+		if ( function_exists("acf_get_attachment") ) {
+			$attachment_id = get_post_thumbnail_id( $id );
+
+			if ( $attachment_id ) {
+				$acfpost['image'] = acf_get_attachment( $attachment_id );
+			}
+		}
 
 		return self::cast_post_to_type( $acfpost, $output );
+	}
+
+	/**
+	* get_acf_post
+	*
+	* This is a recursive function that handles nested repeaters etc. in co-operation
+	* with the get_acf_post function.
+	*
+	* @type	function
+	* @date	16/8/2016
+	* @since	1.1.5
+	*
+	* @param	$field   (mixed)
+	* @param	$options (array)
+	*
+	* $return   same type it is given, possibly extended
+	*/
+	private static function handle_field( $field, $options ) {
+		// No recursion for these post types
+		$ignored_types = [
+			'attachment',
+			'nav_menu_item',
+			'acf-field-group',
+			'acf-field',
+		];
+		
+		$ignored_types = apply_filters( 'dustpress/query/ignore_on_recursion', $ignored_types );
+
+		// A direct relation field
+		if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
+			$field = self::get_acf_post( $field->ID, $options );
+		}
+
+		// A repeater field has relational posts
+		if ( is_array( $field ) && count( $field ) > 0 ) {
+
+			// Follows the nested structure of a repeater
+			foreach ( $field as $idx => &$row ) {
+				// Post in a repeater
+				if ( is_object( $row ) && isset( $row->post_type ) && isset( $row->post_type ) && ! in_array( $row->post_type, $ignored_types ) ) {
+					$row = self::get_acf_post( $row->ID, $options );
+				}
+				else if ( is_object( $row ) ) {
+					$row = $self::handle_field( $row, $options );
+				}
+				else if ( is_array ( $row ) ) {
+					$row = self::handle_field( $row, $options );
+				}
+			}
+		}
+
+		return $field;
 	}
 
 	/**
