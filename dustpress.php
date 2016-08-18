@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.5
+Version: 1.1.6
 */
 
 final class DustPress {
@@ -830,6 +830,9 @@ final class DustPress {
 		// Get the args
 		if ( ! empty( $data["args"] ) ) {
 			$args = $data["args"];
+		}
+		else {
+			$args = [];
 		}
 
 		// Check if the data we got from the JS side has a function path
