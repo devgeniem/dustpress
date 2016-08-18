@@ -17,7 +17,7 @@ class Data {
 		if ( is_array( $data ) || is_object( $data ) ) {
 	        foreach ( (array) $data as $key => $item ) {
 	            if ( "fields" == $key ) {
-	                if ( isset( $item["acf_fc_layout"] ) ) {
+	                if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
 	                	if ( is_array( $data ) ) {
 	                    	$data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
 	                    }
