@@ -37,7 +37,7 @@ class Data {
 	                if ( is_array( $data ) ) {
 	                	self::component_handle( $data[ $key ], true );
 	                }
-	                else {
+	                else if ( $data instanceof stdClass || $data instanceof WP_Post ) {
 	                	self::component_handle( $data->{$key}, true );
 	                }
 	            }
