@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.9
+Version: 1.1.10
 */
 
 final class DustPress {
@@ -505,13 +505,37 @@ final class DustPress {
 			"html" => function( $data, $partial, $dust ) {
 
 				try {
-					$compiled = $dust->compileFile( $partial );
+					if ( apply_filters( "dustpress/cache/partials", true ) && apply_filters( "dustpress/cache/partials/" . $partial, true ) ) {
+						if ( ! ( $compiled = wp_cache_get( $partial, "dustpress/partials" ) ) ) {
+							$compiled = $dust->compileFile( $partial );
+
+							wp_cache_set( $partial, $compiled, "dustpress/partials" );
+						}
+					}
+					else {
+						$compiled = $dust->compileFile( $partial );						
+					}
 				}
 				catch ( Exception $e ) {
 					die( "DustPress error: ". $e->getMessage() );
 				}
 
-				return $dust->renderTemplate( $compiled, $data );
+				if ( apply_filters( "dustpress/cache/rendered", true ) && apply_filters( "dustpress/cache/rendered/" . $partial, true ) ) {
+					$data_hash = sha1( serialize( $compiled ) . serialize( $data ) );
+
+					$cache_time = apply_filters( "dustpress/settings/partial/" . $partial, $this->get_setting("rendered_expire_time") );
+
+					if ( ! ( $rendered = wp_cache_get( $data_hash, "dustpress/rendered" ) ) ) {
+						$rendered = $dust->renderTemplate( $compiled, $data );
+
+						wp_cache_set( $data_hash, $rendered, "dustpress/rendered", $cache_time );
+					}
+				}
+				else {
+					$rendered = $dust->renderTemplate( $compiled, $data );					
+				}
+
+				return $rendered;
 			},
 			"json" => function( $data, $partial, $dust ) {
 				try {
@@ -648,7 +672,8 @@ final class DustPress {
 	public function init_settings() {
 		$this->settings = [
 			"cache" => false,
-			"debug_data_block_name" => "Helper data"
+			"debug_data_block_name" => "Helper data",
+			"rendered_expire_time" => 7*60*60*24
 		];
 
 		// loop through the settings and execute possible filters from functions
