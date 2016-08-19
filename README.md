@@ -231,8 +231,8 @@ object(stdClass)#1 (5) {
   }
   ["PrimaryBlock"] =>
   array(1) {
-      ["SomethingElse"]=>
-      string(13) "This is yet another piece of data."
+    ["SomethingElse"]=>
+    string(13) "This is yet another piece of data."
   }
   ["Header"]=>
   object(stdClass)#2 (0) {
@@ -260,6 +260,71 @@ Contents of the `wp_head()` and `wp_footer()` functions are available for use in
 ```
 {@wphead /}
 ```
+
+## Caching
+
+### Method caching
+
+DustPress has a native support of WordPress transient cache. It works on a method basis, so you can give different methods different TTLs and they get cached automatically.
+
+By default the method caching is disabled. It can be enabled via a filter in your functions.php as follows:
+
+```
+add_filter( "dustpress/setting/cache", "__return_true" );
+```
+
+However, that setting itself doesn't do anything. You also have to define TTLs for the methods you want to cache. TTL is an abbreviation for Time To Live. It defines the time that a method's cache is alive before it needs to be renewed, i.e. when it's code gets run again.
+
+The TTLs are set in an associative array in a public property of the model called `$ttl` as follows:
+
+```
+class Model extends \DustPress\Model {
+  public $ttl = [
+    "Method" => 60
+  ];
+
+  public function Method() {
+    // something
+
+    return $data;
+  }
+}
+
+In the example, the data `Method` returns gets cached for 60 seconds. Caching works on [DustPress.js](https://github.com/devgeniem/dustpress-js) requests as well.
+
+### Partial and end-result caching
+
+DustPress also uses WordPress trasient cache for its partials and even the end-result HTML caching. Unlike method caching, these features are enabled by default and you have to disable them if you don't want to use them.
+
+#### Partial caching
+
+Partial caching caches the compiled version of the Dust templates so that they don't have to be compiled from scratch every time the page loads as it is relatively heavy operation in a large scale.
+
+The partials are cached forever, which means that whenever you change them, you probably want to run `wp_cache_flush()` or the corresponding WP CLI command so that they get updated.
+
+You may want to turn the caching off totally while you are in your development environment. That happens, unexpectedly, via a filter as follows:
+
+```
+add_filter( "dustpress/cache/partials", "__return_false" );
+```
+
+You can also turn the partial caching off only for certain partials:
+
+```
+add_filter( "dustpress/cache/partials/partial_name", "__return_false" );
+```
+
+#### End-result caching
+
+DustPress also caches the resulting HTML that gets served to the end-user. It generates the cache keys with both the data and the partial used to render the HTML, so that cache updates every time the data changes. It is used only to save the time that DustPHP would use to render the template with the data.
+
+You can turn the end-result caching off in the same way as you would the partial caching:
+
+```
+add_filter( "dustpress/cache/rendered", "__return_false" );
+```
+
+**Note!** When enabled, [DustPress Debugger](https://github.com/devgeniem/dustpress-debugger) turns both partial and end-result caching off.
 
 ## Dust templates
 
@@ -534,9 +599,9 @@ Get the debugger from [Geniem GitHub](https://github.com/devgeniem/dustpress-deb
 composer require devgeniem/dustpress-debugger
 ```
 
-## DustPressJS
+## DustPress.js
 
-We have also created a handy DustPress.JS library for using the DustPress Model methods on the front end.
+We have also created a handy DustPress.js library for using the DustPress Model methods on the front end.
 
 Get the debugger from [Geniem Github](https://github.com/devgeniem/dustpress-js) or install it with Composer:
 ```
