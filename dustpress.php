@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.12
+Version: 1.1.13
 */
 
 final class DustPress {
@@ -424,6 +424,14 @@ final class DustPress {
 
 		// Insert Wordpress blog info data to collection
 		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","is_rtl","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","url" );
+
+		if ( $this->is_dustpress_ajax() ) {
+			$remove_infos = array( "wpurl", "admin_email", "version", "user" );
+
+			$remove_infos = apply_filters( "dustpress/ajax/remove_wp", $remove_infos );
+
+			$infos = array_diff( $infos, $remove_infos );
+		}
 
 		foreach ( $infos as $info ) {
 			$wp_data[ $info ] = get_bloginfo( $info );
