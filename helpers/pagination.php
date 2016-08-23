@@ -31,15 +31,15 @@ class Pagination extends Helper {
         $hash               = $params->hash         ? '#' . $params->hash   : '';
         $this->page_var     = $params->page_var     ? $params->page_var     : 'paged';
 
+        $first_page         = 1;
+        $last_page          = $page_count;
+
+        $on_first_page      = false;
+        $on_last_page       = false;
+
         // More items than the set per_page
         if ( ( $items - $per_page ) > 0 ) {
             $page_count = ceil( $items / $per_page );
-
-            $first_page = 1;
-            $last_page  = $page_count;
-
-            $on_first_page  = false;
-            $on_last_page   = false;
 
             // on the first page
             if ( $cur_page == $first_page ) {
