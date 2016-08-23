@@ -31,6 +31,8 @@ class Pagination extends Helper {
         $hash               = $params->hash         ? '#' . $params->hash   : '';
         $this->page_var     = $params->page_var     ? $params->page_var     : 'paged';
 
+        $page_count = ceil( $items / $per_page );
+
         $first_page         = 1;
         $last_page          = $page_count;
 
@@ -39,8 +41,6 @@ class Pagination extends Helper {
 
         // More items than the set per_page
         if ( ( $items - $per_page ) > 0 ) {
-            $page_count = ceil( $items / $per_page );
-
             // on the first page
             if ( $cur_page == $first_page ) {
                 $hellip_start = '';
