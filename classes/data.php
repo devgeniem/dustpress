@@ -14,7 +14,7 @@ class Data {
 	}
 
 	public static function component_handle( &$data, $fields = false ) {
-		//if ( is_array( $data ) || is_object( $data ) ) {
+		if ( is_array( $data ) || is_object( $data ) ) {
 	        foreach ( (array) $data as $key => $item ) {
 	            if ( "fields" == $key ) {
 	                if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
@@ -45,8 +45,9 @@ class Data {
 	                }
 	                else if ( is_object( $data ) ) {
 	                	self::component_handle( $data->{$key}, true );
+	                }
 	            }
 	        }
-	    //}
+	    }
 	}
 }
