@@ -14,7 +14,7 @@ class Data {
 	}
 
 	public static function component_handle( &$data, $fields = false ) {
-		if ( is_array( $data ) || is_object( $data ) ) {
+		//if ( is_array( $data ) || is_object( $data ) ) {
 	        foreach ( (array) $data as $key => $item ) {
 	            if ( "fields" == $key ) {
 	                if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
@@ -29,7 +29,10 @@ class Data {
 	                if ( is_array( $data ) ) {
 	                	self::component_handle( $data[ $key ], true );
 	                }
-	                else {
+	                else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
+	                	self::component_handle( $data->{$key}, true );
+	                }
+	                else if ( is_object( $data ) ) {
 	                	self::component_handle( $data->{$key}, true );
 	                }
 	            }
@@ -37,11 +40,13 @@ class Data {
 	                if ( is_array( $data ) ) {
 	                	self::component_handle( $data[ $key ], true );
 	                }
-	                else if ( $data instanceof stdClass || $data instanceof WP_Post ) {
+	                else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
 	                	self::component_handle( $data->{$key}, true );
 	                }
+	                else if ( is_object( $data ) ) {
+	                	self::component_handle( $data->{$key}, true );
 	            }
 	        }
-	    }
+	    //}
 	}
 }

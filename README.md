@@ -479,7 +479,7 @@ Examples:
 
 Example:
 ```
-{@strtotime value=post_date format="d.m.Y H:i:s" /}
+{@strtodate value=post_date format="d.m.Y H:i:s" /}
 ```
 
 ### title
@@ -493,7 +493,7 @@ Example:
 
 ### wpfooter
 
-`wpfooter` works as a proxy for WordPress` native `wpfooter()` function.
+`wpfooter` works as a proxy for WordPress' native `wpfooter()` function.
 
 Example:
 ```
@@ -502,7 +502,7 @@ Example:
 
 ### wphead
 
-`wphead` works as a proxy for WordPress` native `wphead()` function.
+`wphead` works as a proxy for WordPress' native `wphead()` function.
 
 Example:
 ```
