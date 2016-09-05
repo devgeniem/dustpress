@@ -16,37 +16,38 @@ class Data {
     public static function component_handle( &$data, $fields = false ) {
         if ( is_array( $data ) || is_object( $data ) ) {
             foreach ( (array) $data as $key => $item ) {
-                if ( ! preg_match( "/\0/", $key ) ) {
-                    if ( "fields" == $key ) {
-                        if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
-                            if ( is_array( $data ) ) {
-                                $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
-                            }
-                            else {
-                                $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );   
-                            }
-                        }
-                        
+                // prevent null bytes from raising notices, we don't need them anyway
+                $key = str_replace( chr(0), "", $key );
+
+                if ( "fields" == $key ) {
+                    if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
                         if ( is_array( $data ) ) {
-                            self::component_handle( $data[ $key ], true );
+                            $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
                         }
-                        else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
-                            self::component_handle( $data->{$key}, true );
-                        }
-                        else if ( is_object( $data ) ) {
-                            self::component_handle( $data->{$key}, true );
+                        else {
+                            $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );   
                         }
                     }
-                    else {
-                        if ( is_array( $data ) ) {
-                            self::component_handle( $data[ $key ], true );
-                        }
-                        else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
-                            self::component_handle( $data->{$key}, true );
-                        }
-                        else if ( is_object( $data ) ) {
-                            self::component_handle( $data->{$key}, true );
-                        }
+                    
+                    if ( is_array( $data ) ) {
+                        self::component_handle( $data[ $key ], true );
+                    }
+                    else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
+                        self::component_handle( $data->{$key}, true );
+                    }
+                    else if ( is_object( $data ) ) {
+                        self::component_handle( $data->{$key}, true );
+                    }
+                }
+                else {
+                    if ( is_array( $data ) ) {
+                        self::component_handle( $data[ $key ], true );
+                    }
+                    else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
+                        self::component_handle( $data->{$key}, true );
+                    }
+                    else if ( is_object( $data ) ) {
+                        self::component_handle( $data->{$key}, true );
                     }
                 }
             }
