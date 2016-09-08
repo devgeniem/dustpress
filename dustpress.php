@@ -389,7 +389,7 @@ class DustPress {
 		if ( ! isset( $dustpress->data[ $className ]->Content ) ) $dustpress->data[ $className ]->Content = new \StdClass();
 
 		// Fetch all methods from given class.
-		$methods = $this->get_class_methods( $className );
+		$methods = (array) $this->get_class_methods( $className );
 
 		// Loop through all methods and run the ones starting with "bind" that deliver data to the views.
 		foreach( $methods as $method ) {
