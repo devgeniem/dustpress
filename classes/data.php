@@ -25,17 +25,14 @@ class Data {
                             $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
                         }
                         else {
-                            $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );   
+                            $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
                         }
                     }
-                    
+
                     if ( is_array( $data ) ) {
                         self::component_handle( $data[ $key ], true );
                     }
                     else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
-                        self::component_handle( $data->{$key}, true );
-                    }
-                    else if ( is_object( $data ) ) {
                         self::component_handle( $data->{$key}, true );
                     }
                 }
@@ -44,9 +41,6 @@ class Data {
                         self::component_handle( $data[ $key ], true );
                     }
                     else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
-                        self::component_handle( $data->{$key}, true );
-                    }
-                    else if ( is_object( $data ) ) {
                         self::component_handle( $data->{$key}, true );
                     }
                 }
