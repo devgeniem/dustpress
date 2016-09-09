@@ -160,7 +160,7 @@ class Query {
 			'acf-field-group',
 			'acf-field',
 		];
-		
+
 		$ignored_types = apply_filters( 'dustpress/query/ignore_on_recursion', $ignored_types );
 
 		// A direct relation field
@@ -284,6 +284,15 @@ class Query {
 						$field = get_field_object( $name, $p->ID, true );
 					}
 				}
+
+				// Add attachment image to post
+                if ( function_exists("acf_get_attachment") ) {
+                    $attachment_id = get_post_thumbnail_id( $p->ID );
+
+                    if ( $attachment_id ) {
+                        $p->image = acf_get_attachment( $attachment_id );
+                    }
+                }
 			}
 
 			// Maybe return the whole query object
