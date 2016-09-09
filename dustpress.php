@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.19
+Version: 1.1.20
 */
 
 final class DustPress {
@@ -66,7 +66,7 @@ final class DustPress {
 			get_template_directory()
 		];
 
-		$this->paths = array_unique( $this->paths );
+		$this->paths = array_values( array_unique( $this->paths ) );
 
 		// Find and include Dust helpers from DustPress plugin
 		$paths = [
