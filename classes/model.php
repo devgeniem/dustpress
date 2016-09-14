@@ -425,7 +425,8 @@ class Model {
         $ancestor = $this->get_ancestor();
 
         if ( $template ) {
-            if ( $this == $ancestor ) {
+
+            if ( $this === $ancestor ) {
                 $this->template = $template;
             }
             else {
@@ -672,6 +673,28 @@ class Model {
         }
         else {
             return (object)["error" => "Wanted function does not exist in the allowed functions list."];
+        }
+    }
+
+    /**
+    * Rename current model's data block. Probably for template changing purposes.
+    *
+    * @type   function
+    * @date   14/09/2016
+    * @since  1.2.0
+    *
+    *
+    * @param   $function (string)
+    * @param   $args (array)
+    * @return mixed
+    */
+    protected function rename_model( $name ) {
+        $original         = $this->class_name;
+        $this->class_name = $name;
+
+        if ( isset( $this->data[ $original ] ) ) {
+            $this->data[ $name ] = $this->data[ $original ];
+            unset( $this->data[ $original ] );
         }
     }
 
