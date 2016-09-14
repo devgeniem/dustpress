@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.1.21
+Version: 1.1.22
 */
 
 final class DustPress {
@@ -68,20 +68,20 @@ final class DustPress {
 
 		$this->paths = array_values( array_unique( $this->paths ) );
 
-		// Find and include Dust helpers from DustPress plugin
-		$paths = [
-			dirname( __FILE__ ) . '/helpers',
-		];
+        // Find and include Dust helpers from DustPress plugin
+        $paths = [
+            __DIR__ . '/helpers',
+        ];
 
-		foreach( $paths as $path ) {
-			if ( is_readable( $path ) ) {
-				foreach( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
-					if ( is_readable( $file ) ) {
-						require_once( $file );
-					}
-				}
-			}
-		}
+        foreach( $paths as $path ) {
+            if ( is_readable( $path ) ) {
+                foreach( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
+                    if ( is_readable( $file ) && '.php' === substr( $file, -4, 4 ) ) {
+                        require_once( $file );
+                    }
+                }
+            }
+        }
 
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {
@@ -521,7 +521,7 @@ final class DustPress {
 						}
 					}
 					else {
-						$compiled = $dust->compileFile( $partial );						
+						$compiled = $dust->compileFile( $partial );
 					}
 				}
 				catch ( Exception $e ) {
@@ -540,7 +540,7 @@ final class DustPress {
 					}
 				}
 				else {
-					$rendered = $dust->renderTemplate( $compiled, $data );					
+					$rendered = $dust->renderTemplate( $compiled, $data );
 				}
 
 				return $rendered;
@@ -939,7 +939,7 @@ final class DustPress {
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $partial ) );
 
 				if ( $tidy && is_array( $functions ) && count( $functions ) == 1 ) {
-					die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data->{$functions[0]}, "echo" => false ] ) ] ) );	
+					die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data->{$functions[0]}, "echo" => false ] ) ] ) );
 				}
 				else {
 					die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data, "echo" => false ] ) ] ) );
