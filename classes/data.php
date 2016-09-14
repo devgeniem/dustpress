@@ -19,38 +19,10 @@ class Data {
                 // prevent null bytes from raising notices, we don't need them anyway
                 $key = str_replace( chr(0), "", $key );
 
-<<<<<<< HEAD
                 if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
-=======
-                if ( "fields" == $key ) {
-                    if ( is_array( $item ) && isset( $item["acf_fc_layout"] ) ) {
-                        if ( is_array( $data ) ) {
-                            $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
-                        }
-                        else {
-                            $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
-                        }
-                    }
-
->>>>>>> 913b5cf8fbf325ef837b39e3ffaa3a6731dfd53e
                     if ( is_array( $data ) ) {
                         $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
                     }
-<<<<<<< HEAD
-                    else {
-                        $data->{$key} = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );   
-                    }
-                }
-                
-                if ( is_array( $data ) ) {
-                    self::component_handle( $data[ $key ], true );
-                }
-                else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
-                    self::component_handle( $data->{$key}, true );
-                }
-                else if ( is_object( $data ) ) {
-                    self::component_handle( $data->{$key}, true );
-=======
                 }
                 else {
                     if ( is_array( $data ) ) {
@@ -59,7 +31,6 @@ class Data {
                     else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
                         self::component_handle( $data->{$key}, true );
                     }
->>>>>>> 913b5cf8fbf325ef837b39e3ffaa3a6731dfd53e
                 }
             }
         }
