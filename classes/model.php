@@ -355,10 +355,14 @@ class Model {
     *   @return true/false (boolean)
     */
     public function bind( $data, $key = null, $model = null ) {
-        $this->class_name = get_class( $this );
         if ( ! $key ) {
-            die("DustPress error: You need to specify the key if you use bind_data(). Use return if you want to use the function name.");
+            die("DustPress error: You need to specify the key if you use bind(). Use return if you want to use the function name.");
         }
+
+        if ( ! isset( $this->class_name ) ) {
+            $this->class_name = get_class( $this );
+        }
+
         if ( $model ) {
             // Create a place to store the wanted data in the global data structure.
             if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \StdClass();
@@ -374,7 +378,7 @@ class Model {
             
             if ( ! $this->parent ) {
                 if ( is_array( $data ) ) {
-                    $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[$this->class_name], $data );
+                    $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[ $this->class_name ]->{ $key }, $data );
                 }
                 else {
                     $this->data[ $this->class_name ]->{ $key } = $data;   
