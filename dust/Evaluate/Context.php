@@ -111,6 +111,9 @@ class Context
         {
             $result = $parentObject;
         }
+        else if ( $key === "length" ) {
+            return count( $parentObject );
+        }
         //try to find on object (if we aren't forcing array lookup)
         if(!$forceArrayLookup && $key !== NULL)
         {
