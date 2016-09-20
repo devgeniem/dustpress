@@ -19,7 +19,27 @@ class Helper {
 				return $this->init();
 			}
 			else if ( method_exists( $this, "output" ) ) {
-				return $this->chunk->write( $this->output() );
+				if ( property_exists( $this, "cache" ) ) {
+					$hash = sha1( get_class( $this ) . serialize( $params ) );
+
+					if ( ! ( $output = wp_cache_get( $hash, "dustpress/helpers" ) ) ) {
+						$output = $this->output();
+
+						if ( isset( $this->ttl ) ) {
+							$ttl = $this->ttl;
+						}
+						else {
+							$ttl = 0;
+						}
+
+						wp_cache_set( $hash, $output, "dustpress/helpers", $ttl );
+					}
+				}
+				else {
+					$output = $this->output();
+				}
+
+				return $this->chunk->write( $output );
 			}
 		} else {
             if ( method_exists( $this, "prerun" ) ) {
