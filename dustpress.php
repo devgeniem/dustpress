@@ -931,23 +931,35 @@ final class DustPress {
 
 			// If we don't want to render, json-encode and return just the data
 			if ( empty( $partial ) ) {
-				die( json_encode( [ "success" => $instance->data ] ) );
+				die( wp_json_encode( [ "success" => $instance->data ] ) );
 			}
 			else {
 				$template_override = $instance->get_template();
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $partial ) );
 
-				if ( $tidy && is_array( $functions ) && count( $functions ) == 1 ) {
-					die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data->{$functions[0]}, "echo" => false ] ) ] ) );
+				if ( $tidy && is_array( $functions ) && count( $functions ) === 1 ) {
+
+					$data = $instance->data->{$functions[0]};
+
+					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
 				}
 				else {
-					die( json_encode( [ "success" => $this->render( [ "partial" => $partial, "data" => $instance->data, "echo" => false ] ) ] ) );
+					$data = $instance->data;
+					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
 				}
+
+				$response = [ "success" => $html ];
+
+				if ( is_plugin_active( 'dustpress-debugger/plugin.php' ) ) {
+					$response["debug"] = $data;
+				}
+
+				die( wp_json_encode( $response ) );
 			}
 		}
 		else {
-			die( json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );
+			die( wp_json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );
 		}
 	}
 
