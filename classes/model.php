@@ -326,8 +326,9 @@ class Model {
             $data = $model->fetch_data();
             $class_name = $model->class_name;
 
-+            if( isset( $this->data[ $this->class_name ]->{ $class_name } ) ) {
-                $this->data[ $this->class_name ]->{ $class_name } = array_merge( (array)$this->data[ $this->class_name ]->{ $class_name }, (array)$data );
+            if ( isset( $this->data[ $this->class_name ]->{ $class_name } ) ) {
+                $this->data[ $this->class_name ]->{$class_name } = array_merge( (array)$this->data[ $this->class_name ]->{ $class_name }, (array)$data );
+            }
             else {
                 $this->data[ $this->class_name ]->{ $class_name } = $data;
             }
@@ -339,6 +340,7 @@ class Model {
 
             if ( isset( $this->data[ $class_name ] ) ) {
                 $this->data[ $class_name ] = array_merge( (array)$this->data[ $class_name ], (array)$data );
+            }
             else {
                 $this->data[ $class_name ] = $data;
             }
