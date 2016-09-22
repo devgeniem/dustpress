@@ -10,13 +10,15 @@
 
 namespace DustPress;
 
+use get_class;
+
 class Model {
 
     // The data
     public $data;
 
     // Class name
-    private $class_name;
+    protected $class_name;
 
     // Arguments of this instance
     private $args;
@@ -186,20 +188,20 @@ class Model {
 
                         $method = str_replace( "bind_", "", $m[1] );
 
-                        if ( ! isset( $this->data[ $class ] ) ) {
-                            $this->data[ $class ] = (object)[];
+                        if ( ! isset( $this->data[ $this->class_name ] ) ) {
+                            $this->data[ $this->class_name ] = (object)[];
                         }
 
-                        $data = $this->run_function( $m[1], $class );
+                        $data = $this->run_function( $m[1], $class );                   
 
                         if ( $tidy ) {
                             $tidy_data->{ $m[1] } = $data;
                         }
                         else {
                             if ( ! is_null( $data ) ) {
-                                $content = (array) $this->data[ $class ];
+                                $content = (array) $this->data[ $this->class_name ];
                                 $content[ $method ] = $data;
-                                $this->data[ $class ] = (object) $content;
+                                $this->data[ $this->class_name ] = (object) $content;
                             }
                         }
                     }
@@ -211,8 +213,8 @@ class Model {
 
                     $method = str_replace( "bind_", "", $m );
 
-                    if ( ! isset( $this->data[ $class ]->{ $method } ) ) {
-                        $this->data[ $class ]->{ $method } = [];
+                    if ( ! isset( $this->data[ $this->class_name ]->{ $method } ) ) {
+                        $this->data[ $this->class_name ]->{ $method } = [];
                     }
 
                     $data = $this->run_function( $m, $class );
@@ -222,7 +224,7 @@ class Model {
                             $tidy_data->{ $method } = $data;
                         }
                         else {
-                            $this->data[ $class ]->{ $method } = $data;
+                            $this->data[ $this->class_name ]->{ $method } = $data;
                         }
                     }
                 }
@@ -312,22 +314,41 @@ class Model {
 
     public function bind_sub( $name, $args = null, $cache_sub = true ) {
         $this->class_name = get_class( $this );
-        $model = new $name( $args, $this );
+        if ( is_string( $name ) ) {
+            $model = new $name( $args, $this );
+        }
+        else {
+            throw new \Exception("DustPress error: bind_sub was called with invalid class name: " . print_r( $name, true ) );
+        }
 
         // If the submodel is not on the root level, set it under the current submodel.
         if ( $this->parent ) {
-            $this->data[$this->class_name]->{ $name } = $model->fetch_data();
+            $data = $model->fetch_data();
+            $class_name = $model->class_name;
+
++            if( isset( $this->data[ $this->class_name ]->{ $class_name } ) ) {
+                $this->data[ $this->class_name ]->{ $class_name } = array_merge( (array)$this->data[ $this->class_name ]->{ $class_name }, (array)$data );
+            else {
+                $this->data[ $this->class_name ]->{ $class_name } = $data;
+            }
         }
         // Set submodel under the main model.
         else {
-            $this->data[$name] = $model->fetch_data();
+            $data = $model->fetch_data();
+            $class_name = $model->class_name;
+
+            if ( isset( $this->data[ $class_name ] ) ) {
+                $this->data[ $class_name ] = array_merge( (array)$this->data[ $class_name ], (array)$data );
+            else {
+                $this->data[ $class_name ] = $data;
+            }
         }
 
         if ( ! is_object( $this->submodels ) ) {
             $this->submodels = (object)[];
         }
 
-        $this->submodels->{$name} = $model;
+        $this->submodels->{ $class_name } = $model;
 
 
         // Store called submodels for caching purposes.
@@ -378,7 +399,12 @@ class Model {
             
             if ( ! $this->parent ) {
                 if ( is_array( $data ) ) {
-                    $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[ $this->class_name ]->{ $key }, $data );
+                    if ( isset( $this->data[ $this->class_name ]->{ $key } ) ) {
+                        $this->data[ $this->class_name ]->{ $key } = array_merge( (array) $this->data[ $this->class_name ]->{ $key }, $data );
+                    }
+                    else {
+                        $this->data[ $this->class_name ]->{ $key } = $data;
+                    }
                 }
                 else {
                     $this->data[ $this->class_name ]->{ $key } = $data;   
@@ -695,11 +721,29 @@ class Model {
     protected function rename_model( $name ) {
         $original         = $this->class_name;
         $this->class_name = $name;
-
-        if ( isset( $this->data[ $original ] ) ) {
-            $this->data[ $name ] = $this->data[ $original ];
-            unset( $this->data[ $original ] );
+        /*
+        if ( isset( $this->parent ) && $this->parent ) {
+            $parent = $this->parent->class_name;
         }
+        else {
+            $parent = null;
+        }
+
+        if ( $parent ) {
+            if ( isset( $this->data[ $parent ]->{ $original } ) ) { 
+                $this->data[ $parent ]->{ $name } = $this->data[ $parent ]->{ $original };
+                unset( $this->data[ $parent ]->{ $original } );
+            }
+        }
+        else { */
+            if ( isset( $this->data[ $original ] ) ) {
+                $this->data[ $name ] = $this->data[ $original ];
+                unset( $this->data[ $original ] );
+            }
+            else if ( ! isset( $this->data[ $name ] ) ) {
+                $this->data[ $name ] = (object)[];
+            }
+        //}
     }
 
     /**
