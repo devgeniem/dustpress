@@ -723,29 +723,14 @@ class Model {
     protected function rename_model( $name ) {
         $original         = $this->class_name;
         $this->class_name = $name;
-        /*
-        if ( isset( $this->parent ) && $this->parent ) {
-            $parent = $this->parent->class_name;
+        
+        if ( isset( $this->data[ $original ] ) ) {
+            $this->data[ $name ] = $this->data[ $original ];
+            unset( $this->data[ $original ] );
         }
-        else {
-            $parent = null;
+        else if ( ! isset( $this->data[ $name ] ) ) {
+            $this->data[ $name ] = (object)[];
         }
-
-        if ( $parent ) {
-            if ( isset( $this->data[ $parent ]->{ $original } ) ) { 
-                $this->data[ $parent ]->{ $name } = $this->data[ $parent ]->{ $original };
-                unset( $this->data[ $parent ]->{ $original } );
-            }
-        }
-        else { */
-            if ( isset( $this->data[ $original ] ) ) {
-                $this->data[ $name ] = $this->data[ $original ];
-                unset( $this->data[ $original ] );
-            }
-            else if ( ! isset( $this->data[ $name ] ) ) {
-                $this->data[ $name ] = (object)[];
-            }
-        //}
     }
 
     /**

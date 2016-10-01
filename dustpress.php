@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.2.7
+Version: 1.2.9
 */
 
 final class DustPress {
@@ -204,8 +204,8 @@ final class DustPress {
 
 		if ( is_page() ) {
 			$hierarchy["is_page"] = [
-				"Page" . ucfirst( $template ),
-				"Page" . ucfirst( $post->post_name ),
+				"Page" . $this->dashed_to_camelcase( $template ),
+				"Page" . $this->dashed_to_camelcase( $post->post_name ),
 				"Page" . $post->ID,
 				"Page"
 			];
@@ -215,7 +215,7 @@ final class DustPress {
 			$cat = get_category( get_query_var('cat') );
 
 			$hierarchy["is_category"] = [
-				"Category" . ucfirst( $cat->slug ),
+				"Category" . $this->dashed_to_camelcase( $cat->slug ),
 				"Category" . $cat->term_id,
 				"Category",
 				"Archive"
@@ -227,7 +227,7 @@ final class DustPress {
 			$term = get_term_by( "id", $term_id, "post_tag" );
 
 			$hierarchy["is_tag"] = [
-				"Tag" . ucfirst( $term->slug ),
+				"Tag" . $this->dashed_to_camelcase( $term->slug ),
 				"Tag",
 				"Archive"
 			];
@@ -238,8 +238,8 @@ final class DustPress {
 			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
 
 			$hierarchy["is_tax"] = [
-				"Taxonomy" . ucfirst( get_query_var('taxonomy') ) . ucfirst($term->slug),
-				"Taxonomy" . ucfirst( get_query_var('taxonomy') ),
+				"Taxonomy" . $this->dashed_to_camelcase( get_query_var('taxonomy') ) . $this->dashed_to_camelcase($term->slug),
+				"Taxonomy" . $this->dashed_to_camelcase( get_query_var('taxonomy') ),
 				"Taxonomy",
 				"Archive"
 			];
@@ -249,7 +249,7 @@ final class DustPress {
 			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
 
 			$hierarchy["is_author"] = [
-				"Author" . ucfirst( $author->user_nicename ),
+				"Author" . $this->dashed_to_camelcase( $author->user_nicename ),
 				"Author" . $author->ID,
 				"Author",
 				"Archive"
@@ -756,6 +756,25 @@ final class DustPress {
 	}
 
 	/**
+	*  This function returns given string converted from camel-case to CamelCase
+	*  (or probably camel_case or somethinge else, if wanted).
+	*
+	*  @type	function
+	*  @date	1/10/2016
+	*  @since	1.2.9
+	*
+	*  @param	$string (string)
+	*  @param   $char (string)
+	*  @return	(string)
+	*/
+	public function dashed_to_camelcase( $string, $char = "-" ) {
+		$string = str_replace( $char, " ", $string );
+		$string = str_replace( " ", "", ucwords( $string ) );
+
+		return $string;
+	}
+
+	/**
 	*  This function determines if we want to autoload and render the model or not.
 	*
 	*  @type	function
@@ -785,7 +804,11 @@ final class DustPress {
 				return ! defined( "DOING_AJAX" );
 			},
 			function() {
-				return WP_USE_THEMES !== false;
+				if ( defined( 'WP_USE_THEMES' ) ) {
+					return WP_USE_THEMES !== false;
+				} else {
+					return false;
+				}
 			},
 			function() {
 				return ! is_robots();
