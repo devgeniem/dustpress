@@ -81,6 +81,8 @@ namespace Dust
                 "eq"          => new Helper\Eq(),
                 "any"         => new Helper\Any(),
                 "none"        => new Helper\None(),
+                "first"       => new Helper\First(),
+                "last"        => new Helper\Last(),
                 "if"          => new Helper\IfHelper(),
                 "lt"          => new Helper\Lt(),
                 "lte"         => new Helper\Lte(),
