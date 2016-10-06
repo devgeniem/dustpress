@@ -334,7 +334,7 @@ DustPHP templates are 100% compatible with Dust.js templates. See the official [
 All templates should have a context block with the name of the current model, so that the variables are usable in the template. As for our previous example model, very simplified template could look like this:
 
 ```
-{">shared/header" /}
+{>"shared/header" /}
 
 {#PageFrontpage}
   <h1>{WP.name}</h1>
@@ -347,7 +347,7 @@ All templates should have a context block with the name of the current model, so
   {">shared/sidebar" /}
 {/PageFrontpage}
 
-{">shared/footer" /}
+{>"shared/footer" /}
 ```
 
 This template includes header.dust, sidebar.dust and footer.dust templates from `partials/shared/` subdirectory. At the end of the `PageFrontpage` block we echo HTML from the `SomeHTML` variable and use the `s` filter to get it _unescaped_.  See the [Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial#Sections_and_Context) for more information about sections and contexts.
