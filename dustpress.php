@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.2.13
+Version: 1.2.14
 */
 
 final class DustPress {
@@ -821,6 +821,9 @@ final class DustPress {
 				} else {
 					return false;
 				}
+			},
+			function() {
+				return ! is_feed();
 			},
 			function() {
 				return ! is_robots();
