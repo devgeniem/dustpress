@@ -23,6 +23,7 @@ class Pagination extends Helper {
         $neighbours         = 3;
         $hellip_start       = true;
         $hellip_end         = true;
+        $strings            = isset( $params->strings ) ? $params->strings : [];
         $cur_page           = (int) $params->page;
         $prev_page          = $cur_page - 1;
         $next_page          = $cur_page + 1;
@@ -30,6 +31,15 @@ class Pagination extends Helper {
         $items              = (int) $params->items;
         $hash               = $params->hash         ? '#' . $params->hash   : '';
         $this->page_var     = $params->page_var     ? $params->page_var     : 'paged';
+
+        // Setup strings
+        $defaults = [
+            'previous'  => __( 'Previous', 'dustpress' ),
+            'next'      => __( 'Next', 'dustpress' ),
+            'start'     => __( 'Start', 'dustpress' ),
+            'end'       => __( 'End', 'dustpress' ),
+        ];
+        $strings = wp_parse_args( $strings, $defaults );
 
         $page_count = ceil( $items / $per_page );
 
@@ -139,10 +149,10 @@ class Pagination extends Helper {
         $data->page_link            = apply_filters( 'dustpress/pagination/page_link', $page_link );
 
         $data->S                    = (object)[];
-        $data->S->prev              = __( 'Previous', 'DustPressPagination' );
-        $data->S->next              = __( 'Next', 'DustPressPagination' );
-        $data->S->start             = __( 'Start', 'DustPressPagination' );
-        $data->S->end               = __( 'End', 'DustPressPagination' );
+        $data->S->prev              = $strings['previous'];
+        $data->S->next              = $strings['next'];
+        $data->S->start             = $strings['start'];
+        $data->S->end               = $strings['end'];
 
         $this->data = $data;
 
