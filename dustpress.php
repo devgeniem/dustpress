@@ -713,6 +713,9 @@ final class DustPress {
 		// A hook to prevent DustPress error to appear when using WP Rest API
 		add_action( 'rest_api_init', array( $this, 'disable' ), 1, 1 );
 
+		// A hook to prevent DustPress error to appear when generating robots.txt
+		add_action( 'do_robotstxt', array( $this, 'disable' ), 1, 1 );
+
 		return null;
 	}
 
@@ -824,9 +827,6 @@ final class DustPress {
 			},
 			function() {
 				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed' ) !== false );
-			},
-			function() {
-				return ! is_robots();
 			},
 			function() {
 				return ! isset( $_GET['_wpcf7_is_ajax_call'] );
