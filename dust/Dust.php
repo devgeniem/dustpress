@@ -150,12 +150,11 @@ namespace Dust
             }
 
             //now try each of the included directories
-            for($i = 0; $i < count($this->includedDirectories); $i++)
-            {
-                $possible = realpath($this->includedDirectories[ $i ] . '/' . $path);
-                if($possible !== false)
-                {
-                    return $possible;
+            foreach ( $this->includedDirectories as $directory ) {
+                foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $directory, \RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
+                    if ( substr_compare($file, $path, strlen($file)-strlen($path), strlen($path)) === 0 ) {
+                        return (string)$file;
+                    }
                 }
             }
 
