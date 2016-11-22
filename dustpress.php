@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.2.21
+Version: 1.3.0
 */
 
 final class DustPress {
@@ -322,6 +322,7 @@ final class DustPress {
 			$type = get_post_type();
 
 			$hierarchy["is_single"] = [
+				"Single" . $this->dashed_to_camelcase( $template ),
 				"Single" . $this->dashed_to_camelcase( $type ),
 				"Single"
 			];
