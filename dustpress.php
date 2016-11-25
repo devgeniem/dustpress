@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.3.1
+Version: 1.3.2
 */
 
 final class DustPress {
@@ -34,6 +34,9 @@ final class DustPress {
 
 	// Paths for locating files
 	private $paths;
+
+	// Registered custom ajax functions
+	private $ajax_functions;
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -880,6 +883,12 @@ final class DustPress {
 	}
 
 	/**
+	 */
+	public function register_ajax_function( $key, $callable ) {
+		$this->ajax_functions[ $key ] = $callable;
+	}
+
+	/**
 	*  This function does lots of AJAX stuff with the parameters from the JS side.
 	*
 	*  @type	function
@@ -893,7 +902,7 @@ final class DustPress {
 		global $post;
 
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
-			$data = $_REQUEST["dustpress_data"];
+			$request_data = $_REQUEST["dustpress_data"];
 		}
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
@@ -902,31 +911,61 @@ final class DustPress {
 		$runs = [];
 
 		// Get the args
-		if ( ! empty( $data["args"] ) ) {
-			$args = $data["args"];
+		if ( ! empty( $request_data["args"] ) ) {
+			$args = $request_data["args"];
 		}
 		else {
 			$args = [];
 		}
 
 		// Check if the data we got from the JS side has a function path
-		if ( isset( $data["path"] ) ) {
-			$path = explode( "/", $data["path"] );
+		if ( isset( $request_data["path"] ) ) {
+			// If the path is set as a custom ajax function key, run the custom function
+			if ( isset( $this->ajax_functions[ $request_data["path"] ] ) ) {
+				$data = $this->ajax_functions[ $request_data["path"] ]( $args );
 
-			if ( count( $path ) > 2 ) {
-				die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
-			}
-			else if ( count( $path ) == 2 ) {
-				if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
-					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
+				if ( isset( $request_data['partial'] ) ) {
+					$partial = $request_data['partial'];
 				}
 
-				$model = $path[0];
+				if ( empty( $partial ) ) {
+					die( wp_json_encode( [ "success" => $data ] ) );
+				}
+				else {
+					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
+					
+					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
+						$response = [ "success" => $html, "data" => $data ];
+					}
+					else {
+						$response = [ "success" => $html ];
+					}
 
-				$functions = explode( ",", $path[1] );
+					if ( is_plugin_active( 'dustpress-debugger/plugin.php' ) ) {
+						$response["debug"] = $data;
+					}
 
-				foreach( $functions as $function ) {
-					$runs[] = $function;
+					die( wp_json_encode( $response ) );
+				}
+			}
+			else {
+				$path = explode( "/", $data["path"] );
+
+				if ( count( $path ) > 2 ) {
+					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
+				}
+				else if ( count( $path ) == 2 ) {
+					if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
+						die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
+					}
+
+					$model = $path[0];
+
+					$functions = explode( ",", $path[1] );
+
+					foreach( $functions as $function ) {
+						$runs[] = $function;
+					}
 				}
 			}
 		}
