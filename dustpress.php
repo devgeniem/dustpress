@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.3.2
+Version: 1.3.3
 */
 
 final class DustPress {
@@ -922,7 +922,7 @@ final class DustPress {
 		if ( isset( $request_data["path"] ) ) {
 			// If the path is set as a custom ajax function key, run the custom function
 			if ( isset( $this->ajax_functions[ $request_data["path"] ] ) ) {
-				$data = $this->ajax_functions[ $request_data["path"] ]( $args );
+				$data = call_user_func_array( $this->ajax_functions[ $request_data["path"] ], $args);
 
 				if ( isset( $request_data['partial'] ) ) {
 					$partial = $request_data['partial'];
