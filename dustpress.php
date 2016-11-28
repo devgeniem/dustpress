@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.3.3
+Version: 1.3.4
 */
 
 final class DustPress {
@@ -949,7 +949,7 @@ final class DustPress {
 				}
 			}
 			else {
-				$path = explode( "/", $data["path"] );
+				$path = explode( "/", $request_data["path"] );
 
 				if ( count( $path ) > 2 ) {
 					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
@@ -979,13 +979,13 @@ final class DustPress {
 		}
 
 		// If render is set true, set the model's default template to be used.
-		if ( isset( $data["render"] ) && $data["render"] === "true" ) {
+		if ( isset( $request_data["render"] ) && $request_data["render"] === "true" ) {
 			$partial = strtolower( $this->camelcase_to_dashed( $model ) );
 		}
 
 		// Do we want tidy output or not?
-		if ( isset( $data["tidy"] ) ) {
-			if ( $data["tidy"] === "false" ) {
+		if ( isset( $request_data["tidy"] ) ) {
+			if ( $request_data["tidy"] === "false" ) {
 				$tidy = false;
 			}
 			else {
@@ -997,8 +997,8 @@ final class DustPress {
 		}
 
 		// Get the possible defined partial and possible override the default template.
-		if ( isset( $data["partial"] ) && strlen( $data["partial"] ) > 0 ) {
-			$partial = $data["partial"];
+		if ( isset( $request_data["partial"] ) && strlen( $request_data["partial"] ) > 0 ) {
+			$partial = $request_data["partial"];
 		}
 
 		if ( class_exists( $model ) ) {
