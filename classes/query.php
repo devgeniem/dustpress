@@ -260,6 +260,9 @@ class Query {
 		// Some redundancy, but we need these
 		$defaults = self::get_wp_query_defaults();
 
+		$defaults['max_recursion_level'] = 0;
+		$defaults['current_recursion_level'] = 0;
+
         $options = array_merge( $defaults, $args );
 
         extract( $options );
@@ -279,9 +282,23 @@ class Query {
 
 				$p->fields = get_fields( $p->ID );
 
-				if ( $whole_fields ) {
-					foreach( $p->fields as $name => &$field ) {
-						$field = get_field_object( $name, $p->ID, true );
+				// Get fields with relational post data as a whole acf object
+				if ( $current_recursion_level < $max_recursion_level ) {
+
+					// Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
+					$options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
+
+					if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
+						foreach ( $p->fields as &$field ) {
+							$field = self::handle_field( $field, $options );
+						}
+					}
+				}
+				elseif ( true == $whole_fields ) {
+					if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
+						foreach( $p->fields as $name => &$field ) {
+							$field = get_field_object($name, $id, true);
+						}
 					}
 				}
 
