@@ -140,9 +140,22 @@ class Menu extends Helper {
             return null;
         }
 
+        $parent_id = 0;
+
+        if ( $parent ) {
+            if ( count( $menu_items ) > 0 ) {
+                foreach ( $menu_items as $item ) {
+                    if ( $item->object_id == $parent && $item->object == $type ) {
+                        $parent_id = $item->ID;
+                        break;
+                    }
+                }
+            }
+        }
+
         if ( $menu_items ) {
 
-                $menu = self::build_menu( $menu_items, $parent, null, $override );
+                $menu = self::build_menu( $menu_items, $parent_id, null, $override );
 
                 if ( $index = array_search( 'active', $menu ) ) {
                         unset( $menu[$index] );
@@ -171,25 +184,15 @@ class Menu extends Helper {
      */
     private static function build_menu( $menu_items, $parent = 0, $type = 'page', $override = null ) {
         $temp_items = [];
-        $parent_id = 0;
 
         if ( empty( $type ) ) {
             $type = 'page';
         }
 
         if ( count( $menu_items ) > 0 ) {
-            foreach ( $menu_items as $item ) {
-                if ( $item->object_id == $parent && $item->object == $type ) {
-                    $parent_id = $item->ID;
-                    break;
-                }
-            }
-        }
-
-        if ( count( $menu_items ) > 0 ) {
             foreach ( $menu_items as $item ) {  
-                if ( $item->menu_item_parent == $parent_id ) {
-                    $item->sub_menu = self::build_menu( $menu_items, $item->object_id, $item->object, $override );
+                if ( $item->menu_item_parent == $parent ) {
+                    $item->sub_menu = self::build_menu( $menu_items, $item->ID, $item->object, $override );
 
                     if ( is_array( $item->sub_menu ) && count( $item->sub_menu ) > 0 ) {
                         $item->classes[] = 'menu-item-has-children';
