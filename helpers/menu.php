@@ -145,7 +145,7 @@ class Menu extends Helper {
         if ( $parent ) {
             if ( count( $menu_items ) > 0 ) {
                 foreach ( $menu_items as $item ) {
-                    if ( $item->object_id == $parent && $item->object == $type ) {
+                    if ( $item->object_id == $parent ) {
                         $parent_id = $item->ID;
                         break;
                     }
@@ -157,9 +157,10 @@ class Menu extends Helper {
 
                 $menu = self::build_menu( $menu_items, $parent_id, null, $override );
 
-                if ( $index = array_search( 'active', $menu ) ) {
+                while ( $index = array_search( 'active', $menu ) ) {
                         unset( $menu[$index] );
                 }
+                
                 if ( 0 === array_search( 'active', $menu ) ) {
                         unset( $menu[0] );
                 }
