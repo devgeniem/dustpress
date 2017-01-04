@@ -86,6 +86,7 @@ namespace Dust
                 "if"          => new Helper\IfHelper(),
                 "lt"          => new Helper\Lt(),
                 "lte"         => new Helper\Lte(),
+                "ne"          => new Helper\Ne(),
                 "gt"          => new Helper\Gt(),
                 "gte"         => new Helper\Gte(),
                 "default"     => new Helper\DefaultHelper(),
