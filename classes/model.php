@@ -416,8 +416,6 @@ class Model {
                 $this->data[ $this->class_name ]->{ $key } = $data;
             }
         }
-        // Store data for cacheing purposes.
-        $this->last_bound = $data;
     }
 
     /**
@@ -500,13 +498,6 @@ class Model {
         }
         else {
             $data = call_user_func( [ $this, $m ] );
-        }
-
-        if ( ! $data ) {
-            if ( isset( $this->last_bound ) ) {
-                $data = $this->last_bound;
-                $this->last_bound = null;
-            }
         }
 
         if ( isset( $this->called_subs ) ) {
