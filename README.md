@@ -270,7 +270,7 @@ DustPress has a native support of WordPress transient cache. It works on a metho
 By default the method caching is disabled. It can be enabled via a filter in your functions.php as follows:
 
 ```
-add_filter( "dustpress/setting/cache", "__return_true" );
+add_filter( "dustpress/settings/cache", "__return_true" );
 ```
 
 However, that setting itself doesn't do anything. You also have to define TTLs for the methods you want to cache. TTL is an abbreviation for Time To Live. It defines the time that a method's cache is alive before it needs to be renewed, i.e. when it's code gets run again.
