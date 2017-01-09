@@ -74,6 +74,12 @@ class Menu extends Helper {
             $menuitem_partial = "menuitem";
         }
 
+        if ( isset( $this->params->data ) ) {
+            $custom_data = $this->params->data;
+        } else {
+            $custom_data = null;
+        }
+
         $menu = new \stdClass();
 
         if ( isset( $menu_name ) ) {
@@ -88,6 +94,8 @@ class Menu extends Helper {
 
         $menu->menuitem_partial = $menuitem_partial;
         $menu->depth = $depth;
+
+        $menu->data = $custom_data;
 
         $menu = apply_filters( "dustpress/menu/data", $menu );
 
