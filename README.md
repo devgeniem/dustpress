@@ -393,6 +393,7 @@ Example:
 - `show_submenu`: A boolean value if submenus are shown or not. Defaults to true.
 - `menu_partial`: Use another partial instead of the default `menu.dust`. You can use a custom partial by creating your own `menu.dust` inside your theme, and DustPress will use that instead of the one from its core.
 - `menuitem_partial`: Use another partial instead of the default `menuitem.dust`. You can use a custom partial by creating your own `menuitem.dust` inside your theme, and DustPress will use that instead of the one from its core.
+- `data`: Custom data object to be passed to the menu template. Can be used under `{data}` in `menu.dust` or `menuitem.dust`.
 
 Example:
 ```
