@@ -668,7 +668,7 @@ class Model {
 
     private function generate_cache_key() {
         $args = func_get_args();
-        $seed;
+        $seed = '';
 
         foreach( $args as $arg ) {
             $seed .= serialize( $arg );
