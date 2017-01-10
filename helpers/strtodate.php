@@ -7,7 +7,7 @@ class Strtodate extends Helper {
 		$format	= $this->params->format;
 		$now	= $this->params->now;
 		
-		return date( $format, strtotime( $value, $now ) );
+		return date_i18n( $format, strtotime( $value, $now ) );
     }
 }
 
