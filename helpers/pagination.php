@@ -41,7 +41,12 @@ class Pagination extends Helper {
         ];
         $strings = wp_parse_args( $strings, $defaults );
 
-        $page_count = ceil( $items / $per_page );
+        // Prevent dividing if there are zero items.
+        if(  $per_page > 0 ) {
+            $page_count = ceil( $items / $per_page );
+        } else {
+            $page_count = 1;
+        }
 
         $first_page         = 1;
         $last_page          = $page_count;
