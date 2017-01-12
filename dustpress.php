@@ -85,10 +85,10 @@ final class DustPress {
 
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {
-			add_action( 'shutdown', [ $this, 'create_instance' ] );
+			add_filter( 'template_include', [ $this, 'create_instance' ] );
 		}
 		else if ( $this->is_dustpress_ajax() ) {
-			add_action( 'shutdown', [ $this, 'create_ajax_instance' ] );
+			add_filter( 'template_include', [ $this, 'create_ajax_instance' ] );
 		}
 
 		// Initialize settings
