@@ -24,6 +24,19 @@ class Data {
                         $data[ $key ] = apply_filters( "dustpress/data/component=" . $item["acf_fc_layout"], $item );
                     }
                 }
+                else if ( is_array( $item ) && is_array( $sub = reset( $item ) ) && "c" !== key( $item ) && ( "c" === key( $sub ) ) ) {
+
+                    foreach ( $item as $item_key => &$item_data ) {
+                        $item_data['c'][0] = apply_filters( "dustpress/data/component=" . $item_key, $item_data['c'][0] );
+                    }
+
+                    if ( is_array( $data ) ) {
+                        $data[ $key ] = $item;
+                    }
+                    else if ( get_class($data) == "stdClass" || get_class($data) == "WP_Post" ) {
+                        $data->{ $key } = $item;
+                    }
+                }
                 else {
                     if ( is_array( $data ) ) {
                         self::component_handle( $data[ $key ], true );

@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.4.1
+Version: 1.5.3
 */
 
 final class DustPress {
@@ -22,9 +22,6 @@ final class DustPress {
 
 	// This is where the data will be stored
 	private $data;
-
-	// Possible post body
-	private $postbody;
 
 	// DustPress settings
 	private $settings;
@@ -88,10 +85,10 @@ final class DustPress {
 
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {
-			add_action( 'shutdown', [ $this, 'create_instance' ] );
+			add_filter( 'template_include', [ $this, 'create_instance' ] );
 		}
 		else if ( $this->is_dustpress_ajax() ) {
-			add_action( 'shutdown', [ $this, 'create_ajax_instance' ] );
+			add_filter( 'template_include', [ $this, 'create_ajax_instance' ] );
 		}
 
 		// Initialize settings
@@ -198,12 +195,19 @@ final class DustPress {
 			$template = "default";
 		}
 
-		$hierarchy = [
-			"is_home" => [
-			    "FrontPage",
-				"Home"
-			]
-		];
+		if ( is_front_page() ) {
+			$hierarchy = [
+				"is_front_page" => [
+				    "FrontPage"
+				]
+			];
+		}
+
+		if ( is_home() ) {
+			$hierarchy["is_home"] = [
+			    "Home"
+			];
+		}
 
 		if ( is_page() ) {
 			$hierarchy["is_page"] = [

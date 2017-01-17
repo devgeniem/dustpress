@@ -39,8 +39,6 @@ class Query {
 	* @return  post object as an associative array with meta data
 	*/
 	public static function get_post( $id, $args = array() ) {
-		global $post;
-
 		$defaults = [
 			'meta_keys' => null,
 			'single' 	=> false,
@@ -52,15 +50,15 @@ class Query {
 
 		extract( $options );
 
-		$post = get_post( $id, 'ARRAY_A' );
+		$curpost = get_post( $id, 'ARRAY_A' );
 
-		if ( is_array( $post ) ) {
-			get_post_meta( $post, $id, $meta_keys, $meta_type, $single );
+		if ( is_array( $curpost ) ) {
+			get_post_meta( $curpost, $id, $meta_keys, $meta_type, $single );
 		}
 
-		$post['permalink'] = get_permalink($id);
+		$curpost['permalink'] = get_permalink( $id );
 
-		return self::cast_post_to_type( $post, $output );
+		return self::cast_post_to_type( $curpost, $output );
 	}
 
 	/**
