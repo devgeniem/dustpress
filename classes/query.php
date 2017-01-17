@@ -176,7 +176,7 @@ class Query {
 					$row = self::get_acf_post( $row->ID, $options );
 				}
 				else if ( is_object( $row ) ) {
-					$row = $self::handle_field( $row, $options );
+					$row = self::handle_field( $row, $options );
 				}
 				else if ( is_array ( $row ) ) {
 					$row = self::handle_field( $row, $options );
