@@ -151,7 +151,7 @@ class DustPress {
 
 			// Add create_instance to right action hook if we are not on the admin side
 			if ( ! is_admin() && ! $this->is_login_page() ) {
-				add_action( 'shutdown', array( $this, 'create_instance' ) );
+				add_filter( 'template_include', [ $this, 'create_instance' ] );
 			}
 
 			// Add admin menu
