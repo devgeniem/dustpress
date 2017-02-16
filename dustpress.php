@@ -877,7 +877,7 @@ final class DustPress {
 	*
 	*  @return	(boolean)
 	*/
-	private function is_dustpress_ajax() {
+	public function is_dustpress_ajax() {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			return true;
 		}
@@ -912,6 +912,11 @@ final class DustPress {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
 
+        if ( ! defined( 'DOING_AJAX' ) ) {
+            // Define the WordPress constant.
+		    define( 'DOING_AJAX', true );
+        }
+
 		$runs = [];
 
 		// Get the args
@@ -937,7 +942,7 @@ final class DustPress {
 				}
 				else {
 					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
-					
+
 					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
 						$response = [ "success" => $html, "data" => $data ];
 					}
