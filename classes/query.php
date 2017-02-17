@@ -36,7 +36,7 @@ class Query {
 	 */
 	public static function get_post( $id, $args = array() ) {
 		$defaults = [
-			'meta_keys' => 'all',
+			'meta_keys' => 'null',
 			'single' 	=> false,
 			'output' 	=> 'OBJECT'
 		];
@@ -342,7 +342,7 @@ class Query {
         ];
 
         // If the debugger is enabled, return debug data.
-        if ( class_exists( '\DustPress\Debugger' ) && Debugger::use_debugger() ) {
+        if ( class_exists( __NAMESPACE__ . '\Debugger' ) && Debugger::use_debugger() ) {
             $object->query      = $query->query;
             $object->query_vars = $query->query_vars;
             $object->tax_query  = $query->tax_query;
