@@ -5,7 +5,7 @@
 - URL: http://www.dustpress.com
 - Tags: dustpress, wordpress, dustjs, dust.js
 - Requires at least: 4.2.0
-- Tested up to: 4.5.2
+- Tested up to: 4.7.2
 - License: GPLv2 or later
 - License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -578,26 +578,78 @@ With `\DustPress\Query` you can query single WordPress posts with two different 
 * id: The id of the post.
 * args: Arguments in an array.
 
-The argument key `'meta_keys'` accepts meta key values in an array as strings. Passing a string instead of the value `'all'` will fetch all the meta fields in an associative array. The additional argument keys are `'single'` and `'meta_type'` with the same functionality as described in WordPress [documentation](https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()`. Found meta data is appended under the queried post object array with the key `meta`. If no matching post with the passed id is found, `false` is returned.
+The argument key `meta_keys` is used to query postmeta. It defaults to  `'null'` and no postmeta is loaded by default. Set the value to `'all'` to fetch all the postmeta rows. You can query single meta keys by passing an array of strings corresponding to keys in postmeta.
+
+The argument key `'single'` is described in WordPress [documentation](https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()` and it defines the return type of the found meta rows. Postmeta is appended under the queried post object with the key `meta`. Found metadata is returned in an associative array with found meta values mapped by the meta keys. The metadata is stored  by the key `meta` under the value returned by the function.
+
+The required return type can be defined similiarly to WordPress' `get_post` function. Set the `output` argument key with one of `'OBJECT'`, `'ARRAY_A'`, or `'ARRAY_N'`, which correspond to a [WP_Post](https://developer.wordpress.org/reference/classes/wp_post/) object, an associative array, or a numeric array, respectively. If no matching post with the passed id is found, `false` is returned.
+
+```
+$args = [
+  'meta_keys' => [
+    'my_meta_key_1',
+    'my_meta_key_2'
+  ],
+  'single' => true
+];
+\DustPress\Query::get_post( get_the_ID(), $args );
+```
 
 #### get_acf_post()
 
-This function extends the `get_post()` function with automatic loading of ACF field group data. Fields are loaded with the ACF function [`get_fields`](https://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post() function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
+This function extends the `get_post()` function with automatic loading of ACF field group data. Fields are loaded with the ACF function [`get_fields`](https://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post()` function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
 
 This function has a recursive operation. If the argument with the key `recursive` is set to `true`, ACF fields with relational post object data are loaded recursively with full meta and field group data. This recursion also works within the first level of an ACF repeater field.
+
+```
+$args = [
+  'meta_keys' => null,
+  'recursive' => true
+];
+\DustPress\Query::get_acf_post( get_the_ID(), $args );
+```
 
 ### Querying multiple posts
 
 #### get_posts()
 
-This function will query multiple posts based on given arguments with the option to get post metadata binded with the post objects. Post objects are queried with the WordPress `get_post` function and the data is extended with metadata. Thus this function accepts the same arguments as the basic `get_post` function. If found, posts are returned as an associative array. If no matching posts are found, `false`is returned. This function accepts arguments in an array with the following keys:
-* all the arguments described in the WordPress codex for the `get_posts`function: https://codex.wordpress.org/Function_Reference/get_posts
-* meta_keys: Function described in the `get_post()` function. Found meta values are returned automatically for all posts if this argument is set.
-* meta_type: Function described in the `get_post()`function
+This function will query multiple posts based on given arguments. Post objects are queried with the WordPress `WP_Query` class. This function accepts arguments in an array with the following arguments:
+
+* All the arguments described in the WordPress codex for the `get_posts`function: https://codex.wordpress.org/Function_Reference/get_posts
+* meta_keys: This functionality is [described](#get_post) in the `get_post()` function and it it applyed for each found post.
+* query_object: If set to `false`, the function returns the posts in an array. If set to `true`, the function returns an object which specifications are described below. Defaults to `false`.
+
+If no matching posts are found, `false` is returned. The return type of this function varies based on the given arguments. If `query_object` argument is set to true **or** the accepted `WP_Query` argument `no_found_rows` is set to `false`, the function returns a clean object with attributes copied from the queried `WP_Query` class instance with unnecessary attributes removed. If these conditions are not met, the function returns the found posts in an array.
+
+```
+public function Query() {
+	// Args might be set if the function is in a submodel or
+	// they can come from a DustPress.js AJAX request.
+    $args = $this->get_args();
+
+    $per_page   = (int) get_option( 'posts_per_page' );
+    $page       = isset( $args['page'] ) ? $args['page'] : 1;
+    $offset     = ( $page - 1 ) * $per_page;
+
+    $query_args = [
+        'post_type'                 => 'post',
+        'posts_per_page'            => $per_page,
+        'offset'                    => $offset,
+        'update_post_meta_cache'    => false,
+        'update_post_term_cache'    => false,
+        'no_found_rows'             => false,
+        'query_object'              => true,
+    ];
+
+    // This returns a WP_Query like object.
+    // Queried posts are accessible in dust by typing 'Query.posts'.
+    return \DustPress\Query::get_posts( $args );   
+}
+```
 
 #### get_acf_posts()
 
-This function extends the get_posts function with the ability to load ACF field group data with the post objects. Accepts the same arguments as the `get_posts` function with the addition of the key `whole_fields` which functions similarly as described in the `get_acf_post` function. This function does not have a recursive functionality. ACF fields with relational post object data need to be loaded separately.
+This function extends the get_posts function with the ability to load ACF field group data with the post objects. Arguments [described](#get_posts) for the `get_posts` function are also accepted here with the addition of the key `whole_fields` which functions similarly as [described](#get_acf_post) in the `get_acf_post` function. This function does not have a recursive functionality. ACF fields with relational post object data need to be loaded separately.
 
 # Plugins
 

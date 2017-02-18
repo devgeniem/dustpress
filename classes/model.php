@@ -1,17 +1,19 @@
 <?php
-
 /**
-* DustPress Model Class
-*
-* Extendable class which contains basic functions for DustPress models.
-*
-* @class DustPress_Model
-*/
+ * DustPress Model Class
+ *
+ * Extendable class which contains basic functions for DustPress models.
+ *
+ * @class DustPress_Model
+ */
 
 namespace DustPress;
 
 use get_class;
 
+/**
+ * The base class for template models.
+ */
 class Model {
 
     // The data
@@ -36,17 +38,18 @@ class Model {
     private $hash;
 
     /**
-    * Constructor for DustPress model class.
-    *
-    * @type   function
-    * @date   10/8/2015
-    * @since  0.2.0
-    *
-    * @param  load (boolean)
-    * @return N/A
-    */
-
+     * Constructor for DustPress model class.
+     *
+     * @type   function
+     * @date   10/8/2015
+     * @since  0.2.0
+     *
+     * @param  load (boolean)
+     * @return N/A
+     */
     public function __construct( $args = [], $parent = null ) {
+        $this->fix_deprecated();
+
         if ( ! empty( $args ) ) {
             $this->args = $args;
         }
@@ -87,17 +90,33 @@ class Model {
     }
 
     /**
-    * fetch_data
-    *
-    * This function gets the data from models and binds it to the global data structure
-    *
-    * @type   function
-    * @date   15/10/2015
-    * @since  0.2.0
-    *
-    * @param  N/A
-    * @return N/A
-    */
+     * This function ensures deprecated functionalities will not break the model.
+     *
+     * @type   function
+     * @date   16/02/2017
+     * @since  1.5.5
+     *
+     * @param  N/A
+     * @return N/A
+     */
+    public function fix_deprecated() {
+        // Reassign deprecated "allowed_functions" to "api".
+        if ( isset( $this->allowed_functions ) ) {
+            error_log('DustPress: Model property "allowed_functions" is deprecated, use "api" instead.');
+            $this->api = $this->allowed_functions;
+        }
+    }
+
+    /**
+     * This function gets the data from models and binds it to the global data structure.
+     *
+     * @type   function
+     * @date   15/10/2015
+     * @since  0.2.0
+     *
+     * @param  N/A
+     * @return N/A
+     */
     public function fetch_data( $functions = null, $tidy = false ) {
         $this->class_name = get_class( $this );
 
@@ -192,7 +211,7 @@ class Model {
                             $this->data[ $this->class_name ] = (object)[];
                         }
 
-                        $data = $this->run_function( $m[1], $class );                   
+                        $data = $this->run_function( $m[1], $class );
 
                         if ( $tidy ) {
                             $tidy_data->{ $m[1] } = $data;
@@ -261,19 +280,17 @@ class Model {
     }
 
     /**
-    * get_class_methods
-    *
-    * This function returns all public methods from current class and it parents up to
-    * but not including Model.
-    *
-    * @type   function
-    * @date   19/3/2015
-    * @since  0.0.1
-    *
-    * @param  $this->class_name (string)
-    * @return $methods (array)
-    */
-
+     * This function returns all public methods from current class and it parents up to
+     * but not including Model.
+     *
+     * @type   function
+     * @date   19/3/2015
+     * @since  0.0.1
+     *
+     * @param  $class_name (string)
+     * @param  $methods (array)
+     * @return $methods (array)
+     */
     private function get_class_methods( $class_name, $methods = array() ) {
         $rc = new \ReflectionClass( $class_name );
         $rmpu = $rc->getMethods();
@@ -303,15 +320,14 @@ class Model {
     }
 
     /**
-    * This function checks if a bound submodel is wanted to run and if it is, runs it.
-    *
-    * @type   function
-    * @date   17/3/2015
-    * @since  0.0.1
-    *
-    * @param  $name (string), $args (array), $cache_sub (boolean)
-    */
-
+     * This function checks if a bound submodel is wanted to run and if it is, runs it.
+     *
+     * @type   function
+     * @date   17/3/2015
+     * @since  0.0.1
+     *
+     * @param  $name (string), $args (array), $cache_sub (boolean)
+     */
     public function bind_sub( $name, $args = null, $cache_sub = true ) {
         $this->class_name = get_class( $this );
         if ( is_string( $name ) ) {
@@ -363,20 +379,18 @@ class Model {
     }
 
     /**
-    *   bind
-    *
-    *   This function binds the data from the models to the global data structure.
-    *   It takes the data key as second parameter and optional data block name as third.
-    *
-    *   @type   function
-    *   @date   17/3/2015
-    *   @since  0.0.1
-    *
-    *   @param  $data (N/A)
-    *   @param  $key (string)
-    *   @param  $model (string)
-    *   @return true/false (boolean)
-    */
+     *   This function binds the data from the models to the global data structure.
+     *   It takes the data key as second parameter and optional data block name as third.
+     *
+     *   @type   function
+     *   @date   17/3/2015
+     *   @since  0.0.1
+     *
+     *   @param  $data (N/A)
+     *   @param  $key (string)
+     *   @param  $model (string)
+     *   @return true/false (boolean)
+     */
     public function bind( $data, $key = null, $model = null ) {
         if ( ! $key ) {
             die("DustPress error: You need to specify the key if you use bind(). Use return if you want to use the function name.");
@@ -398,7 +412,7 @@ class Model {
         else {
             // Create a place to store the wanted data in the global data structure.
             if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
-            
+
             if ( ! $this->parent ) {
                 if ( is_array( $data ) ) {
                     if ( isset( $this->data[ $this->class_name ]->{ $key } ) ) {
@@ -409,7 +423,7 @@ class Model {
                     }
                 }
                 else {
-                    $this->data[ $this->class_name ]->{ $key } = $data;   
+                    $this->data[ $this->class_name ]->{ $key } = $data;
                 }
             }
             else {
@@ -419,16 +433,15 @@ class Model {
     }
 
     /**
-    * This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
-    *
-    * @type   function
-    * @date   15/10/2015
-    * @since  0.2.0
-    *
-    * @param  N/A
-    * @return mixed
-    */
-
+     * This function returns the desired Dust template, if the developer has defined one instead of default. Otherwise return false.
+     *
+     * @type   function
+     * @date   15/10/2015
+     * @since  0.2.0
+     *
+     * @param  N/A
+     * @return mixed
+     */
     public function get_template() {
         $ancestor = $this->get_ancestor();
 
@@ -441,16 +454,15 @@ class Model {
     }
 
     /**
-    * This function lets the developer to set the template to be used to render a page.
-    *
-    * @type   function
-    * @date   15/10/2015
-    * @since  0.2.0
-    *
-    * @param  $template (string)
-    * @return N/A
-    */
-
+     * This function lets the developer to set the template to be used to render a page.
+     *
+     * @type   function
+     * @date   15/10/2015
+     * @since  0.2.0
+     *
+     * @param  $template (string)
+     * @return N/A
+     */
     public function set_template( $template ) {
         $ancestor = $this->get_ancestor();
 
@@ -466,19 +478,18 @@ class Model {
     }
 
     /**
-    * run_function
-    *
-    * This function checks whether data exists in cache (if cache is enabled)
-    * and returns the data or runs the function and returns its return data.
-    *
-    * @type   function
-    * @date   29/01/2016
-    * @since  0.3.1
-    *
-    * @param  $m (string)
-    * @return N/A
-    */
-
+     * run_function
+     *
+     * This function checks whether data exists in cache (if cache is enabled)
+     * and returns the data or runs the function and returns its return data.
+     *
+     * @type   function
+     * @date   29/01/2016
+     * @since  0.3.1
+     *
+     * @param  $m (string)
+     * @return N/A
+     */
     private function run_function( $m, $class = null ) {
         $cached = $this->get_cached( $m );
 
@@ -516,18 +527,15 @@ class Model {
     }
 
     /**
-    * get_cached
-    *
-    * This function checks if the function is defined as cacheable and returns the cache if it exists.
-    *
-    * @type   function
-    * @date   29/01/2016
-    * @since  0.3.1
-    *
-    * @param  $m (string)
-    * @return N/A
-    */
-
+     * This function checks if the function is defined as cacheable and returns the cache if it exists.
+     *
+     * @type   function
+     * @date   29/01/2016
+     * @since  0.3.1
+     *
+     * @param  $m (string)
+     * @return N/A
+     */
     private function get_cached( $m ) {
 
         if ( ! dustpress()->get_setting('cache') ) {
@@ -555,19 +563,16 @@ class Model {
     }
 
     /**
-    * maybe_cache
-    *
-    * This function stores data sets to transient cache if it is enabled
-    * and indexes cache keys for model-function-pairs.
-    *
-    * @type   function
-    * @date   29/01/2016
-    * @since  0.3.1
-    *
-    * @param  $m (string), $data (any), $subs (array)
-    * @return N/A
-    */
-
+     * This function stores data sets to transient cache if it is enabled
+     * and indexes cache keys for model-function-pairs.
+     *
+     * @type   function
+     * @date   29/01/2016
+     * @since  0.3.1
+     *
+     * @param  $m (string), $data (any), $subs (array)
+     * @return N/A
+     */
     private function maybe_cache( $m, $data, $subs ) {
 
         // Check whether cache is enabled and model has ttl-settings.
@@ -604,8 +609,6 @@ class Model {
     }
 
     /**
-     *  is_cacheable_function
-     *
      *  Checks whether the function is to be cached.
      *
      *  @param  $m (string), $ttl (array)
@@ -628,23 +631,20 @@ class Model {
     }
 
     /**
-    * is_function_allowed
-    *
-    * This functions returns true if asked private or protected functions is
-    * allowed to be run via the run wrapper.
-    *
-    * @type   function
-    * @date   17/12/2015
-    * @since  0.3.0
-    *
-    * @param   $function (string)
-    * @return  $allowed (boolean)
-    */
+     * This functions returns true if asked private or protected functions is
+     * allowed to be run via the run wrapper.
+     *
+     * @type   function
+     * @date   17/12/2015
+     * @since  0.3.0
+     *
+     * @param   $function (string)
+     * @return  $allowed (boolean)
+     */
     private function is_function_allowed( $function ) {
-        if ( is_array( $this->allowed_functions ) && in_array( $function, $this->allowed_functions ) ) {
+        if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
             return true;
-        }
-        else {
+        } else {
             $reflection = new \ReflectionMethod( $this, $function );
             if ( $reflection->isPublic() ) {
                 return true;
@@ -656,16 +656,15 @@ class Model {
     }
 
     /**
-    * This functions creates a cache key hash from parameters.
-    *
-    * @type   function
-    * @date   17/12/2015
-    * @since  0.3.0
-    *
-    * @param  $args (ellipsis)
-    * @return $key (string)
-    */
-
+     * This functions creates a cache key hash from parameters.
+     *
+     * @type   function
+     * @date   17/12/2015
+     * @since  0.3.0
+     *
+     * @param  $args (ellipsis)
+     * @return $key (string)
+     */
     private function generate_cache_key() {
         $args = func_get_args();
         $seed = '';
@@ -678,18 +677,18 @@ class Model {
     }
 
     /**
-    * This function runs a restricted function if it exists in the allowed functions
-    * and returns whatever the wanted function returns.
-    *
-    * @type   function
-    * @date   17/12/2015
-    * @since  0.3.0
-    *
-    *
-    * @param   $function (string)
-    * @param   $args (array)
-    * @return mixed
-    */
+     * This function runs a restricted function if it exists in the allowed functions
+     * and returns whatever the wanted function returns.
+     *
+     * @type   function
+     * @date   17/12/2015
+     * @since  0.3.0
+     *
+     *
+     * @param   $function (string)
+     * @param   $args (array)
+     * @return mixed
+     */
     public function run_restricted( $function ) {
         if ( $this->is_function_allowed( $function ) ) {
             return $this->run_function( $function );
@@ -700,21 +699,21 @@ class Model {
     }
 
     /**
-    * Rename current model's data block. Probably for template changing purposes.
-    *
-    * @type   function
-    * @date   14/09/2016
-    * @since  1.2.0
-    *
-    *
-    * @param   $function (string)
-    * @param   $args (array)
-    * @return mixed
-    */
+     * Rename current model's data block. Probably for template changing purposes.
+     *
+     * @type   function
+     * @date   14/09/2016
+     * @since  1.2.0
+     *
+     *
+     * @param   $function (string)
+     * @param   $args (array)
+     * @return mixed
+     */
     protected function rename_model( $name ) {
         $original         = $this->class_name;
         $this->class_name = $name;
-        
+
         if ( isset( $this->data[ $original ] ) ) {
             $this->data[ $name ] = $this->data[ $original ];
             unset( $this->data[ $original ] );
