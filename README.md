@@ -40,6 +40,15 @@ DustPress supports Composer's autoload feature. If you have it enabled, you don'
 
 - Clone this repository somewhere in your project and require the `dustpress.php` file in your `functions.php`.
 
+## External resources
+
+There are several other repositories that contain DustPress material as well:
+
+- [DustPress Starter Theme](https://github.com/devgeniem/dustpress-starter-theme) - a basic starter theme to use as a boilerplate
+- [DustPress Debugger](https://github.com/devgeniem/dustpress-debugger) - a handy plugin to see the data you have sent to the view
+- [DustPress.js](https://github.com/devgeniem/dustpress-js) - a plugin that provides a JavaScript library to unleash the magical powers of DustPress on the front-end as well
+- [DustPress Comments Helper](https://github.com/devgeniem/dustpress-comments) - a DustPress helper to easily implement commenting on your theme
+
 ## Usage
 
 You need to call `dustpress();` in your `functions.php` to enable DustPress. It must be naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
