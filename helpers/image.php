@@ -1,6 +1,6 @@
 <?php
 /**
- * The Contains helper
+ * The Image helper
  */
 
 namespace DustPress;
