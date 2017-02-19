@@ -564,6 +564,18 @@ _the echoed output_
 <ul>
 ```
 
+### json output
+
+DustPress can output its data instead of the rendered version if the developer enables the functionality. It is done by adding one or both of following filters into your `functions.php`:
+
+```
+add_filter( 'dustpress/settings/json_url', '__return_true' );
+
+add_filter( 'dustpress/settings/json_headers', '__return_true' );
+```
+
+The former enables JSON output when query parameter `?JSON` is added to the url, and the latter when HTTP header `Accept: application/json` is present on the request.
+
 # Additional Classes
 
 ## \DustPress\Query

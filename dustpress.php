@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.5.8
+Version: 1.5.9
 */
 
 final class DustPress {
@@ -535,6 +535,14 @@ final class DustPress {
 			$type = get_option('dustpress_default_format');
 		}
 
+		if ( $this->get_setting('json_url') && isset( $_GET['json'] ) ) {
+			$type = 'json';
+		}
+
+		if ( $this->get_setting('json_headers') && isset( $_SERVER['HTTP_ACCEPT'] ) && $_SERVER['HTTP_ACCEPT'] == 'application/json' ) {
+			$type = 'json';
+		}
+
 		$types = array(
 			"html" => function( $data, $partial, $dust ) {
 
@@ -707,7 +715,9 @@ final class DustPress {
 		$this->settings = [
 			"cache" => false,
 			"debug_data_block_name" => "Helper data",
-			"rendered_expire_time" => 7*60*60*24
+			"rendered_expire_time" => 7*60*60*24,
+			"json_url" => false,
+			"json_headers" => false,
 		];
 
 		// loop through the settings and execute possible filters from functions
@@ -877,7 +887,7 @@ final class DustPress {
 	*
 	*  @return	(boolean)
 	*/
-	public function is_dustpress_ajax() {
+	private function is_dustpress_ajax() {
 		if ( isset( $_REQUEST["dustpress_data"] ) ) {
 			return true;
 		}
@@ -912,11 +922,6 @@ final class DustPress {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
 
-        if ( ! defined( 'DOING_AJAX' ) ) {
-            // Define the WordPress constant.
-		    define( 'DOING_AJAX', true );
-        }
-
 		$runs = [];
 
 		// Get the args
@@ -942,7 +947,7 @@ final class DustPress {
 				}
 				else {
 					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
-
+					
 					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
 						$response = [ "success" => $html, "data" => $data ];
 					}
