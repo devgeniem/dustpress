@@ -51,7 +51,7 @@ There are several other repositories that contain DustPress material as well:
 
 ## Usage
 
-You need to call `dustpress();` in your `functions.php` to enable DustPress. It must be naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
+You need to call `dustpress();` in your `functions.php` to enable DustPress. It must naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
 
 Within your theme there must be two directories called `models` and `partials` to use DustPress. Their purpose will be explained later in this file.
 

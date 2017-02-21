@@ -37,6 +37,9 @@ class Model {
     // Temporary hash key
     private $hash;
 
+    // Is execution terminated
+    private $terminated;
+
     /**
      * Constructor for DustPress model class.
      *
@@ -247,6 +250,10 @@ class Model {
                         }
                     }
                 }
+
+                if ( $this->terminated == true ) {
+                    break 2;
+                }
             }
 
             unset( $class_methods );
@@ -329,6 +336,10 @@ class Model {
      * @param  $name (string), $args (array), $cache_sub (boolean)
      */
     public function bind_sub( $name, $args = null, $cache_sub = true ) {
+        if ( $this->terminated == true ) {
+            return;
+        }
+
         $this->class_name = get_class( $this );
         if ( is_string( $name ) ) {
             $model = new $name( $args, $this );
@@ -375,6 +386,10 @@ class Model {
                 $this->called_subs = [];
             }
             $this->called_subs[] = [ 'class_name' => $name, 'args'  => $args ];
+        }
+
+        if ( $model->terminated == true ) {
+            $this-terminate();
         }
     }
 
@@ -738,5 +753,12 @@ class Model {
             }
         }
         return false;
+    }
+
+    /**
+     * A function to set execution terminated.
+     */
+    protected function terminate() {
+        $this->terminated = true;
     }
 }
