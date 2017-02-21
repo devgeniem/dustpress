@@ -377,7 +377,7 @@ class Model {
             $this->submodels = (object)[];
         }
 
-        $this->submodels->{ $class_name } = $model;
+        $this->submodels->{ $name } = $model;
 
 
         // Store called submodels for caching purposes.
@@ -657,9 +657,7 @@ class Model {
      * @return  $allowed (boolean)
      */
     private function is_function_allowed( $function ) {
-        if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
-            return true;
-        } else {
+        if ( ! defined('DOING_AJAX') ) {
             $reflection = new \ReflectionMethod( $this, $function );
             if ( $reflection->isPublic() ) {
                 return true;
@@ -667,6 +665,12 @@ class Model {
             else {
                 return false;
             }
+        }
+        else if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
@@ -755,9 +759,6 @@ class Model {
         return false;
     }
 
-    /**
-     * A function to set execution terminated.
-     */
     protected function terminate() {
         $this->terminated = true;
     }
