@@ -62,22 +62,57 @@ class Model {
         $this->parent = $parent;
     }
 
+    /**
+     * @return array
+     */
     public function get_args() {
         return $this->args;
     }
 
+    /**
+     * @return mixed
+     */
     public function get_data() {
         return $this->data;
     }
 
+    /**
+     * @param $name
+     *
+     * @return mixed
+     */
     public function get_submodel( $name ) {
         return $this->submodels->{$name};
     }
 
+    /**
+     * @return object
+     */
     public function get_submodels() {
         return $this->submodels;
     }
 
+    /**
+     * @return mixed
+     */
+    public function get_hash() {
+        return $this->hash;
+    }
+
+    /**
+     * Set the hash key.
+     *
+     * @param string $hash A hash key for caching.
+     */
+    public function set_hash( $hash ) {
+        $this->hash = $hash;
+    }
+
+    /**
+     * @param Model $model A Model instance.
+     *
+     * @return Model
+     */
     public function get_ancestor( $model = null ) {
         if ( ! isset( $model ) ) {
             return $this->get_ancestor( $this );
@@ -506,14 +541,13 @@ class Model {
      * @return N/A
      */
     private function run_function( $m, $class = null ) {
-        $cached = $this->get_cached( $m );
+        $cached = Cache::get_cached( $m, $this );
 
         if ( is_null( $class ) ) {
             $class = $this->class_name;
         }
 
         if ( $cached ) {
-            //error_log('this is a cache: ' . $m);
             return $cached;
         }
 
@@ -526,123 +560,13 @@ class Model {
             $data = call_user_func( [ $this, $m ] );
         }
 
-        if ( isset( $this->called_subs ) ) {
-            $subs = $this->called_subs;
-        }
-        else {
-            $subs = null;
-        }
+        Cache::maybe_cache( $m, $this );
 
-        $this->maybe_cache( $m, $data, $subs );
-
-        // Unset called submodels for this run
-        $this->called_subs = null;
+        // Unset called submodels and the hash key for this run
+        $this->called_subs  = null;
+        $this->hash         = null;
 
         return $data;
-    }
-
-    /**
-     * This function checks if the function is defined as cacheable and returns the cache if it exists.
-     *
-     * @type   function
-     * @date   29/01/2016
-     * @since  0.3.1
-     *
-     * @param  $m (string)
-     * @return N/A
-     */
-    private function get_cached( $m ) {
-
-        if ( ! dustpress()->get_setting('cache') ) {
-            return false;
-        }
-
-        $args       = $this->get_args();
-        $this->hash = $this->generate_cache_key( $this->class_name, $args, $m );
-
-        $cached = get_transient( $this->hash );
-
-        if ( false === $cached ) {
-            return false;
-        }
-
-        // Run stored submodel calls
-        if ( isset( $cached->subs ) && is_array( $cached->subs ) ) {
-            foreach ( $cached->subs as $sub_data ) {
-                // Run submodel without cacheing it.
-                $this->bind_sub( $sub_data['class_name'], $sub_data['args'], false );
-            }
-        }
-
-        return $cached->data;
-    }
-
-    /**
-     * This function stores data sets to transient cache if it is enabled
-     * and indexes cache keys for model-function-pairs.
-     *
-     * @type   function
-     * @date   29/01/2016
-     * @since  0.3.1
-     *
-     * @param  $m (string), $data (any), $subs (array)
-     * @return N/A
-     */
-    private function maybe_cache( $m, $data, $subs ) {
-
-        // Check whether cache is enabled and model has ttl-settings.
-        if ( dustpress()->get_setting('cache') && $this->is_cacheable_function( $m ) ) {
-
-            // Extend data with submodels
-            $to_cache = (object)[ 'data' => $data, 'subs' => $subs ];
-
-            set_transient( $this->hash, $to_cache, $this->ttl[ $m ] );
-
-            // If no hash key exists, bail
-            if ( ! isset( $this->hash ) ) {
-                return;
-            }
-
-            // Index key for cache clearing
-            $index      = $this->generate_cache_key( $this->class_name, $m );
-            $hash_index = get_transient( $index );
-
-            if ( ! is_array( $hash_index ) ) {
-                $hash_index = [];
-            }
-
-            // Set the data hash key to the index array of this model function
-            if ( ! in_array( $this->hash, $hash_index ) ) {
-                $hash_index[] = $this->hash;
-            }
-
-            // Store transient for 30 days
-            set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
-        }
-
-        return false;
-    }
-
-    /**
-     *  Checks whether the function is to be cached.
-     *
-     *  @param  $m (string), $ttl (array)
-     *  @return (boolean)
-     */
-    private function is_cacheable_function( $m ) {
-        // No caching set
-        if ( ! isset( $this->ttl ) && ! is_array( $this->ttl ) ) {
-            return false;
-        }
-        if ( is_array( $this->ttl ) ) {
-            foreach ( $this->ttl as $key => $val ) {
-                if ( $m === $key ) {
-
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -672,27 +596,6 @@ class Model {
         else {
             return false;
         }
-    }
-
-    /**
-     * This functions creates a cache key hash from parameters.
-     *
-     * @type   function
-     * @date   17/12/2015
-     * @since  0.3.0
-     *
-     * @param  $args (ellipsis)
-     * @return $key (string)
-     */
-    private function generate_cache_key() {
-        $args = func_get_args();
-        $seed = '';
-
-        foreach( $args as $arg ) {
-            $seed .= serialize( $arg );
-        }
-
-        return sha1( $seed );
     }
 
     /**
