@@ -43,7 +43,8 @@ class Settings extends \DustPress\Model {
         return [
             'mainImage' => [
                 'sizes'  => [
-                    '(min-width: 1280px) 100vw',                    						'(min-width: 768px) 50vw',
+                    '(min-width: 1280px) 100vw',                    						
+                    '(min-width: 768px) 50vw',
                     '100vw',
                 ],
                 'src' => 'https://image.com/example.jpg',
