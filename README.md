@@ -448,6 +448,8 @@ Example:
 {@s s="Home page" td="my-page" /}
 ```
 
+You can use a [translation parser](https://github.com/devgeniem/dustpress/wiki/Translation-parser) to find all strings defined with {@s} and write them to a file in a format that can be scanned with POedit.
+
 ### sep
 
 `sep` helper is an extension to Dust's native `sep` helper. It behaves the same, but it can also be given two extra parameters: `start` and `end`. They work as the offsets of the function. By default `start` is 0 and `end` is 1.
