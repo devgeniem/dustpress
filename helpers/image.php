@@ -35,40 +35,50 @@ class Image extends Helper {
 
             } else { // Only the ID given as the original image source.
 
-                // No custom responsive parameters given
-                if ( null === $image_data['srcset'] && null === $image_data['sizes'] ) {
+                if ( null === $image_data['size'] ) {
 
-                    // Return the WordPress default img-tag
-                    // from the full-sized image with a source set.
-                    $the_image_markup = wp_get_attachment_image(
-                        $image_data['id'],
-                        'full',
-                        false,
-                        $image_data['attrs']
-                    );
+                    return '<p><strong>Dustpress image helper error:</strong>
+                            <em>No image size attribute given. When
+                            using the ID, you have to give a registered size name to
+                            the helper. </em></p>';
 
-                    if ( $the_image_markup ) {
+                } else { // ID and size given.
 
-                        return $the_image_markup;
+                    // No custom responsive parameters given
+                    if ( null === $image_data['srcset'] && null === $image_data['sizes'] ) {
 
-                    } else {
+                        // Return the WordPress default img-tag
+                        // from the full-sized image with a source set.
+                        $the_image_markup = wp_get_attachment_image(
+                            $image_data['id'],
+                            $image_data['size'],
+                            false,
+                            $image_data['attrs']
+                        );
 
-                        return '<p><strong>Dustpress image helper error:</strong>
-                                <em>No image found from the database with the given id.</em></p>';
+                        if ( $the_image_markup ) {
 
-                    }
-                } else { // Custom responsive parameters are given.
+                            return $the_image_markup;
 
-                    // SRCSET exists but no SIZES attribute is given.
-                    if ( null === $image_data['sizes'] ) {
+                        } else {
 
-                        return '<p><strong>Dustpress image helper error:</strong>
-                                <em>Srcset exists but no sizes attribute is given.</em></p>';
+                            return '<p><strong>Dustpress image helper error:</strong>
+                                    <em>No image found from the database with the given id.</em></p>';
 
-                    } else { // Both custom responsive parameters and the id is given.
+                        }
+                    } else { // Custom responsive parameters are given.
 
-                        return $this->get_image_markup( $image_data );
+                        // SRCSET exists but no SIZES attribute is given.
+                        if ( null === $image_data['sizes'] ) {
 
+                            return '<p><strong>Dustpress image helper error:</strong>
+                                    <em>Srcset exists but no sizes attribute is given.</em></p>';
+
+                        } else { // Both custom responsive parameters and the id is given.
+
+                            return $this->get_image_markup( $image_data );
+
+                        }
                     }
                 }
             }
@@ -119,6 +129,7 @@ class Image extends Helper {
         $image_data = [
             'id' => null,
             'src' => null,
+            'size' => null,
             'srcset' => null,
             'sizes' => null,
             'attrs' => [],
@@ -132,6 +143,11 @@ class Image extends Helper {
         // Add the src attribute to the data array if it is given.
         if ( isset( $params->src ) ) {
             $image_data['src'] = $params->src;
+        }
+
+        // Add the size attribute to the data array if it is given.
+        if ( isset( $params->size ) ) {
+            $image_data['size'] = $params->size;
         }
 
         // Add the srcset attribute to the data array if it is given.
@@ -173,8 +189,12 @@ class Image extends Helper {
 
         } else { // Else get the images src from WP.
 
+            // Get the image from WP.
+            $image_src_array = wp_get_attachment_image_src( $image_data['id'],
+            $image_data['size'] );
+
             // Construct the beginning markup of the image string if the image is found.
-            if ( $image_src_array = wp_get_attachment_image_src( $image_data['id'], 'full' ) ) {
+            if ( $image_src_array ) {
 
                 $image_src = $image_src_array[0];
                 $image_width = $image_src_array[1];
