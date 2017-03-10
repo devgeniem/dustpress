@@ -389,9 +389,9 @@ Example:
 {@content data=fields.some_content.value /}
 ```
 
-### Image
+### image
 
-The `image` helper returns a markup for `img` tags with proper `srcset` and `sizes` attributes for responsive use. The full readme for the helper can be found [here](https://github.com/devgeniem/dustpress/docs/helpers/image.md).
+The `image` helper returns a markup for `img` tags with proper `srcset` and `sizes` attributes for responsive use. The full readme for the helper can be found [here](docs/helpers/image.md).
 
 
 ### menu
