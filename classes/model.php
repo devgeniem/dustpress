@@ -37,6 +37,9 @@ class Model {
     // Temporary hash key
     private $hash;
 
+    // Is execution terminated
+    private $terminated;
+
     /**
      * Constructor for DustPress model class.
      *
@@ -247,6 +250,10 @@ class Model {
                         }
                     }
                 }
+
+                if ( $this->terminated == true ) {
+                    break 2;
+                }
             }
 
             unset( $class_methods );
@@ -329,6 +336,10 @@ class Model {
      * @param  $name (string), $args (array), $cache_sub (boolean)
      */
     public function bind_sub( $name, $args = null, $cache_sub = true ) {
+        if ( $this->terminated == true ) {
+            return;
+        }
+
         $this->class_name = get_class( $this );
         if ( is_string( $name ) ) {
             $model = new $name( $args, $this );
@@ -366,7 +377,7 @@ class Model {
             $this->submodels = (object)[];
         }
 
-        $this->submodels->{ $class_name } = $model;
+        $this->submodels->{ $name } = $model;
 
 
         // Store called submodels for caching purposes.
@@ -375,6 +386,10 @@ class Model {
                 $this->called_subs = [];
             }
             $this->called_subs[] = [ 'class_name' => $name, 'args'  => $args ];
+        }
+
+        if ( $model->terminated == true ) {
+            $this-terminate();
         }
     }
 
@@ -642,9 +657,7 @@ class Model {
      * @return  $allowed (boolean)
      */
     private function is_function_allowed( $function ) {
-        if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
-            return true;
-        } else {
+        if ( ! defined('DOING_AJAX') ) {
             $reflection = new \ReflectionMethod( $this, $function );
             if ( $reflection->isPublic() ) {
                 return true;
@@ -652,6 +665,12 @@ class Model {
             else {
                 return false;
             }
+        }
+        else if ( isset( $this->api ) && is_array( $this->api ) && in_array( $function, $this->api ) ) {
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
@@ -738,5 +757,9 @@ class Model {
             }
         }
         return false;
+    }
+
+    protected function terminate() {
+        $this->terminated = true;
     }
 }

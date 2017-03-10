@@ -56,4 +56,4 @@ class Settings extends \DustPress\Model {
             ],
         ];
     }
-}
+} 

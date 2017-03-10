@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.5.9
+Version: 1.5.13
 */
 
 final class DustPress {
@@ -15,7 +15,7 @@ final class DustPress {
 	private static $instance;
 
 	// Instance of DustPHP
-	private $dust;
+	public $dust;
 
 	// Main model
 	private $model;
@@ -143,6 +143,8 @@ final class DustPress {
 				$this->model = new $template();
 
 				$this->model->fetch_data();
+
+				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
 				$template_override = $this->model->get_template();
 
@@ -921,6 +923,21 @@ final class DustPress {
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
+		
+		if ( isset( $request_data['token'] ) && isset( $_COOKIE['dpjs_token'] ) ) {
+			$token = ( $request_data['token'] === $_COOKIE['dpjs_token'] );
+		}
+		else {
+			$token = false;
+		}
+
+		if ( ! $token ) {
+			die( json_encode( [ "error" => "CSRF token mismatch." ] ) );
+		}
+
+		if ( ! defined( 'DOING_AJAX' ) ) {
+			define( 'DOING_AJAX', true );
+		}
 
 		$runs = [];
 
@@ -1272,7 +1289,7 @@ final class DustPress {
 
 			foreach ( $paths as $path ) {
 				if ( is_readable( $path ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {	
 						if ( strpos( $file, "/" . $filename ) ) {
 							if ( is_readable( $file ) ) {
 								require_once( $file );

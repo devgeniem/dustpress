@@ -51,7 +51,7 @@ There are several other repositories that contain DustPress material as well:
 
 ## Usage
 
-You need to call `dustpress();` in your `functions.php` to enable DustPress. It must be naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
+You need to call `dustpress();` in your `functions.php` to enable DustPress. It must naturally be done after requiring the library itself if you haven't used Composer's autoload feature.
 
 Within your theme there must be two directories called `models` and `partials` to use DustPress. Their purpose will be explained later in this file.
 
@@ -448,6 +448,8 @@ Example:
 {@s s="Home page" td="my-page" /}
 ```
 
+You can use a [translation parser](https://github.com/devgeniem/dustpress/wiki/Translation-parser) to find all strings defined with {@s} and write them to a file in a format that can be scanned with POedit.
+
 ### sep
 
 `sep` helper is an extension to Dust's native `sep` helper. It behaves the same, but it can also be given two extra parameters: `start` and `end`. They work as the offsets of the function. By default `start` is 0 and `end` is 1.
@@ -571,7 +573,7 @@ _the echoed output_
 
 ### json output
 
-DustPress can output its data instead of the rendered version if the developer enables the functionality. It is done by adding one or both of following filters into your `functions.php`:
+DustPress can output its data as JSON instead of the rendered version if the developer enables the functionality. It is done by adding one or both of following filters into your `functions.php`:
 
 ```
 add_filter( 'dustpress/settings/json_url', '__return_true' );
