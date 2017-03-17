@@ -389,6 +389,11 @@ Example:
 {@content data=fields.some_content.value /}
 ```
 
+### image
+
+The `image` helper returns a markup for `img` tags with proper `srcset` and `sizes` attributes for responsive use. The full readme for the helper can be found [here](docs/helpers/image.md).
+
+
 ### menu
 
 `menu` helper does what it name suggests: it creates a menu. It has several parameters that are explained below:
@@ -442,6 +447,8 @@ Example:
 ```
 {@s s="Home page" td="my-page" /}
 ```
+
+You can use a [translation parser](https://github.com/devgeniem/dustpress/wiki/Translation-parser) to find all strings defined with {@s} and write them to a file in a format that can be scanned with POedit.
 
 ### sep
 
@@ -655,7 +662,7 @@ public function Query() {
 
     // This returns a WP_Query like object.
     // Queried posts are accessible in dust by typing 'Query.posts'.
-    return \DustPress\Query::get_posts( $args );   
+    return \DustPress\Query::get_posts( $args );
 }
 ```
 
