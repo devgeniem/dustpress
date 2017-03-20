@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.6.1
+Version: 1.6.2
 */
 
 final class DustPress {
@@ -945,6 +945,10 @@ final class DustPress {
 		}
 		else {
 			$args = [];
+		}
+
+		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data["path"] ) ) {
+			die( json_encode( [ "error" => "AJAX call path contains illegal characters." ] ) );
 		}
 
 		// Check if the data we got from the JS side has a function path
