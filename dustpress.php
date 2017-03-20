@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.6.2
+Version: 1.6.3
 */
 
 final class DustPress {
@@ -921,7 +921,7 @@ final class DustPress {
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
-		
+
 		if ( isset( $request_data['token'] ) && isset( $_COOKIE['dpjs_token'] ) ) {
 			$token = ( $request_data['token'] === $_COOKIE['dpjs_token'] );
 		}
@@ -966,7 +966,7 @@ final class DustPress {
 				}
 				else {
 					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
-					
+
 					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
 						$response = [ "success" => $html, "data" => $data ];
 					}
@@ -1291,7 +1291,7 @@ final class DustPress {
 
 			foreach ( $paths as $path ) {
 				if ( is_readable( $path ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {	
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
 						if ( strpos( $file, "/" . $filename ) ) {
 							if ( is_readable( $file ) ) {
 								require_once( $file );
