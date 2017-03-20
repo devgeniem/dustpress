@@ -10,21 +10,36 @@ namespace DustPress;
  */
 class Pagination extends Helper {
 
+    /**
+     * An object for binding the helper data.
+     *
+     * @var object
+     */
     private $data;
-    private $output;
+
+    /**
+     * The query variable to identify the current page.
+     *
+     * @var string
+     */
     private $page_var;
 
+    /**
+     * Output the helper html.
+     *
+     * @return string
+     */
     public function output() {
 
         $params             = $this->params;
-        $data               = (object)[];
+        $data               = (object) [];
         $pages              = array();
         $visible            = 7;
         $neighbours         = 3;
         $hellip_start       = true;
         $hellip_end         = true;
         $strings            = isset( $params->strings ) ? $params->strings : [];
-        $cur_page           = (int) $params->page;
+        $cur_page           = isset( $params->page )    ? (int) $params->page : 1;
         $prev_page          = $cur_page - 1;
         $next_page          = $cur_page + 1;
         $per_page           = (int) $params->per_page;
@@ -42,7 +57,7 @@ class Pagination extends Helper {
         $strings = wp_parse_args( $strings, $defaults );
 
         // Prevent dividing if there are zero items.
-        if(  $per_page > 0 ) {
+        if ( $per_page > 0 ) {
             $page_count = ceil( $items / $per_page );
         } else {
             $page_count = 1;
@@ -54,9 +69,9 @@ class Pagination extends Helper {
         $on_first_page      = false;
         $on_last_page       = false;
 
-        // More items than the set per_page
+        // There are more items than one page can hold.
         if ( ( $items - $per_page ) > 0 ) {
-            // on the first page
+            // On the first page.
             if ( $cur_page == $first_page ) {
                 $hellip_start = '';
                 $on_first_page = true;
@@ -65,33 +80,39 @@ class Pagination extends Helper {
                         $hellip_end = '';
                         break;
                     }
-                    $pages[$i] = (object)[];
-                    $pages[$i]->page = $i + 1;
-                    if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
+                    $pages[ $i ] = (object) [];
+                    $pages[ $i ]->page = $i + 1;
+                    if ( $cur_page === $pages[ $i ]->page ) {
+                        $pages[ $i ]->active = true;
+                    }
                 }
             }
-            // on the last page
-            elseif ( $cur_page == $last_page ) {
+            // On the last page.
+            elseif ( $cur_page === $last_page ) {
                 $hellip_end = '';
                 $on_last_page = true;
                 if ( $page_count <= $visible ) {
                     $hellip_start = '';
                     for ( $i = 0; $i < $page_count; $i++ ) {
-                        $pages[$i] = (object)[];
-                        $pages[$i]->page = $i + 1;
-                        if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
+                        $pages[ $i ] = (object) [];
+                        $pages[ $i ]->page = $i + 1;
+                        if ( $cur_page === $pages[ $i ]->page ) {
+                            $pages[ $i ]->active = true;
+                        }
                     }
                 }
                 else {
                     $start = $page_count - $visible + 1;
                     for ( $i = $start; $i <= $page_count; $i++ ) {
-                        $pages[$i] = (object)[];
-                        $pages[$i]->page = $i;
-                        if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
+                        $pages[ $i ] = (object) [];
+                        $pages[ $i ]->page = $i;
+                        if ( $cur_page === $pages[ $i ]->page ) {
+                            $pages[ $i ]->active = true;
+                        }
                     }
                 }
             }
-            // on a random page
+            // On a random page.
             else {
                 $start = $cur_page - $neighbours;
                 if ( $start <= 1 ) {
@@ -113,17 +134,17 @@ class Pagination extends Helper {
                 $max_pages = $start + ( $visible - 1 );
                 if ( $max_pages <= $page_count ) {
                     for ( $i = $start; $i <= $max_pages; $i++) {
-                        $pages[$i] = (object)[];
-                        $pages[$i]->page = $i;
-                        if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
+                        $pages[ $i ] = (object) [];
+                        $pages[ $i ]->page = $i;
+                        if ( $cur_page === $pages[ $i ]->page ) $pages[ $i ]->active = true;
                     }
                 }
                 // display less
                 else {
                     for ( $i = $start; $i <= $end; $i++) {
-                        $pages[$i] = (object)[];
-                        $pages[$i]->page = $i;
-                        if ( $cur_page == $pages[$i]->page ) $pages[$i]->active = true;
+                        $pages[ $i ] = (object) [];
+                        $pages[ $i ]->page = $i;
+                        if ( $cur_page === $pages[ $i ]->page ) $pages[ $i ]->active = true;
                     }
                 }
             }
@@ -150,10 +171,10 @@ class Pagination extends Helper {
         $data->next_page            = $next_page;
         $data->prev_page            = $prev_page;
         $data->hash                 = $hash;
-        $data->page_var           = $this->page_var;
+        $data->page_var             = $this->page_var;
         $data->page_link            = apply_filters( 'dustpress/pagination/page_link', $page_link );
 
-        $data->S                    = (object)[];
+        $data->S                    = (object) [];
         $data->S->prev              = $strings['previous'];
         $data->S->next              = $strings['next'];
         $data->S->start             = $strings['start'];
@@ -162,36 +183,43 @@ class Pagination extends Helper {
         $this->data = $data;
 
         return dustpress()->render( [
-            "partial"   => "pagination",
-            "data"      => $this->data,
-            "type"      => "html",
-            "echo"      => false
+            'partial'   => 'pagination',
+            'data'      => $this->data,
+            'type'      => 'html',
+            'echo'      => false,
         ]);
     }
 
+    /**
+     * Format the pagination page link by adding the pagination
+     * parameter to the current query string.
+     *
+     * @return string
+     */
     public function build_page_link() {
-        $query_string = filter_var($_SERVER['QUERY_STRING'], FILTER_SANITIZE_STRING);
+        $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_STRING );
         $page_link      = '?';
         // User passed get parameters
         if ( $query_string ) {
-            // A page queried
+            // A page queried.
             if ( strpos( $query_string, $this->page_var ) !== false ) {
                 $idx = 1;
                 foreach ( $_GET as $key => $value ) {
-                    if ( $key != $this->page_var ) {
+                    if ( $key !== $this->page_var ) {
                         if ( is_array( $value ) ) {
                             foreach ( $value as $v ) {
-                                $page_link .= urlencode( $key ) . '%5B%5D=' . urlencode( $v ) . '&';
+                                $page_link .= rawurlencode( $key ) . '%5B%5D=';
+                                $page_link .= rawurlencode( $v ) . '&';
                             }
                         } else {
-                            $page_link .= urlencode( $key ) . '=' . urlencode( $value ) . '&';
+                            $page_link .= rawurlencode( $key ) . '=' . rawurlencode( $value ) . '&';
                         }
                     }
                     $idx++;
                 }
                 $page_link .= $this->page_var . '=';
             }
-            // No page queried
+            // No page queried.
             else {
                 $page_link .= $query_string . '&' . $this->page_var . '=';
             }

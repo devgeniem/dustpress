@@ -416,18 +416,41 @@ Example:
 
 ### pagination
 
-`pagination` helper prints out a basic pagination for your template. It takes the data from your model as parameters and calculates the number of pages based on the `posts per page` value. It then prints out an `ul` element containing the page links with the corresponding page as a query parameter. The helper accepts the following parameters:
+`pagination` helper prints out a basic pagination for your template. It takes the data from your model as parameters and calculates the number of pages based on the `per_page` value. It then prints out an `ul` element containing the page links with the corresponding page as a query parameter. The helper accepts the following parameters:
 
+- `page`: The current active page. Defaults to `1`.
 - `per_page`: The number of items a single page should have.
 - `items`: The amount of items in your data set. For example this could be the post count.
 - `page_var`: The query parameter for the pagination links. The default is `paged`.
 - `hash`: The hash link to be added at the end of the pagination links.
+- `strings`: An array of strings to translate and manipulate the texts in the navigational links. Pass the following array keys with translated values:
+  - `previous`
+  - `next`
+  - `start`
+  - `end`
 
 Example:
 
 ```
-{@pagination per_page=10 items=item_count page_var="paged" hash="posts-section-id" }
+{@pagination page=current_page per_page=10 items=item_count page_var="paged" hash="posts-section-id" /}
 ```
+#### Page link formatting
+
+The helper defaults to the following page link format: `{page_link}{last_page}{hash}`. Without any customizing to WordPress url handling the links are outputted as `https://domain.com/something/?paged=2`.  To alter the link formatting filter the `page_link` value with the `dustpress/pagination/page_link` filter and replace the `pagination.dust` with your custom template in you theme.
+
+##### Formatting example:
+
+```php
+/**
+ * Change the pagination link format from '?paged=' to 'page/'.
+ * This works only on pages with no other GET parameters.
+ */
+custom_pagination_link( $page_link ) {
+    return str_replace( '?paged=', 'page/', $page_link );
+}
+add_filter( 'dustpress/pagination/page_link', 'custom_pagination_link' );
+```
+
 ### permalink
 
 `permalink` helper emulates WordPress' native `get_permalink()` function. It takes one parameter, `id`, that tells it what post's permalink to give. It defaults to current post's id.
