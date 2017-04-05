@@ -1,5 +1,5 @@
 <li{?classes} class="{#classes}{.}{@sep} {/sep}{/classes}"{/classes} id="menu_item_{object_id}">
-<a href="{url}">{title|s}</a>
+<a href="{url}"{?target} target="{target}"{/target}>{title|s}</a>
 
 {?show_submenu}
 	{@eq key=depth value=depth_now}
