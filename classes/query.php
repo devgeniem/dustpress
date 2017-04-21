@@ -203,10 +203,14 @@ class Query {
 
 		self::$query = new WP_Query( $options );
 
-		// Get the permalink of the post
-		if ( is_array( self::$query->posts ) && count( self::$query->posts ) > 0 ) {
+		// Get the permalink of the post if objects were found.
+		if (
+		    is_array( self::$query->posts ) &&
+            self::$query->query_vars['fields'] !== 'ids' &&
+            count( self::$query->posts ) > 0
+        ) {
 			foreach ( self::$query->posts as &$p ) {
-				$p->permalink = get_permalink( $p->ID );
+                $p->permalink = get_permalink( $p->ID );
 			}
 		}
 
