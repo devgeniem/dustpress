@@ -692,6 +692,8 @@ class Model {
             $seed .= serialize( $arg );
         }
 
+        $seed = apply_filters( 'dustpress/cache/seed', $seed );
+
         return sha1( $seed );
     }
 
