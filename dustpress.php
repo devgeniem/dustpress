@@ -922,7 +922,7 @@ final class DustPress {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
 
-		if ( !empty( $request_data['token'] ) && !empty( $_COOKIE['dpjs_token'] ) ) {
+		if ( ! empty( $request_data['token'] ) && ! empty( $_COOKIE['dpjs_token'] ) ) {
 			$token = ( $request_data['token'] === $_COOKIE['dpjs_token'] );
 		}
 		else {
