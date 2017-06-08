@@ -411,7 +411,7 @@ The `image` helper returns a markup for `img` tags with proper `srcset` and `siz
 
 Example:
 ```
-{@menu menu_name="main-menu" ul_id="main-menu" ul_classes "menu primary-menu" show_submenu=false /}
+{@menu menu_name="main-menu" ul_id="main-menu" ul_classes="menu primary-menu" show_submenu=false /}
 ```
 
 ### pagination
