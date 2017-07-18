@@ -34,8 +34,8 @@ class Pagination extends Helper {
         $params             = $this->params;
         $data               = (object) [];
         $pages              = array();
-        $visible            = 7;
-        $neighbours         = 3;
+        $visible            = isset( $params->visible )    ? (int) $params->visible : 7;
+        $neighbours         = isset( $params->neighbours ) ? (int) $params->neighbours : 3;
         $hellip_start       = true;
         $hellip_end         = true;
         $strings            = isset( $params->strings ) ? $params->strings : [];
@@ -75,7 +75,7 @@ class Pagination extends Helper {
             if ( $cur_page == $first_page ) {
                 $hellip_start = '';
                 $on_first_page = true;
-                for ( $i = 0; $i < 7; $i++ ) {
+                for ( $i = 0; $i < $visible; $i++ ) {
                     if ( ( $i + 1 ) > $page_count ) {
                         $hellip_end = '';
                         break;
