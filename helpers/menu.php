@@ -260,6 +260,8 @@ class Menu extends Helper {
 
         $return = (    \get_the_ID() == $item->object_id
                 &&  'post_type' == $item->type )
+                // Check if on a static page that shows posts.
+                ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
                 ||  ( $item->object_id == $term_id && 'taxonomy' == $item->type )
                 ||  ( $item->object_id == $override );
 
