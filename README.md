@@ -423,6 +423,7 @@ Example:
 - `items`: The amount of items in your data set. For example this could be the post count.
 - `page_var`: The query parameter for the pagination links. The default is `paged`.
 - `hash`: The hash link to be added at the end of the pagination links.
+- `neighbours`: How many page numbers to display to either side of the current page. Defaults to 3.
 - `strings`: An array of strings to translate and manipulate the texts in the navigational links. Pass the following array keys with translated values:
   - `previous`
   - `next`
