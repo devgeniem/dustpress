@@ -83,9 +83,9 @@ class Menu extends Helper {
         $menu = new \stdClass();
 
         if ( isset( $menu_name ) ) {
-            $menu_data  = self::get_menu_data( $menu_name, $parent, $override );
+            $menu_data = self::get_menu_data( $menu_name, $parent, $override );
         } else {
-            $menu_data  = self::get_menu_data( $menu_id, $parent, $override, true );
+            $menu_data = self::get_menu_data( $menu_id, $parent, $override, true );
         }
 
         $menu->menu_object = $menu_data['menu_object'];
@@ -165,22 +165,22 @@ class Menu extends Helper {
 
         if ( $menu_items ) {
 
-                $builded_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
+                $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
 
-                $active = array_keys( $builded_menu_items, 'active' );
+                $active = array_keys( $built_menu_items, 'active' );
 
                 foreach( $active as $index ) {
-                    unset( $builded_menu_items[ $index ] );
+                    unset( $built_menu_items[ $index ] );
                 }
                 
-                if ( 0 === array_search( 'active', $builded_menu_items ) ) {
-                        unset( $builded_menu_items[0] );
+                if ( 0 === array_search( 'active', $built_menu_items ) ) {
+                        unset( $built_menu_items[0] );
                 }
 
                 // return menu object and menu items
                 $menu = [];
                 $menu['menu_object'] = $menu_object;
-                $menu['menu_items']  = $builded_menu_items;
+                $menu['menu_items']  = $built_menu_items;
 
                 return apply_filters( "dustpress/menu", $menu );
         }
