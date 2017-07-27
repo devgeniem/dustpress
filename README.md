@@ -517,6 +517,8 @@ Examples:
 
 `strtodate` formats the date it is given to a format it is given. It takes three parameters: `value`, `format` and `now`. The function emulates the behaviour of a PHP code: `date( $format, strtotime( $value, $now ) )`.
 
+If no format parameter is given, the default date format for the site will be used ( `get_option( 'date_format' )`).
+
 Example:
 ```
 {@strtodate value=post_date format="d.m.Y H:i:s" /}
