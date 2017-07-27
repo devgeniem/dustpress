@@ -83,11 +83,13 @@ class Menu extends Helper {
         $menu = new \stdClass();
 
         if ( isset( $menu_name ) ) {
-            $menu->items = self::get_menu_as_items( $menu_name, $parent, $override );
+            $menu_data = self::get_menu_data( $menu_name, $parent, $override );
         } else {
-            $menu->items = self::get_menu_as_items( $menu_id, $parent, $override, true );
+            $menu_data = self::get_menu_data( $menu_id, $parent, $override, true );
         }
 
+        $menu->menu_object = $menu_data['menu_object'];
+        $menu->items = $menu_data['menu_items'];
         $menu->ul_classes = $ul_classes;
         $menu->ul_id = $ul_id;
         $menu->show_submenu = $show_submenu;
@@ -129,9 +131,9 @@ class Menu extends Helper {
      * @param integer $override
      * @param boolean $menu_id_given
      *
-     * @return      array of menu items in a recursive array
+     * @return      array of menu object and menu items in a recursive array
      */
-    public static function get_menu_as_items( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
+    public static function get_menu_data( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
 
         if ( $menu_id_given ) {
             $menu_object = \wp_get_nav_menu_object( $menu_name );
@@ -163,15 +165,22 @@ class Menu extends Helper {
 
         if ( $menu_items ) {
 
-                $menu = self::build_menu( $menu_items, $parent_id, null, $override );
+                $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
 
-                while ( $index = array_search( 'active', $menu ) ) {
-                        unset( $menu[$index] );
+                $active = array_keys( $built_menu_items, 'active' );
+
+                foreach( $active as $index ) {
+                    unset( $built_menu_items[ $index ] );
                 }
                 
-                if ( 0 === array_search( 'active', $menu ) ) {
-                        unset( $menu[0] );
+                if ( 0 === array_search( 'active', $built_menu_items ) ) {
+                        unset( $built_menu_items[0] );
                 }
+
+                // return menu object and menu items
+                $menu = [];
+                $menu['menu_object'] = $menu_object;
+                $menu['menu_items']  = $built_menu_items;
 
                 return apply_filters( "dustpress/menu", $menu );
         }
