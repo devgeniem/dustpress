@@ -8,6 +8,10 @@ class Content extends Helper {
         if ( isset( $this->params->data ) ) {
             return apply_filters( 'the_content', $this->params->data );
         } else {
+            if ( isset( $this->params->id ) ) {
+                $post = get_post( $this->params->id );
+            }
+            
             ob_start();
             setup_postdata( $post );
             the_content();
