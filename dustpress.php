@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.6.5
+Version: 1.6.9
 */
 
 final class DustPress {
@@ -900,9 +900,33 @@ final class DustPress {
 	}
 
 	/**
+	 * Register a function to be run with a keyword from DustPress.js.
+	 * 
+	 * @type    function
+	 * @date    25/11/2016
+	 * @since   1.3.2
+	 * 
+	 * @param   $key (string)
+	 * @param   $callable (mixed)
+	 * 
+	 * @return  void
 	 */
 	public function register_ajax_function( $key, $callable ) {
 		$this->ajax_functions[ $key ] = $callable;
+	}
+
+	/**
+	 * A function to determine if a keyword has already been registered for an ajax function.
+	 *
+	 * @type   function
+	 * @date   10/10/2017
+	 * @since  1.6.9
+	 * 
+	 * @param  string $key
+	 * @return (boolean)
+	 */
+	public function ajax_function_exists( $key ) {
+		return isset( $this->ajax_functions[ $key ] );
 	}
 
 	/**

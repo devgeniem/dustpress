@@ -411,7 +411,7 @@ The `image` helper returns a markup for `img` tags with proper `srcset` and `siz
 
 Example:
 ```
-{@menu menu_name="main-menu" ul_id="main-menu" ul_classes "menu primary-menu" show_submenu=false /}
+{@menu menu_name="main-menu" ul_id="main-menu" ul_classes="menu primary-menu" show_submenu=false /}
 ```
 
 ### pagination
@@ -451,6 +451,21 @@ custom_pagination_link( $page_link ) {
 add_filter( 'dustpress/pagination/page_link', 'custom_pagination_link' );
 ```
 
+### password
+
+`password` implements WordPress' native password protection functionality. It takes one parameter, `id`, that tells it what post's password to require. It defaults to current post's id.
+
+Put your password protected content inside the `password` context and it will be replaced with a password form until the correct password has been given.
+
+Example:
+```
+{@password}
+  <p>This content is password protected.</p>
+{/password}
+```
+
+Unlike native WordPress, where the form's layout can be changed via filter, you can override it with your own Dust template. The default template can be found in DustPress core under `partials/` directory. Copy it somewhere under your theme's `partials/` directory and make the modifications you want to.
+
 ### permalink
 
 `permalink` helper emulates WordPress' native `get_permalink()` function. It takes one parameter, `id`, that tells it what post's permalink to give. It defaults to current post's id.
@@ -462,7 +477,7 @@ Example:
 
 ### s
 
-`s` helper emulates WordPress' native `__` function and it is used in internationalization. It takes two parameters: `s` that is the string to be translated and `td` that is the text domain, only `s` is mandatory.
+`s` helper emulates WordPress' native `__` or `_x` functions and it is used in internationalization. It takes one to three parameters: `s` that is the string to be translated and the only required parameter. `td` is the text domain and `x` is the context to provide with the translation.
 
 Note that the use of `s` helper does not bring the string available to for example WPML's string scanning function.
 
@@ -471,7 +486,7 @@ Example:
 {@s s="Home page" td="my-page" /}
 ```
 
-You can use a [translation parser](https://github.com/devgeniem/dustpress/wiki/Translation-parser) to find all strings defined with {@s} and write them to a file in a format that can be scanned with POedit.
+You can use the [translation parser script](https://github.com/devgeniem/dustpress/wiki/Translation-parser) to find all strings defined with {@s} and to write them to a file in a format that can be scanned with POedit.
 
 ### sep
 
@@ -516,6 +531,8 @@ Examples:
 ### strtodate
 
 `strtodate` formats the date it is given to a format it is given. It takes three parameters: `value`, `format` and `now`. The function emulates the behaviour of a PHP code: `date( $format, strtotime( $value, $now ) )`.
+
+If no format parameter is given, the default date format for the site will be used ( `get_option( 'date_format' )`).
 
 Example:
 ```
