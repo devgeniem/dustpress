@@ -891,7 +891,7 @@ final class DustPress {
 		$request_body = file_get_contents( 'php://input' );
 		$json = json_decode( $request_body );
 
-		if ( ! empty( $json ) && property_exists( $json, 'dustpress_data' ) ) {
+		if ( isset( $_POST['dustpress_data'] ) || ( ! empty( $json ) && property_exists( $json, 'dustpress_data' ) ) ) {
 			return true;
 		}
 		else {
@@ -947,6 +947,9 @@ final class DustPress {
 
 		if ( isset( $json->dustpress_data ) ) {
 			$request_data = $json->dustpress_data;
+		}
+		elseif ( isset( $_POST['dustpress_data'] ) ) {
+			$request_data = (object) $_POST['dustpress_data'];
 		}
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
