@@ -888,7 +888,10 @@ final class DustPress {
 	*  @return	(boolean)
 	*/
 	private function is_dustpress_ajax() {
-		if ( isset( $_POST["dustpress_data"] ) ) {
+		$request_body = file_get_contents( 'php://input' );
+		$json = json_decode( $request_body );
+
+		if ( isset( $_POST['dustpress_data'] ) || ( ! empty( $json ) && property_exists( $json, 'dustpress_data' ) ) ) {
 			return true;
 		}
 		else {
@@ -939,15 +942,21 @@ final class DustPress {
 	public function create_ajax_instance() {
 		global $post;
 
-		if ( isset( $_POST["dustpress_data"] ) ) {
-			$request_data = $_POST["dustpress_data"];
+		$request_body = file_get_contents( 'php://input' );
+		$json = json_decode( $request_body );
+
+		if ( isset( $json->dustpress_data ) ) {
+			$request_data = $json->dustpress_data;
+		}
+		elseif ( isset( $_POST['dustpress_data'] ) ) {
+			$request_data = (object) $_POST['dustpress_data'];
 		}
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
 		}
 
-		if ( ! empty( $request_data['token'] ) && ! empty( $_COOKIE['dpjs_token'] ) ) {
-			$token = ( $request_data['token'] === $_COOKIE['dpjs_token'] );
+		if ( ! empty( $request_data->token ) && ! empty( $_COOKIE['dpjs_token'] ) ) {
+			$token = ( $request_data->token === $_COOKIE['dpjs_token'] );
 		}
 		else {
 			$token = false;
@@ -964,25 +973,25 @@ final class DustPress {
 		$runs = [];
 
 		// Get the args
-		if ( ! empty( $request_data["args"] ) ) {
-			$args = $request_data["args"];
+		if ( ! empty( $request_data->args ) ) {
+			$args = $request_data->args;
 		}
 		else {
 			$args = [];
 		}
 
-		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data["path"] ) ) {
+		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data->path ) ) {
 			die( json_encode( [ "error" => "AJAX call path contains illegal characters." ] ) );
 		}
 
 		// Check if the data we got from the JS side has a function path
-		if ( isset( $request_data["path"] ) ) {
+		if ( isset( $request_data->path ) ) {
 			// If the path is set as a custom ajax function key, run the custom function
-			if ( isset( $this->ajax_functions[ $request_data["path"] ] ) ) {
-				$data = call_user_func_array( $this->ajax_functions[ $request_data["path"] ], [ $args ] );
+			if ( isset( $this->ajax_functions[ $request_data->path ] ) ) {
+				$data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
 
-				if ( isset( $request_data['partial'] ) ) {
-					$partial = $request_data['partial'];
+				if ( isset( $request_data->partial ) ) {
+					$partial = $request_data->partial;
 				}
 
 				if ( empty( $partial ) ) {
@@ -1006,7 +1015,7 @@ final class DustPress {
 				}
 			}
 			else {
-				$path = explode( "/", $request_data["path"] );
+				$path = explode( "/", $request_data->path );
 
 				if ( count( $path ) > 2 ) {
 					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
@@ -1036,13 +1045,13 @@ final class DustPress {
 		}
 
 		// If render is set true, set the model's default template to be used.
-		if ( isset( $request_data["render"] ) && $request_data["render"] === "true" ) {
+		if ( isset( $request_data->render ) && $request_data->render === true ) {
 			$partial = strtolower( $this->camelcase_to_dashed( $model ) );
 		}
 
 		// Do we want tidy output or not?
-		if ( isset( $request_data["tidy"] ) ) {
-			if ( $request_data["tidy"] === "false" ) {
+		if ( isset( $request_data->tidy ) ) {
+			if ( $request_data->tidy === false ) {
 				$tidy = false;
 			}
 			else {
@@ -1054,8 +1063,8 @@ final class DustPress {
 		}
 
 		// Get the possible defined partial and possible override the default template.
-		if ( isset( $request_data["partial"] ) && strlen( $request_data["partial"] ) > 0 ) {
-			$partial = $request_data["partial"];
+		if ( isset( $request_data->partial ) && strlen( $request_data->partial ) > 0 ) {
+			$partial = $request_data->partial;
 		}
 
 		if ( class_exists( $model ) ) {
