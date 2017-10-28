@@ -54,6 +54,8 @@ final class DustPress {
 	*/
 
 	protected function __construct() {
+		// Autoload paths will be stored here so the filesystem has to be scanned only once.
+		$this->autoload_paths = [];
 
 		$this->register_autoloaders();
 
@@ -1322,23 +1324,39 @@ final class DustPress {
 
 			$filename = strtolower( $class ) .".php";
 
-			foreach ( $paths as $path ) {
-				if ( is_readable( $path ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
-						if ( strpos( $file, "/" . $filename ) ) {
-							if ( is_readable( $file ) ) {
-								require_once( $file );
-								return;
-							}
-						}
-					}
-				}
-				else {
-					if ( dirname( __FILE__ ) ."/models" !== $path ) {
-						die("DustPress error: Your theme does not have required directory ". $path);
-					}
-				}
-			}
+			// Store all paths when autoloading for the first time.
+            if (empty($this->autoload_paths)) {
+                foreach ( $paths as $path ) {
+                    if ( is_readable( $path ) ) {
+                        foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
+                            $file_basename = $file->getBaseName();
+                            $file_fullpath = $file->getPath()."/".$file->getFileName();
+
+                            // Ignore certain files as they do not contain any model files.
+                            if ($file_basename == '.' || $file_basename == '..' || !strstr($file_basename, '.') || strstr($file_fullpath, '/.git/')) { continue; }
+
+                            // Only store filepath and filename from the SplFileObject.
+                            $this->autoload_paths[] = $file->getPath()."/".$file->getFileName();
+                        }
+                    }
+                    else {
+                        if ( dirname( __FILE__ ) ."/models" !== $path ) {
+                            die("DustPress error: Your theme does not have required directory ". $path);
+                        }
+                    }
+                }
+            }
+
+            // Find the file in the stored paths.
+            foreach ($this->autoload_paths as $file) {
+                if ( strpos( $file, "/" . $filename ) ) {
+                    if ( is_readable( $file ) ) {
+                        require_once( $file );
+
+                        return;
+                    }
+                }
+            }
 		});
 	}
 
