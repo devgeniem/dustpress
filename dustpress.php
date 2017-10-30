@@ -32,6 +32,9 @@ final class DustPress {
 	// Paths for locating files
 	private $paths;
 
+    // Are we on an activation page
+    private $activate;
+
 	// Registered custom ajax functions
 	private $ajax_functions;
 
@@ -88,6 +91,15 @@ final class DustPress {
 		// Add create_instance to right action hook if we are not on the admin side
 		if ( $this->want_autoload() ) {
 			add_filter( 'template_include', [ $this, 'create_instance' ] );
+
+            // If we are on wp-activate.php hook into activate_header
+            if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
+                $this->activate = true;
+                // Run create_instance for use partial and model
+                add_action( 'activate_header', [ $this, 'create_instance' ] );
+                // Kill original wp-activate.php execution
+                add_action( 'activate_header', function() { die(); } );
+            }
 		}
 		else if ( $this->is_dustpress_ajax() ) {
 			add_filter( 'template_include', [ $this, 'create_ajax_instance' ] );
@@ -112,28 +124,39 @@ final class DustPress {
 	public function create_instance() {
 		global $post;
 
-		if ( is_object( $post ) && isset( $post->ID ) ) {
-			$post_id = $post->ID;
-		}
-		else {
-			$post_id = null;
-		}
+        // Initialize an array for debugging.
+        $debugs = [];
 
-		// Filter for wanted post ID
-		$new_post = apply_filters( "dustpress/router", $post_id );
+        if ( ! $this->activate ) {
+            if ( is_object( $post ) && isset( $post->ID ) ) {
+                $post_id = $post->ID;
+            }
+            else {
+                $post_id = null;
+            }
 
-		// If developer wanted a post ID, make it happen
-		if ( ! is_null( $new_post ) ) {
-			$post = get_post( $new_post );
+            // Filter for wanted post ID
+            $new_post = apply_filters( "dustpress/router", $post_id );
 
-			setup_postdata( $post );
-		}
+            // If developer wanted a post ID, make it happen
+            if ( ! is_null( $new_post ) ) {
+                $post = get_post( $new_post );
 
-		// Initialize an array for debugging.
-		$debugs = [];
+                setup_postdata( $post );
+            }
 
-		// Get current template name tidied up a bit.
-		$template = $this->get_template_filename( $debugs );
+
+            // Get current template name tidied up a bit.
+            $template = $this->get_template_filename( $debugs );
+        }
+        else {
+            // Use user-activate.php and user-activate.dust to replace wp-activate.php
+            $template = apply_filters( 'dustpress/template/useractivate', 'UserActivate' );
+            $debugs[] = $template;
+            // Prevent 404 on multisite sub pages.
+            global $wp_query;
+            $wp_query->is_404 = false;
+        }
 
 		$template = apply_filters( "dustpress/template", $template );
 
@@ -838,13 +861,17 @@ final class DustPress {
 			function() {
 				return ! defined( "DOING_AJAX" );
 			},
-			function() {
-				if ( defined( 'WP_USE_THEMES' ) ) {
-					return WP_USE_THEMES !== false;
-				} else {
-					return false;
-				}
-			},
+            function() {
+                if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate') > 0 ) {
+                    return true;
+                }
+                elseif ( defined( 'WP_USE_THEMES' ) ) {
+                    return WP_USE_THEMES !== false;
+                }
+                else {
+                    return false;
+                }
+            },
 			function() {
 				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed' ) !== false );
 			},
@@ -903,14 +930,14 @@ final class DustPress {
 
 	/**
 	 * Register a function to be run with a keyword from DustPress.js.
-	 * 
+	 *
 	 * @type    function
 	 * @date    25/11/2016
 	 * @since   1.3.2
-	 * 
+	 *
 	 * @param   $key (string)
 	 * @param   $callable (mixed)
-	 * 
+	 *
 	 * @return  void
 	 */
 	public function register_ajax_function( $key, $callable ) {
@@ -923,7 +950,7 @@ final class DustPress {
 	 * @type   function
 	 * @date   10/10/2017
 	 * @since  1.6.9
-	 * 
+	 *
 	 * @param  string $key
 	 * @return (boolean)
 	 */
