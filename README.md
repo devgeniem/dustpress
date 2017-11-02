@@ -738,3 +738,10 @@ Get the Comments helper from [Geniem Github](https://github.com/devgeniem/dustpr
 ```
 composer require devgeniem/dustpress-comments
 ```
+
+# Overriding default templates
+DustPress offers a way to override WordPress default templates that could not otherwise be edited.
+
+At the moment it's possible to modify:
+
+- wp-activate.php ([docs](https://github.com/devgeniem/dustpress/blob/master/docs/customize-wp/user-activate.md))

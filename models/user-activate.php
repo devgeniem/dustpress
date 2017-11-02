@@ -80,8 +80,19 @@ class UserActivate extends \DustPress\Model {
         return $state;
     }
 
-    /*
+
+
+    /**
      * Returns strings for printing.
+     *
+     * Available strings:
+     *  title - Site header
+     *  wp-activate-link - Activation link
+     *  message - Translated message.
+     *  error - Possible error
+     *  username - User's loginname
+     *  password - Translated string of "Your chosen password".
+     *
      *  @return  $this->print (string) Messages for the view.
      */
     public function Print() {
