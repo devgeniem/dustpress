@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ##[Unreleased]
 ### Added
-- Model and partial containing the basic functionality of the default user activate view.
+- Model and partial containing the basic functionality of the default wp-activate.php file.
 
 ### Changed
-- Modify DustPress to notice when user is on user activate view and load custom view instead.
+- Modify core so that when wp-activate.php is loaded the execution is stopped and DustPress creates its own instance.
 
 ## [1.6.11] - 2017-10-30
 ### Changed
