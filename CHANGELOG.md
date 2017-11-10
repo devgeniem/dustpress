@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.7.1] - 2017-11-03
+
 ### Changed
 - Fixed not properly recognizing tidy & render arguements on older dustpress-js calls
 
