@@ -980,8 +980,9 @@ final class DustPress {
 		elseif ( isset( $_POST['dustpress_data'] ) ) {
 			$request_data = (object) $_POST['dustpress_data'];
 
-			$request_data->tidy = $request_data->tidy === 'true' ? true : false;
-			$request_data->render = $request_data->render === 'true' ? true : false;
+			// Parse old data to correct format and assume it to be false if it isn't defined
+			$request_data->tidy = ( isset( $request_data->tidy ) && $request_data->tidy === 'true' ) ? true : false;
+			$request_data->render = ( isset( $request_data->render ) && $request_data->render === 'true' ) ? true : false;
 		}
 		else {
 			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
