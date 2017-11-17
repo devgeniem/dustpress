@@ -589,7 +589,7 @@ final class DustPress {
 					die( "DustPress error: ". $e->getMessage() );
 				}
 
-				if ( apply_filters( "dustpress/cache/rendered", false ) && apply_filters( "dustpress/cache/rendered/" . $partial, true ) ) {
+				if ( apply_filters( "dustpress/cache/rendered", true ) && apply_filters( "dustpress/cache/rendered/" . $partial, true ) ) {
 					$data_hash = sha1( serialize( $compiled ) . serialize( $data ) );
 
 					$cache_time = apply_filters( "dustpress/settings/partial/" . $partial, $this->get_setting("rendered_expire_time") );
