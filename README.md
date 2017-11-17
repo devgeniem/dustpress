@@ -5,7 +5,7 @@
 - URL: http://www.dustpress.com
 - Tags: dustpress, wordpress, dustjs, dust.js
 - Requires at least: 4.2.0
-- Tested up to: 4.8.3
+- Tested up to: 4.9.0
 - License: GPLv2 or later
 - License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -304,7 +304,7 @@ In the example, the data `Method` returns gets cached for 60 seconds. Caching wo
 
 ### Partial and end-result caching
 
-DustPress also uses WordPress trasient cache for its partials and even the end-result HTML caching. Unlike method caching, these features are enabled by default and you have to disable them if you don't want to use them.
+DustPress also uses WordPress object cache for its partials and even the end-result HTML caching. Unlike method caching, these features are enabled by default and you have to disable them if you don't want to use them.
 
 #### Partial caching
 
@@ -326,7 +326,7 @@ add_filter( "dustpress/cache/partials/partial_name", "__return_false" );
 
 #### End-result caching
 
-DustPress also caches the resulting HTML that gets served to the end-user. It generates the cache keys with both the data and the partial used to render the HTML, so that cache updates every time the data changes. It is used only to save the time that DustPHP would use to render the template with the data.
+DustPress also caches the resulting HTML that gets served to the end-user. It generates the cache keys with both the data and the partial used to render the HTML, so that cache updates every time the data changes. It is used only to save the time that DustPHP would use to render the template with the data. With more complicated templates the operation can take time, so it is recommended to keep the cache on at least in production.
 
 You can turn the end-result caching off in the same way as you would the partial caching:
 
