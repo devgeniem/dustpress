@@ -631,10 +631,10 @@ class Model {
      */
     private function is_cacheable_function( $m ) {
         // No caching set
-        if ( ! isset( $this->ttl ) && ! is_array( $this->ttl ) ) {
+        if ( ! empty( $this->ttl ) && ! is_array( $this->ttl ) ) {
             return false;
         }
-        if ( is_array( $this->ttl ) ) {
+        if ( ! empty( $this->ttl ) && is_array( $this->ttl ) ) {
             foreach ( $this->ttl as $key => $val ) {
                 if ( $m === $key ) {
 

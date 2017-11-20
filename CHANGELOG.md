@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Fixed a Notice from `is_cacheable_function` method when `$ttl` is not set in some model
+
 ## [1.7.1] - 2017-11-03
 
 ### Changed
