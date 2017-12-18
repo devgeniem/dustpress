@@ -640,9 +640,9 @@ With `\DustPress\Query` you can query single WordPress posts with two different 
 
 The argument key `meta_keys` is used to query postmeta. It defaults to  `'null'` and no postmeta is loaded by default. Set the value to `'all'` to fetch all the postmeta rows. You can query single meta keys by passing an array of strings corresponding to keys in postmeta.
 
-The argument key `'single'` is described in WordPress [documentation](https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()` and it defines the return type of the found meta rows. Postmeta is appended under the queried post object with the key `meta`. Found metadata is returned in an associative array with found meta values mapped by the meta keys. The metadata is stored  by the key `meta` under the value returned by the function.
+The argument key `'single'` is described in WordPress [documentation](https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()` and it defines the return type of the found meta rows. Postmeta is appended to the queried post object with the key `meta`. Found metadata is returned in an associative array with found meta values mapped by the meta keys. The metadata is  the key `meta` under the value returned by the function.
 
-The required return type can be defined similiarly to WordPress' `get_post` function. Set the `output` argument key with one of `'OBJECT'`, `'ARRAY_A'`, or `'ARRAY_N'`, which correspond to a [WP_Post](https://developer.wordpress.org/reference/classes/wp_post/) object, an associative array, or a numeric array, respectively. If no matching post with the passed id is found, `false` is returned.
+The required return type can be defined similarly to WordPress' `get_post` function. Set the `output` argument key with one of `'OBJECT'`, `'ARRAY_A'`, or `'ARRAY_N'`, which correspond to a [WP_Post](https://developer.wordpress.org/reference/classes/wp_post/) object, an associative array, or a numeric array, respectively. If no matching post with the passed id is found, `false` is returned.
 
 ```
 $args = [
@@ -657,14 +657,16 @@ $args = [
 
 #### get_acf_post()
 
-This function extends the `get_post()` function with automatic loading of ACF field group data. Fields are loaded with the ACF function [`get_fields`](https://www.advancedcustomfields.com/resources/get_fields/) and are returned into the the post object under the key `fields`. This function accepts the same arguments as the `get_post()` function and also the argument key `whole_fields`. With this argument set to `true` this function returns the field group data as seen in the field group edit screen.
+This function extends the `get_post()` function with automatic loading of ACF field group data. Fields are loaded with the ACF function [`get_fields`](https://www.advancedcustomfields.com/resources/get_fields/) and are returned to the post object under the key `fields`. This function accepts the same arguments as the `get_post()` function and also the argument key `whole_fields`. With this argument set to `true`, this function returns the field group data as seen in the field group edit screen.
 
-This function has a recursive operation. If the argument with the key `recursive` is set to `true`, ACF fields with relational post object data are loaded recursively with full meta and field group data. This recursion also works within the first level of an ACF repeater field.
+This function has a recursive operation. If the argument with the key `max_recursion_level` is set with an integer value, ACF fields with relational post object data are loaded recursively with full meta and field group data. The level indicates how many levels of related articles are loaded as full post objects with ACF fields included. This recursion also works within the first level of an ACF repeater field.
+
+*Use the recursion with caution. Levels greater than `1` might cause an increase in page load times.*
 
 ```
 $args = [
   'meta_keys' => null,
-  'recursive' => true
+  'single'    => true
 ];
 \DustPress\Query::get_acf_post( get_the_ID(), $args );
 ```
