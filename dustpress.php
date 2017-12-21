@@ -1028,12 +1028,18 @@ final class DustPress {
 				}
 
 				if ( empty( $partial ) ) {
-					die( wp_json_encode( [ "success" => $data ] ) );
+					$output = [ "success" => $data ];
+
+					if ( isset( $request_data->data ) && $request_data->data === true ) {
+						$output[ "data" ] = $data;
+					}
+
+					die( wp_json_encode( $output ) );
 				}
 				else {
 					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
 
-					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
+					if ( isset( $request_data->data ) && $request_data->data === true ) {
 						$response = [ "success" => $html, "data" => $data ];
 					}
 					else {
@@ -1108,7 +1114,13 @@ final class DustPress {
 
 			// If we don't want to render, json-encode and return just the data
 			if ( empty( $partial ) ) {
-				die( wp_json_encode( [ "success" => $instance->data ] ) );
+				$output = [ "success" => $instance->data ];
+
+				if ( isset( $request_data->data ) && $request_data->data === true ) {
+					$output[ "data" ] = $instance->data;
+				}
+
+				die( wp_json_encode( $output ) );
 			}
 			else {
 				$template_override = $instance->get_template();
