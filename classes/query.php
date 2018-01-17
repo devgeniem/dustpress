@@ -55,6 +55,7 @@ class Query {
         }
 
 		$post_data['permalink'] = get_permalink( $id );
+		$post_data['image_id']  = get_post_thumbnail_id( $id );
 
 		// Cast the post and return.
 		return self::cast_post_to_type( $post_data, $output );
@@ -203,7 +204,8 @@ class Query {
 
 		self::$query = new WP_Query( $options );
 
-		// Get the permalink of the post if objects were found.
+		// Extend the basic post data with the permalink
+		// and the featured image id if it exists.
 		if (
 		    is_array( self::$query->posts ) &&
             self::$query->query_vars['fields'] !== 'ids' &&
@@ -211,6 +213,7 @@ class Query {
         ) {
 			foreach ( self::$query->posts as &$p ) {
                 $p->permalink = get_permalink( $p->ID );
+                $p->image_id  = get_post_thumbnail_id( $p->ID );
 			}
 		}
 
