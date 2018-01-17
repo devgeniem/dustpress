@@ -655,6 +655,11 @@ $args = [
 \DustPress\Query::get_post( get_the_ID(), $args );
 ```
 
+The returned [WordPress post object](https://codex.wordpress.org/Class_Reference/WP_Post) is extended with the following keys:
+
+- `permalink` - The post permalink.
+- `image_id` - If a featured image is set for the post, this is the id of it.
+
 #### get_acf_post()
 
 This function extends the `get_post()` function with automatic loading of ACF field group data. Fields are loaded with the ACF function [`get_fields`](https://www.advancedcustomfields.com/resources/get_fields/) and are returned to the post object under the key `fields`. This function accepts the same arguments as the `get_post()` function and also the argument key `whole_fields`. With this argument set to `true`, this function returns the field group data as seen in the field group edit screen.
@@ -675,13 +680,20 @@ $args = [
 
 #### get_posts()
 
-This function will query multiple posts based on given arguments. Post objects are queried with the WordPress `WP_Query` class. This function accepts arguments in an array with the following arguments:
+This function will query multiple posts based on given arguments. Post objects are queried with the WordPress `WP_Query` class. This function accepts the following arguments:
 
 * All the arguments described in the WordPress codex for the `get_posts`function: https://codex.wordpress.org/Function_Reference/get_posts
 * meta_keys: This functionality is [described](#get_post) in the `get_post()` function and it it applyed for each found post.
 * query_object: If set to `false`, the function returns the posts in an array. If set to `true`, the function returns an object which specifications are described below. Defaults to `false`.
 
 If no matching posts are found, `false` is returned. The return type of this function varies based on the given arguments. If `query_object` argument is set to true **or** the accepted `WP_Query` argument `no_found_rows` is set to `false`, the function returns a clean object with attributes copied from the queried `WP_Query` class instance with unnecessary attributes removed. If these conditions are not met, the function returns the found posts in an array.
+
+In the returned array [WordPress post objects](https://codex.wordpress.org/Class_Reference/WP_Post) are extended with the following keys:
+
+- `permalink` - The post permalink.
+- `image_id` - If a featured image is set for the post, this is the id of it.
+
+##### Example usage
 
 ```
 public function Query() {
@@ -700,18 +712,25 @@ public function Query() {
         'update_post_meta_cache'    => false,
         'update_post_term_cache'    => false,
         'no_found_rows'             => false,
-        'query_object'              => true,
+        'query_object'              => false,
     ];
 
     // This returns a WP_Query like object.
-    // Queried posts are accessible in dust by typing 'Query.posts'.
+    // Queried posts are accessible in dust under the 'Query' key.
     return \DustPress\Query::get_posts( $args );
 }
 ```
 
 #### get_acf_posts()
 
-This function extends the get_posts function with the ability to load ACF field group data with the post objects. Arguments [described](#get_posts) for the `get_posts` function are also accepted here with the addition of the key `whole_fields` which functions similarly as [described](#get_acf_post) in the `get_acf_post` function. This function does not have a recursive functionality. ACF fields with relational post object data need to be loaded separately.
+This function extends the `\DustPress\Query\get_posts` method with the ability to load ACF field group data with the post objects. Arguments [described](#get_posts) for the `get_posts` method are also accepted here with the addition of the key `whole_fields` which is used similarly to the the `\DustPress\Query\get_acf_post` function.
+
+This function does not support the recursive related post fetching. ACF fields with relational post object data need to be loaded separately.
+
+Apart from the `\DustPress\Query\get_posts`, the `image_id` key is removed in the found post objects and WordPress post objects](https://codex.wordpress.org/Class_Reference/WP_Post) are extended with the following keys:
+
+- `permalink` - The post permalink.
+- `image` - If a featured image is set for the post, this is the data returned by the `acf_get_attachment` function.
 
 # Plugins
 
