@@ -62,22 +62,81 @@ class Model {
         $this->parent = $parent;
     }
 
+    /**
+     * Get model's arguments
+     * 
+     * @type  function
+     * @date  3/6/2016
+     * @since 0.4.0
+     *
+     * @return void
+     */
     public function get_args() {
         return $this->args;
     }
 
+    /**
+     * Set the arguments for a model
+     *
+     * @type  function
+     * @date  26/1/2018
+     * @since 1.11.0
+     * 
+     * @param [type] $args
+     * @return void
+     */
+    public function set_args( $args ) {
+        $this->args = $args;
+    }
+
+    /**
+     * Get the data from this model after fetch_data() has been run.
+     * 
+     * @type  function
+     * @date  3/6/2016
+     * @since 0.4.0
+     *
+     * @return void
+     */
     public function get_data() {
         return $this->data;
     }
 
+    /**
+     * Get the instance of an instantiated submodel
+     * 
+     * @type  function
+     * @date  3/6/2016
+     * @since 0.4.0
+     *
+     * @return Dustpress\Model
+     */
     public function get_submodel( $name ) {
         return $this->submodels->{$name};
     }
 
+    /**
+     * Get all instantiated submodels for this model as an array
+     * 
+     * @type  function
+     * @date  3/6/2016
+     * @since 0.4.0
+     *
+     * @return array
+     */
     public function get_submodels() {
         return $this->submodels;
     }
 
+    /**
+     * Get the ancestor of this model.
+     * 
+     * @type  function
+     * @date  3/6/2016
+     * @since 0.4.0
+     *
+     * @return Dustpress\Model
+     */
     public function get_ancestor( $model = null ) {
         if ( ! isset( $model ) ) {
             return $this->get_ancestor( $this );
@@ -733,6 +792,11 @@ class Model {
      */
     protected function rename_model( $name ) {
         $original         = $this->class_name;
+
+        if ( $original === $name ) {
+            return;
+        }
+
         $this->class_name = $name;
 
         if ( isset( $this->data[ $original ] ) ) {

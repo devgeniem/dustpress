@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.11.0] - 2018-01-26
+
+### Added
+- Documentation for Model class.
+- A `set_args()` method for Model to make it possible to set arguments for an already instantiated model dynamically.
+
+### Fixed
+- A bug where renaming a model to a name it already had would throw an error.
+- A bug where sending an array as a JSON POST payload to a DustPress site would cause an error.
+
 ## [1.10.0] - 2017-12-21
 
 ### Added
