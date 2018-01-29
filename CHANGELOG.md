@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.12.0] - 2018-01-29
+
+### Added
+- Adds menu location to the menu helper data. This helps developers to filter menu by menu `location`.
+
 ## [1.11.0] - 2018-01-26
 
 ### Added

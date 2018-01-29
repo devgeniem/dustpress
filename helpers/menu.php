@@ -135,16 +135,24 @@ class Menu extends Helper {
      */
     public static function get_menu_data( $menu_name, $parent = 0, $override = null, $menu_id_given = false ) {
 
+        $locations = \get_nav_menu_locations();
+
         if ( $menu_id_given ) {
             $menu_object = \wp_get_nav_menu_object( $menu_name );
         } else {
-            if ( ( $locations = \get_nav_menu_locations() ) && isset( $locations[ $menu_name ] ) ) {
+            if ( ( $locations ) && isset( $locations[ $menu_name ] ) ) {
                 $menu_object = \wp_get_nav_menu_object( $locations[ $menu_name ] );
             }
         }
 
         if ( isset( $menu_object) ) {
             $menu_items = \wp_get_nav_menu_items( $menu_object );
+
+            // Add menu object location to the menu object.
+            // You can use this to filter specific menu items.
+            if ( ! empty( $menu_object->term_id ) && is_array( $locations ) ) {
+                $menu_object->location = array_search( $menu_object->term_id, $locations );
+            }
         }
         else {
             return null;
