@@ -187,10 +187,10 @@ class Menu extends Helper {
 
                 // return menu object and menu items
                 $menu = [];
-                $menu['menu_object'] = $menu_object;
-                $menu['menu_items']  = $built_menu_items;
+                $menu['menu_object'] = apply_filters( 'dustpress/menu/object/location=' . $menu_object->location, $menu_object );
+                $menu['menu_items'] = apply_filters( 'dustpress/menu/items/location=' . $menu_object->location, $built_menu_items );
 
-                return apply_filters( "dustpress/menu", $menu );
+                return apply_filters( 'dustpress/menu', $menu );
         }
     }
 
