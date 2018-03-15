@@ -34,8 +34,8 @@ class Pagination extends Helper {
         $params         = $this->params;
         $data           = (object) [];
         $pages          = array();
-        $visible        = 7;
-        $neighbours     = 3;
+        $neighbours     = isset( $params->neighbours ) ? (int) $params->neighbours : 3;
+        $visible        = 1 + ( 2 * $neighbours );
         $hellip_start   = true;
         $hellip_end     = true;
         $strings        = isset( $params->strings ) ? $params->strings    : [];
