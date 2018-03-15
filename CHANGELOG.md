@@ -8,9 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Ability to register custom routes.
-
-### Added
-
 - The Pagination helper now adds its data into the debugger.
 
 ### Fixed

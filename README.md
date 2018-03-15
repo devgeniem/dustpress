@@ -776,7 +776,7 @@ composer require devgeniem/dustpress-comments
 ```
 
 # Overriding default templates
-DustPress offers a way to override WordPress' default templates that othewise are not easily editable.
+DustPress offers a way to override WordPress' default templates that otherwise are not easily editable.
 
 At the moment it's possible to modify:
 
