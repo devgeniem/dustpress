@@ -624,6 +624,20 @@ add_filter( 'dustpress/settings/json_headers', '__return_true' );
 
 The former enables JSON output when query parameter `?JSON` is added to the url, and the latter when HTTP header `Accept: application/json` is present on the request.
 
+### Custom routes
+
+With DustPress, you can define custom routes easily to be used outside the WordPress post context. If you have a custom page you need to show, but don't want to create an admin page for it, custom routes are the way to go.
+
+```
+dustpress()->register_custom_route( 'custom/route', 'MyModel' ); 
+```
+
+The above code registers `custom/route` url to be mapped with `MyModel`. DustPress automatically passes all parameters from the url to the model as arguments, so for example url `custom/route/custom_parameter/1` still uses the `MyModel` model and the parameters are available with `$this->get_args()` for the developer.
+
+The routes should be defined before `init` hook is run, so just register them directly within the `functions.php` scope.
+
+**Note!** Remember to flush WordPress rewrites after registering them in your `functions.php`. You can do it either in the code, with the WP CLI or just visiting the Permalinks options page in the admin.
+
 # Additional Classes
 
 ## \DustPress\Query

@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.12.0
+Version: 1.13.0
 */
 
 final class DustPress {
@@ -108,6 +108,11 @@ final class DustPress {
 		// Initialize settings
 		add_action( 'init', [ $this, 'init_settings' ] );
 
+		// Register custom route rewrite tag
+		add_rewrite_tag( '%dustpress_custom_route%', '([^\/]+)' );
+		add_rewrite_tag( '%dustpress_custom_route_route%', '(.+)' );
+		add_rewrite_tag( '%dustpress_custom_route_parameters%', '(.+)' );
+
 		return;
 	}
 
@@ -122,7 +127,7 @@ final class DustPress {
 	*  @return	N/A
 	*/
 	public function create_instance() {
-		global $post;
+		global $post, $wp_query;
 
         // Initialize an array for debugging.
         $debugs = [];
@@ -154,18 +159,33 @@ final class DustPress {
             $template = apply_filters( 'dustpress/template/useractivate', 'UserActivate' );
             $debugs[] = $template;
             // Prevent 404 on multisite sub pages.
-            global $wp_query;
             $wp_query->is_404 = false;
-        }
+		}
 
-		$template = apply_filters( "dustpress/template", $template );
+		$custom_route_args       = [];
+		$custom_route            = $wp_query->get( 'dustpress_custom_route' );
+		$custom_route_parameters = $wp_query->get( 'dustpress_custom_route_parameters' );
+
+	
+		// Handle registered DustPress custom routes
+		if ( ! empty( $custom_route ) ) {
+			$template = $custom_route;
+			
+			$custom_route_args[ 'route' ] = $wp_query->get( 'dustpress_custom_route_route' );
+
+			if ( ! empty( $custom_route_parameters ) ) {
+				$custom_route_args['params'] = explode( '/', $custom_route_parameters );
+			}
+		}
+
+		$template = apply_filters( "dustpress/template", $template, $custom_route_args );
 
 		if ( ! defined("DOING_AJAX") && ! $this->disabled ) {
 			// If class exists with the template's name, create new instance with it.
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
 			if ( class_exists ( $template ) ) {
-				$this->model = new $template();
+				$this->model = new $template( $custom_route_args );
 
 				$this->model->fetch_data();
 
@@ -1431,6 +1451,23 @@ final class DustPress {
 		}
 
 		return $return;
+	}
+
+	/**
+	 * Register a custom route for a model to be used outside the posts context.
+	 * 
+	 * @type   function
+	 * @date   15/03/2018
+	 * @since  1.13.0
+	 *
+	 * @param string $route    A regular expression to be used as the route.
+	 * @param string $template The model name to be used with the matching route.
+	 * @return void
+	 */
+	public function register_custom_route( $route, $template ) {
+		add_action( 'init', function() use ( $route, $template ) {
+			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
+		});
 	}
 }
 
