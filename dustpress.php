@@ -162,30 +162,30 @@ final class DustPress {
             $wp_query->is_404 = false;
 		}
 
-		$custom_route_params = [];
+		$custom_route_args       = [];
+		$custom_route            = $wp_query->get( 'dustpress_custom_route' );
+		$custom_route_parameters = $wp_query->get( 'dustpress_custom_route_parameters' );
+
 	
 		// Handle registered DustPress custom routes
-		if ( $wp_query->get( 'dustpress_custom_route' ) ) {
-			$template = $wp_query->get( 'dustpress_custom_route' );
-			$route    = $wp_query->get( 'dustpress_custom_route_route' );
+		if ( ! empty( $custom_route ) ) {
+			$template = $custom_route;
+			
+			$custom_route_args[ 'route' ] = $wp_query->get( 'dustpress_custom_route_route' );
 
-			$custom_route_params[ 'route' ] = $route;
-
-			if ( $wp_query->get( 'dustpress_custom_route_parameters' ) ) {
-				$params = $wp_query->get( 'dustpress_custom_route_parameters' );
-
-				$custom_route_params['params'] = explode( '/', $params );
+			if ( ! empty( $custom_route_parameters ) ) {
+				$custom_route_args['params'] = explode( '/', $custom_route_parameters );
 			}
 		}
 
-		$template = apply_filters( "dustpress/template", $template, $custom_route_params );
+		$template = apply_filters( "dustpress/template", $template, $custom_route_args );
 
 		if ( ! defined("DOING_AJAX") && ! $this->disabled ) {
 			// If class exists with the template's name, create new instance with it.
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
 			if ( class_exists ( $template ) ) {
-				$this->model = new $template( $custom_route_params );
+				$this->model = new $template( $custom_route_args );
 
 				$this->model->fetch_data();
 
