@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- The Pagination helper now adds its data into the debugger.
+
+### Fixed
+
+- Code style fixes for the Pagination helper.
+
 ## [1.12.0] - 2018-01-29
 
 ### Added
