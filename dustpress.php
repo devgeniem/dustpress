@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.13.0
+Version: 1.13.1
 */
 
 final class DustPress {
@@ -115,8 +115,15 @@ final class DustPress {
 	}
 
 	/**
-	 * Register custom route rewrite tag
-	 */
+	*  Register custom route rewrite tags
+	*
+	*  @type	function
+	*  @date	19/3/2019
+	*  @since	1.13.1
+	*
+	*  @param   N/A
+	*  @return	N/A
+	*/
 	public function rewrite_tags() {
 		// Register custom route rewrite tag
 		add_rewrite_tag( '%dustpress_custom_route%', '([^\/]+)' );
