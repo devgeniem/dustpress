@@ -109,7 +109,7 @@ final class DustPress {
 		add_action( 'init', [ $this, 'init_settings' ] );
 
 		// Register custom route rewrite tag
-		add_action( 'init', [ $this, 'rewrite_tags' ] );
+		add_action( 'init', [ $this, 'rewrite_tags' ], 20 );
 
 		return;
 	}
@@ -1475,7 +1475,7 @@ final class DustPress {
 	public function register_custom_route( $route, $template ) {
 		add_action( 'init', function() use ( $route, $template ) {
 			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
-		});
+		}, 30);
 	}
 }
 
