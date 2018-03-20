@@ -32,6 +32,9 @@ final class DustPress {
 	// Paths for locating files
 	private $paths;
 
+	// Paths for locating dust template files
+	private $dust_template_files;
+
     // Are we on an activation page
     private $activate;
 
@@ -72,6 +75,9 @@ final class DustPress {
 		];
 
 		$this->paths = array_values( array_unique( $this->paths ) );
+
+		// Dust template paths will be stored here so the filesystem has to be scanned only once.
+		$this->dust_template_files = [];
 
         // Find and include Dust helpers from DustPress plugin
         $paths = [
@@ -1260,20 +1266,22 @@ final class DustPress {
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
-		$templatepaths = $this->get_template_paths("partials");
+		if ( empty( $this->dust_template_files ) ) {
+			$templatepaths = $this->get_template_paths("partials");
 
-		foreach ( $templatepaths as $templatepath ) {
-			if ( is_readable( $templatepath ) ) {
-				foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
-					if ( strpos( $file, $templatefile ) !== false ) {
-						if ( is_readable( $file ) ) {
-							return $file;
+			foreach ( $templatepaths as $templatepath ) {
+				if ( is_readable( $templatepath ) ) {
+					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
+						if ( is_readable( $file->getPathname() ) ) {
+							$this->dust_template_files[ $file->getFilename() ] = $file->getPathname();
 						}
 					}
 				}
-			}
+			}		
 		}
-
+		if ( isset( $this->dust_template_files[ $templatefile ] ) ) {
+			return $this->dust_template_files[ $templatefile ];
+		}
 		return false;
 	}
 
