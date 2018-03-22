@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.13.1
+Version: 1.14.0
 */
 
 final class DustPress {
@@ -32,8 +32,8 @@ final class DustPress {
 	// Paths for locating files
 	private $paths;
 
-	// Paths for locating dust template files
-	private $dust_template_files;
+	// Paths for template files
+	private $templates;
 
     // Are we on an activation page
     private $activate;
@@ -77,7 +77,7 @@ final class DustPress {
 		$this->paths = array_values( array_unique( $this->paths ) );
 
 		// Dust template paths will be stored here so the filesystem has to be scanned only once.
-		$this->dust_template_files = [];
+		$this->templates = [];
 
         // Find and include Dust helpers from DustPress plugin
         $paths = [
@@ -104,7 +104,9 @@ final class DustPress {
                 // Run create_instance for use partial and model
                 add_action( 'activate_header', [ $this, 'create_instance' ] );
                 // Kill original wp-activate.php execution
-                add_action( 'activate_header', function() { die(); } );
+                add_action( 'activate_header', function() {
+					die();
+				});
             }
 		}
 		else if ( $this->is_dustpress_ajax() ) {
@@ -162,7 +164,7 @@ final class DustPress {
             }
 
             // Filter for wanted post ID
-            $new_post = apply_filters( "dustpress/router", $post_id );
+            $new_post = apply_filters( 'dustpress/router', $post_id );
 
             // If developer wanted a post ID, make it happen
             if ( ! is_null( $new_post ) ) {
@@ -195,13 +197,13 @@ final class DustPress {
 			$custom_route_args[ 'route' ] = $wp_query->get( 'dustpress_custom_route_route' );
 
 			if ( ! empty( $custom_route_parameters ) ) {
-				$custom_route_args['params'] = explode( '/', $custom_route_parameters );
+				$custom_route_args['params'] = explode( DIRECTORY_SEPARATOR, $custom_route_parameters );
 			}
 		}
 
-		$template = apply_filters( "dustpress/template", $template, $custom_route_args );
+		$template = apply_filters( 'dustpress/template', $template, $custom_route_args );
 
-		if ( ! defined("DOING_AJAX") && ! $this->disabled ) {
+		if ( ! defined( 'DOING_AJAX' ) && ! $this->disabled ) {
 			// If class exists with the template's name, create new instance with it.
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
@@ -216,10 +218,10 @@ final class DustPress {
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-				$this->render( [ "partial" => $partial, "main" => true ] );
+				$this->render( [ 'partial' => $partial, 'main' => true ] );
 			}
 			else {
-				die("DustPress error: No suitable model found. One of these is required: ". implode(", ", $debugs));
+				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 			}
 		}
 	}
@@ -242,142 +244,142 @@ final class DustPress {
 			$page_template = get_post_meta( $post->ID, '_wp_page_template', true );
 
 			if ( $page_template ) {
-				$array = explode( "/", $page_template );
+				$array = explode( DIRECTORY_SEPARATOR, $page_template );
 
 				$template = array_pop( $array );
 
 				// strip out .php
-				$template = str_replace( ".php", "", $template );
+				$template = str_replace( '.php', '', $template );
 
 				// strip out page-, single-
-				$template = str_replace( "page-", "", $template );
-				$template = str_replace( "single-", "", $template );
+				$template = str_replace( 'page-', '', $template );
+				$template = str_replace( 'single-', '', $template );
 
-				if ( $template == "default" ) $template = "page";
+				if ( $template == 'default' ) $template = 'page';
 			}
 			else {
-				$template = "default";
+				$template = 'default';
 			}
 		}
 		else {
-			$template = "default";
+			$template = 'default';
 		}
 
 		if ( is_front_page() ) {
 			$hierarchy = [
-				"is_front_page" => [
-				    "FrontPage"
+				'is_front_page' => [
+				    'FrontPage'
 				]
 			];
 		}
 
 		if ( is_home() ) {
-			$hierarchy["is_home"] = [
-			    "Home"
+			$hierarchy['is_home'] = [
+			    'Home'
 			];
 		}
 
 		if ( is_page() ) {
-			$hierarchy["is_page"] = [
-				"Page" . $this->dashed_to_camelcase( $template ),
-				"Page" . $this->dashed_to_camelcase( $post->post_name ),
-				"Page" . $post->ID,
-				"Page"
+			$hierarchy[ 'is_page' ] = [
+				'Page' . $this->dashed_to_camelcase( $template ),
+				'Page' . $this->dashed_to_camelcase( $post->post_name ),
+				'Page' . $post->ID,
+				'Page'
 			];
 		}
 
 		if ( is_category() ) {
-			$cat = get_category( get_query_var('cat') );
+			$cat = get_category( get_query_var( 'cat' ) );
 
-			$hierarchy["is_category"] = [
-				"Category" . $this->dashed_to_camelcase( $cat->slug ),
-				"Category" . $cat->term_id,
-				"Category",
-				"Archive"
+			$hierarchy[ 'is_category' ] = [
+				'Category' . $this->dashed_to_camelcase( $cat->slug ),
+				'Category' . $cat->term_id,
+				'Category',
+				'Archive'
 			];
 		}
 
 		if ( is_tag() ) {
 			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, "post_tag" );
+			$term = get_term_by( 'id', $term_id, 'post_tag' );
 
-			$hierarchy["is_tag"] = [
-				"Tag" . $this->dashed_to_camelcase( $term->slug ),
-				"Tag",
-				"Archive"
+			$hierarchy[ 'is_tag' ] = [
+				'Tag' . $this->dashed_to_camelcase( $term->slug ),
+				'Tag',
+				'Archive'
 			];
 		}
 
 		if ( is_tax() ) {
 			$term_id = get_queried_object()->term_id;
-			$term = get_term_by( "id", $term_id, get_query_var('taxonomy') );
+			$term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
 
-			$hierarchy["is_tax"] = [
-				"Taxonomy" . $this->dashed_to_camelcase( get_query_var('taxonomy') ) . $this->dashed_to_camelcase($term->slug),
-				"Taxonomy" . $this->dashed_to_camelcase( get_query_var('taxonomy') ),
-				"Taxonomy",
-				"Archive"
+			$hierarchy[ 'is_tax' ] = [
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
+				'Taxonomy',
+				'Archive'
 			];
 		}
 
 		if ( is_author() ) {
 			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
 
-			$hierarchy["is_author"] = [
-				"Author" . $this->dashed_to_camelcase( $author->user_nicename ),
-				"Author" . $author->ID,
-				"Author",
-				"Archive"
+			$hierarchy[ 'is_author' ] = [
+				'Author' . $this->dashed_to_camelcase( $author->user_nicename ),
+				'Author' . $author->ID,
+				'Author',
+				'Archive'
 			];
 		}
 
-		$hierarchy["is_search"] = [
-			"Search"
+		$hierarchy[ 'is_search' ] = [
+			'Search'
 		];
 
 
-		$hierarchy["is_404"] = [
-			"Error404"
+		$hierarchy[ 'is_404' ] = [
+			'Error404'
 		];
 
 		if ( is_attachment() ) {
 			$mime_type = get_post_mime_type( get_the_ID() );
 
-			$hiearchy["is_attachment"] = [
+			$hiearchy[ 'is_attachment' ] = [
 				function() use ( $mime_type ) {
-					if ( preg_match( "/^image/", $mime_type ) && class_exists("Image") ) {
-						return "Image";
+					if ( preg_match( '/^image/', $mime_type ) && class_exists( 'Image' ) ) {
+						return 'Image';
 					}
 					else {
 						return false;
 					}
 				},
 				function() use ( $mime_type ) {
-					if ( preg_match( "/^video/", $mime_type ) && class_exists("Video") ) {
-						return "Video";
+					if ( preg_match( '/^video/', $mime_type ) && class_exists( 'Video' ) ) {
+						return 'Video';
 					}
 					else {
 						return false;
 					}
 				},
 				function() use ( $mime_type ) {
-					if ( preg_match( "/^application/", $mime_type ) && class_exists("Application") ) {
-						return "Application";
+					if ( preg_match( '/^application/', $mime_type ) && class_exists( 'Application' ) ) {
+						return 'Application';
 					}
 					else {
 						return false;
 					}
 				},
 				function() use ( $mime_type ) {
-					if ( $mime_type == "text/plain" ) {
-						if ( class_exists( "Text" ) ) {
-							return "Text";
+					if ( $mime_type == 'text/plain' ) {
+						if ( class_exists( 'Text' ) ) {
+							return 'Text';
 						}
-						else if ( class_exists( "Plain" ) ) {
-							return "Plain";
+						else if ( class_exists( 'Plain' ) ) {
+							return 'Plain';
 						}
-						else if ( class_exists( "TextPlain" ) ) {
-							return "TextPlain";
+						else if ( class_exists( 'TextPlain' ) ) {
+							return 'TextPlain';
 						}
 						else {
 							return false;
@@ -387,35 +389,35 @@ final class DustPress {
 						return false;
 					}
 				},
-				"Attachment",
-				"SingleAttachment",
-				"Single"
+				'Attachment',
+				'SingleAttachment',
+				'Single'
 			];
 		}
 
 		if ( is_single() ) {
 			$type = get_post_type();
 
-			$hierarchy["is_single"] = [
-				"Single" . $this->dashed_to_camelcase( $template ),
-				"Single" . $this->dashed_to_camelcase( $type ),
-				"Single"
+			$hierarchy[ 'is_single' ] = [
+				'Single' . $this->dashed_to_camelcase( $template ),
+				'Single' . $this->dashed_to_camelcase( $type ),
+				'Single'
 			];
 		}
 
 		if ( is_archive() ) {
 			// Double check just to keep the function structure.
-			$hierarchy["is_archive"] = [
+			$hierarchy[ 'is_archive' ] = [
 				function() {
 					$post_types = get_post_types();
 
 					foreach ( $post_types as $type ) {
 						if ( is_post_type_archive( $type ) ) {
-							if ( class_exists( "Archive" . $this->dashed_to_camelcase( $type ) ) ) {
-								return "Archive" . $this->dashed_to_camelcase( $type );
+							if ( class_exists( 'Archive' . $this->dashed_to_camelcase( $type ) ) ) {
+								return 'Archive' . $this->dashed_to_camelcase( $type );
 							}
-							else if ( class_exists("Archive") ) {
-								return "Archive";
+							else if ( class_exists( 'Archive' ) ) {
+								return 'Archive';
 							}
 							else {
 								return false;
@@ -431,13 +433,13 @@ final class DustPress {
 		if ( is_date() ) {
 
 			// Double check just to keep the function structure.
-			$hierarchy["is_date"] = [
+			$hierarchy[ 'is_date' ] = [
 				function() {
-					if ( class_exists( "Date" ) ) {
-						return "Date";
+					if ( class_exists( 'Date' ) ) {
+						return 'Date';
 					}
-					else if ( class_exists( "Archive" ) ) {
-						return "Archive";
+					else if ( class_exists( 'Archive' ) ) {
+						return 'Archive';
 					}
 					else {
 						return false;
@@ -447,7 +449,7 @@ final class DustPress {
 		}
 
 		// I don't think you really want to do this.
-		$hierarchy = apply_filters( "dustpress/template_hierarchy", $hierarchy );
+		$hierarchy = apply_filters( 'dustpress/template_hierarchy', $hierarchy );
 
 		foreach( $hierarchy as $level => $keys ) {
 			if ( true === call_user_func ( $level ) ) {
@@ -499,8 +501,8 @@ final class DustPress {
 			}
 		}
 
-		$debugs[] = "Index";
-		return "Index";
+		$debugs[] = 'Index';
+		return 'Index';
 	}
 
 	/**
@@ -517,12 +519,35 @@ final class DustPress {
 		$wp_data = array();
 
 		// Insert Wordpress blog info data to collection
-		$infos = array( "name","description","wpurl","url","admin_email","charset","version","html_type","is_rtl","language","stylesheet_url","stylesheet_directory","template_url","template_directory","pingback_url","atom_url","rdf_url","rss_url","rss2_url","comments_atom_url","comments_rss2_url","url" );
+		$infos = [
+			'name',
+			'description',
+			'wpurl',
+			'url',
+			'admin_email',
+			'charset',
+			'version',
+			'html_type',
+			'is_rtl',
+			'language',
+			'stylesheet_url',
+			'stylesheet_directory',
+			'template_url',
+			'template_directory',
+			'pingback_url',
+			'atom_url',
+			'rdf_url',
+			'rss_url',
+			'rss2_url',
+			'comments_atom_url',
+			'comments_rss2_url',
+			'url'
+		];
 
 		if ( $this->is_dustpress_ajax() ) {
-			$remove_infos = array( "wpurl", "admin_email", "version", "user" );
+			$remove_infos = array( 'wpurl', 'admin_email', 'version', 'user' );
 
-			$remove_infos = apply_filters( "dustpress/ajax/remove_wp", $remove_infos );
+			$remove_infos = apply_filters( 'dustpress/ajax/remove_wp', $remove_infos );
 
 			$infos = array_diff( $infos, $remove_infos );
 		}
@@ -536,31 +561,31 @@ final class DustPress {
 		$currentuser = wp_get_current_user();
 
 		if ( 0 === $currentuser->ID ) {
-			$wp_data["loggedin"] = false;
+			$wp_data['loggedin'] = false;
 		}
 		else {
-			$wp_data["loggedin"] = true;
-			$wp_data["user"] = $currentuser->data;
-			$wp_data["user"]->roles = $currentuser->roles;
-			unset( $wp_data["user"]->user_pass );
+			$wp_data['loggedin'] = true;
+			$wp_data['user'] = $currentuser->data;
+			$wp_data['user']->roles = $currentuser->roles;
+			unset( $wp_data['user']->user_pass );
 		}
 
 		// Insert WP title to collection
 		ob_start();
 		wp_title();
-		$wp_data["title"] = ob_get_clean();
+		$wp_data['title'] = ob_get_clean();
 
 		// Insert admin ajax url
-		$wp_data["admin_ajax_url"] = admin_url( 'admin-ajax.php' );
+		$wp_data['admin_ajax_url'] = admin_url( 'admin-ajax.php' );
 
 		// Insert current page permalink
-		$wp_data["permalink"] = get_permalink();
+		$wp_data['permalink'] = get_permalink();
 
 		// Insert body classes
-		$wp_data["body_class"] = get_body_class();
+		$wp_data['body_class'] = get_body_class();
 
 		// Return collection after filters
-		return apply_filters( "dustpress/data/wp", $wp_data );
+		return apply_filters( 'dustpress/data/wp', $wp_data );
 	}
 
 	/**
@@ -580,46 +605,46 @@ final class DustPress {
 				$hash;
 
 		$defaults = [
-			"data" => false,
-			"type" => "default",
-			"echo" => true,
-			"main" => false,
+			'data' => false,
+			'type' => 'default',
+			'echo' => true,
+			'main' => false,
 		];
 
 		if ( is_array( $args ) ) {
-			if ( ! isset( $args["partial"] ) ) {
-				die("<p><b>DustPress error:</b> No partial is given to the render function.</p>");
+			if ( ! isset( $args['partial'] ) ) {
+				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
 			}
 		}
 
-		$options = array_merge( $defaults, (array)$args );
+		$options = array_merge( $defaults, (array) $args );
 
 		extract( $options );
 
-		if ( "default" == $type && ! get_option('dustpress_default_format' ) ) {
-			$type = "html";
+		if ( 'default' == $type && ! get_option( 'dustpress_default_format' ) ) {
+			$type = 'html';
 		}
-		else if ( "default" == $type && get_option('dustpress_default_format' ) ) {
-			$type = get_option('dustpress_default_format');
+		else if ( 'default' == $type && get_option( 'dustpress_default_format' ) ) {
+			$type = get_option( 'dustpress_default_format' );
 		}
 
-		if ( $this->get_setting('json_url') && isset( $_GET['json'] ) ) {
+		if ( $this->get_setting( 'json_url' ) && isset( $_GET['json'] ) ) {
 			$type = 'json';
 		}
 
-		if ( $this->get_setting('json_headers') && isset( $_SERVER['HTTP_ACCEPT'] ) && $_SERVER['HTTP_ACCEPT'] == 'application/json' ) {
+		if ( $this->get_setting( 'json_headers' ) && isset( $_SERVER['HTTP_ACCEPT'] ) && $_SERVER['HTTP_ACCEPT'] == 'application/json' ) {
 			$type = 'json';
 		}
 
 		$types = array(
-			"html" => function( $data, $partial, $dust ) {
+			'html' => function( $data, $partial, $dust ) {
 
 				try {
-					if ( apply_filters( "dustpress/cache/partials", false ) && apply_filters( "dustpress/cache/partials/" . $partial, true ) ) {
-						if ( ! ( $compiled = wp_cache_get( $partial, "dustpress/partials" ) ) ) {
+					if ( apply_filters( 'dustpress/cache/partials', false ) && apply_filters( 'dustpress/cache/partials/' . $partial, true ) ) {
+						if ( ! ( $compiled = wp_cache_get( $partial, 'dustpress/partials' ) ) ) {
 							$compiled = $dust->compileFile( $partial );
 
-							wp_cache_set( $partial, $compiled, "dustpress/partials" );
+							wp_cache_set( $partial, $compiled, 'dustpress/partials' );
 						}
 					}
 					else {
@@ -627,18 +652,18 @@ final class DustPress {
 					}
 				}
 				catch ( Exception $e ) {
-					die( "DustPress error: ". $e->getMessage() );
+					die( 'DustPress error: '. $e->getMessage() );
 				}
 
-				if ( apply_filters( "dustpress/cache/rendered", true ) && apply_filters( "dustpress/cache/rendered/" . $partial, true ) ) {
+				if ( apply_filters( 'dustpress/cache/rendered', true ) && apply_filters( 'dustpress/cache/rendered/' . $partial, true ) ) {
 					$data_hash = sha1( serialize( $compiled ) . serialize( $data ) );
 
-					$cache_time = apply_filters( "dustpress/settings/partial/" . $partial, $this->get_setting("rendered_expire_time") );
+					$cache_time = apply_filters( 'dustpress/settings/partial/' . $partial, $this->get_setting( 'rendered_expire_time' ) );
 
-					if ( ! ( $rendered = wp_cache_get( $data_hash, "dustpress/rendered" ) ) ) {
+					if ( ! ( $rendered = wp_cache_get( $data_hash, 'dustpress/rendered' ) ) ) {
 						$rendered = $dust->renderTemplate( $compiled, $data );
 
-						wp_cache_set( $data_hash, $rendered, "dustpress/rendered", $cache_time );
+						wp_cache_set( $data_hash, $rendered, 'dustpress/rendered', $cache_time );
 					}
 				}
 				else {
@@ -647,12 +672,12 @@ final class DustPress {
 
 				return $rendered;
 			},
-			"json" => function( $data, $partial, $dust ) {
+			'json' => function( $data, $partial, $dust ) {
 				try {
 					$output = json_encode( $data );
 				}
 				catch ( Exception $e ) {
-					die( "JSON encode error: ". $e->getMessage() );
+					die( 'JSON encode error: ' . $e->getMessage() );
 				}
 
 				return $output;
@@ -662,7 +687,7 @@ final class DustPress {
 		$types = apply_filters( 'dustpress/formats', $types );
 
 		if ( ! $data ) {
-			$this->model->data = (array)$this->model->data;
+			$this->model->data = (array) $this->model->data;
 
 			$this->model->data['WP'] = $this->populate_data_collection();
 		}
@@ -672,7 +697,7 @@ final class DustPress {
 			$dust = $this->dust;
 		}
 		else {
-			die("DustPress error: Something very unexpected happened: there is no DustPHP.");
+			die( 'DustPress error: Something very unexpected happened: there is no DustPHP.' );
 		}
 
 		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
@@ -686,7 +711,7 @@ final class DustPress {
 			$this->prerun_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
-			die( "DustPress error: ". $e->getMessage() );
+			die( 'DustPress error: '. $e->getMessage() );
 		}
 
 		if ( $data ) {
@@ -697,7 +722,7 @@ final class DustPress {
 			$render_data = apply_filters( 'dustpress/data/main', $render_data );
 		}
 
-		$this->dust->includedDirectories = $this->get_template_paths('partials');
+		$this->dust->includedDirectories = $this->get_template_paths( 'partials' );
 
 		// Create output with wanted format.
 		$output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
@@ -706,12 +731,12 @@ final class DustPress {
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
 		// Do something with the data after rendering
-		apply_filters( "dustpress/data/after_render", $render_data );
+		apply_filters( 'dustpress/data/after_render', $render_data );
 
 		if ( $echo ) {
 			if ( empty ( strlen( $output ) ) ) {
 				$error = true;
-				echo "DustPress warning: empty output.";
+				echo 'DustPress warning: empty output.';
 			}
 			else {
 				echo $output;
@@ -746,24 +771,21 @@ final class DustPress {
 		else {
 			$templatefile =  $partial . '.dust';
 
-			$templatepaths = $this->get_template_paths("partials");
+			$templates = $this->get_templates();
 
-			foreach ( $templatepaths as $templatepath ) {
-				if ( is_readable( $templatepath ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
-						if ( basename( $file ) == $templatefile ) {
-							if ( is_readable( $file ) ) {
-								return $file;
-							}
-						}
-					}
-				}
+			if ( isset( $templates[ $templatefile ] ) ) {
+				return $templates[ $templatefile ];
+			}
+
+			// Force searching of templates bypassing the cache.
+			$templates = $this->get_templates( true );
+
+			if ( isset( $templates[ $templatefile ] ) ) {
+				return $templates[ $templatefile ];
 			}
 
 			// If we could not find such template.
-			throw new Exception( "Error loading template file: " . $partial, 1 );
-
-			return false;
+			throw new Exception( 'Error loading template file: ' . $partial, 1 );
 		}
 	}
 
@@ -779,16 +801,16 @@ final class DustPress {
 
 	public function init_settings() {
 		$this->settings = [
-			"cache" => false,
-			"debug_data_block_name" => "Helper data",
-			"rendered_expire_time" => 7*60*60*24,
-			"json_url" => false,
-			"json_headers" => false,
+			'cache' => false,
+			'debug_data_block_name' => 'Helper data',
+			'rendered_expire_time' => 7*60*60*24,
+			'json_url' => false,
+			'json_headers' => false,
 		];
 
 		// loop through the settings and execute possible filters from functions
 		foreach ( $this->settings as $key => $value ) {
-			$this->settings[ $key ] = apply_filters( "dustpress/settings/". $key, $value );
+			$this->settings[ $key ] = apply_filters( 'dustpress/settings/'. $key, $value );
 		}
 
 		// A hook to prevent DustPress error to appear in Yoast's sitemap
@@ -814,7 +836,7 @@ final class DustPress {
 	*/
 
 	public function get_setting( $key ) {
-		return apply_filters( "dustpress/settings/" . $key, isset( $this->settings[ $key ] ) ? $this->settings[ $key ] : null );
+		return apply_filters( 'dustpress/settings/' . $key, isset( $this->settings[ $key ] ) ? $this->settings[ $key ] : null );
 	}
 
 	/**
@@ -844,7 +866,7 @@ final class DustPress {
 	*  @param   $char (string)
 	*  @return	(string)
 	*/
-	public function camelcase_to_dashed( $string, $char = "-" ) {
+	public function camelcase_to_dashed( $string, $char = '-' ) {
 		preg_match_all( '!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches );
 		$results = $matches[0];
 		foreach ( $results as &$match ) {
@@ -866,9 +888,9 @@ final class DustPress {
 	*  @param   $char (string)
 	*  @return	(string)
 	*/
-	public function dashed_to_camelcase( $string, $char = "-" ) {
-		$string = str_replace( $char, " ", $string );
-		$string = str_replace( " ", "", ucwords( $string ) );
+	public function dashed_to_camelcase( $string, $char = '-' ) {
+		$string = str_replace( $char, ' ', $string );
+		$string = str_replace( ' ', '', ucwords( $string ) );
 
 		return $string;
 	}
@@ -894,13 +916,13 @@ final class DustPress {
 				return ! $this->is_login_page();
 			},
 			function() {
-				return ! defined( "WP_CLI" );
+				return ! defined( 'WP_CLI' );
 			},
 			function() {
-				return ( php_sapi_name() !== "cli" );
+				return ( php_sapi_name() !== 'cli' );
 			},
 			function() {
-				return ! defined( "DOING_AJAX" );
+				return ! defined( 'DOING_AJAX' );
 			},
             function() {
                 if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate') > 0 ) {
@@ -930,7 +952,7 @@ final class DustPress {
 			}
 		];
 
-		$conditions = apply_filters( "dustpress/want_autoload", $conditions );
+		$conditions = apply_filters( 'dustpress/want_autoload', $conditions );
 
 		foreach( $conditions as $condition ) {
 			if ( is_callable( $condition ) ) {
@@ -1026,18 +1048,18 @@ final class DustPress {
 			$request_data->render = ( isset( $request_data->render ) && $request_data->render === 'true' ) ? true : false;
 		}
 		else {
-			die( json_encode( [ "error" => "Something went wrong. There was no dustpress_data present at the request." ] ) );
+			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
 		}
 
-		if ( ! empty( $request_data->token ) && ! empty( $_COOKIE['dpjs_token'] ) ) {
-			$token = ( $request_data->token === $_COOKIE['dpjs_token'] );
+		if ( ! empty( $request_data->token ) && ! empty( $_COOKIE[ 'dpjs_token' ] ) ) {
+			$token = ( $request_data->token === $_COOKIE[ 'dpjs_token' ] );
 		}
 		else {
 			$token = false;
 		}
 
 		if ( ! $token ) {
-			die( json_encode( [ "error" => "CSRF token mismatch." ] ) );
+			die( json_encode( [ 'error' => 'CSRF token mismatch.' ] ) );
 		}
 
 		if ( ! defined( 'DOING_AJAX' ) ) {
@@ -1055,7 +1077,7 @@ final class DustPress {
 		}
 
 		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data->path ) ) {
-			die( json_encode( [ "error" => "AJAX call path contains illegal characters." ] ) );
+			die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
 		}
 
 		// Check if the data we got from the JS side has a function path
@@ -1069,45 +1091,45 @@ final class DustPress {
 				}
 
 				if ( empty( $partial ) ) {
-					$output = [ "success" => $data ];
+					$output = [ 'success' => $data ];
 
 					if ( isset( $request_data->data ) && $request_data->data === true ) {
-						$output[ "data" ] = $data;
+						$output[ 'data' ] = $data;
 					}
 
 					die( wp_json_encode( $output ) );
 				}
 				else {
-					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
+					$html = $this->render( [ 'partial' => $partial, 'data' => $data, 'echo' => false ] );
 
 					if ( isset( $request_data->data ) && $request_data->data === true ) {
-						$response = [ "success" => $html, "data" => $data ];
+						$response = [ 'success' => $html, 'data' => $data ];
 					}
 					else {
-						$response = [ "success" => $html ];
+						$response = [ 'success' => $html ];
 					}
 
-					if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
-						$response["debug"] = $data;
+					if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+						$response[ 'debug' ] = $data;
 					}
 
 					die( wp_json_encode( $response ) );
 				}
 			}
 			else {
-				$path = explode( "/", $request_data->path );
+				$path = explode( DIRECTORY_SEPARATOR, $request_data->path );
 
 				if ( count( $path ) > 2 ) {
-					die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
+					die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
 				}
 				else if ( count( $path ) == 2 ) {
 					if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
-						die( json_encode( [ "error" => "AJAX call did not have a proper function path defined (syntax: model/function)." ] ) );
+						die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
 					}
 
 					$model = $path[0];
 
-					$functions = explode( ",", $path[1] );
+					$functions = explode( ',', $path[1] );
 
 					foreach( $functions as $function ) {
 						$runs[] = $function;
@@ -1121,7 +1143,7 @@ final class DustPress {
 			// Get current template name
 			$model = $this->get_template_filename();
 
-			$model = apply_filters( "dustpress/template", $model );
+			$model = apply_filters( 'dustpress/template', $model );
 		}
 
 		// If render is set true, set the model's default template to be used.
@@ -1155,10 +1177,10 @@ final class DustPress {
 
 			// If we don't want to render, json-encode and return just the data
 			if ( empty( $partial ) ) {
-				$output = [ "success" => $instance->data ];
+				$output = [ 'success' => $instance->data ];
 
 				if ( isset( $request_data->data ) && $request_data->data === true ) {
-					$output[ "data" ] = $instance->data;
+					$output[ 'data' ] = $instance->data;
 				}
 
 				die( wp_json_encode( $output ) );
@@ -1172,29 +1194,29 @@ final class DustPress {
 
 					$data = $instance->data->{$functions[0]};
 
-					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
+					$html = $this->render( [ 'partial' => $partial, 'data' => $data, 'echo' => false ] );
 				}
 				else {
 					$data = $instance->data;
-					$html = $this->render( [ "partial" => $partial, "data" => $data, "echo" => false ] );
+					$html = $this->render( [ 'partial' => $partial, 'data' => $data, 'echo' => false ] );
 				}
 
 				if ( isset( $request_data->data ) && $request_data->data === true ) {
-					$response = [ "success" => $html, "data" => $data ];
+					$response = [ 'success' => $html, 'data' => $data ];
 				}
 				else {
-					$response = [ "success" => $html ];
+					$response = [ 'success' => $html ];
 				}
 
-				if ( method_exists('\DustPress\Debugger', 'use_debugger') && \DustPress\Debugger::use_debugger() ) {
-					$response["debug"] = $data;
+				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+					$response[ 'debug' ] = $data;
 				}
 
 				die( wp_json_encode( $response ) );
 			}
 		}
 		else {
-			die( wp_json_encode( [ "error" => "Model '". $model ."' does not exist." ] ) );
+			die( wp_json_encode( [ 'error' => 'Model \'' . $model . '\ does not exist.' ] ) );
 		}
 	}
 
@@ -1226,15 +1248,15 @@ final class DustPress {
 		$helpers = [];
 
 		// Get helpers
-		preg_match_all("/\{@(\w+)/", $file, $findings);
+		preg_match_all( '/\{@(\w+)/', $file, $findings );
 
 		$helpers = array_merge( $helpers, array_unique( $findings[1] ) );
 
 		// Get includes
-		preg_match_all("/\{>[\"']?([-a-zA-z0-9\/]+)?/", $file, $includes);
+		preg_match_all( '/\{>["\']?([-a-zA-z0-9\/]+)?/', $file, $includes);
 
 		foreach( $includes[1] as $include ) {
-			$incl_explode = explode("/", $include);
+			$incl_explode = explode( DIRECTORY_SEPARATOR, $include );
 
 			$include = array_pop( $incl_explode );
 
@@ -1266,21 +1288,10 @@ final class DustPress {
 	public function get_prerender_file( $partial ) {
 		$templatefile =  $partial . '.dust';
 
-		if ( empty( $this->dust_template_files ) ) {
-			$templatepaths = $this->get_template_paths("partials");
+		$templates = $this->get_templates();
 
-			foreach ( $templatepaths as $templatepath ) {
-				if ( is_readable( $templatepath ) ) {
-					foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath ) ) as $file ) {
-						if ( is_readable( $file->getPathname() ) ) {
-							$this->dust_template_files[ $file->getFilename() ] = $file->getPathname();
-						}
-					}
-				}
-			}		
-		}
-		if ( isset( $this->dust_template_files[ $templatefile ] ) ) {
-			return $this->dust_template_files[ $templatefile ];
+		if ( isset( $templates[ $templatefile ] ) ) {
+			return $templates[ $templatefile ];
 		}
 		return false;
 	}
@@ -1313,6 +1324,43 @@ final class DustPress {
 				}
 			}
 		}
+	}
+
+	/**
+	*  Returns an array of Dust files present in the project. If the variable is empty, populates it recursively.
+	*
+	*  @type	function
+	*  @date	21/03/2018
+	*  @since	1.14.0
+	*
+	*  @param   N/A
+	*  @return	array
+	*/
+	public function get_templates( $force = false ) {
+		if ( empty( $this->templates ) || $force ) {
+			if ( ! defined( 'DUSTPRESS_DISABLE_TEMPLATE_CACHE' ) || ( ! method_exists( '\DustPress\Debugger', 'use_debugger' ) && ! \DustPress\Debugger::use_debugger() ) ) {
+				$this->templates = wp_cache_get( 'dustpress/templates' );
+			}
+
+			if ( empty( $this->templates ) || $force ) {
+				$templatepaths = $this->get_template_paths( 'partials' );
+
+				foreach ( $templatepaths as $templatepath ) {
+					if ( is_readable( $templatepath ) ) {
+						foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
+							if ( is_readable( $file->getPathname() ) && substr( $file->getFilename(), -5 ) === '.dust' ) {
+								
+								$this->templates[ $file->getFilename() ] = $file->getPathname();
+							}
+						}
+					}
+				}
+
+				wp_cache_set( 'dustpress/templates', $this->templates );
+			}
+		}
+
+		return $this->templates;
 	}
 
 	/**
@@ -1363,7 +1411,7 @@ final class DustPress {
 		    $prefix = 'Dust\\';
 
 		    // base directory for the namespace prefix
-		    $base_dir = dirname( __FILE__ ) . '/dust/';
+		    $base_dir = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'dust' . DIRECTORY_SEPARATOR;
 
 		    // does the class use the namespace prefix?
 		    $len = strlen( $prefix );
@@ -1378,7 +1426,7 @@ final class DustPress {
 		    // replace the namespace prefix with the base directory, replace namespace
 		    // separators with directory separators in the relative class name, append
 		    // with .php
-		    $file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+		    $file = $base_dir . str_replace( '\\', DIRECTORY_SEPARATOR, $relative_class ) . '.php';
 
 		    // if the file exists, require it
 		    if ( file_exists( $file ) ) {
@@ -1388,54 +1436,56 @@ final class DustPress {
 
 		// Autoload DustPress classes
 		spl_autoload_register( function( $class ) {
-			$paths = $this->get_template_paths("models");
+			$paths = $this->get_template_paths( 'models' );
 
 			$paths[] = dirname( __FILE__ );
 
-			if ( $class == "DustPress\Query" ) {
-				$class = "classes/query";
+			if ( $class == 'DustPress\Query' ) {
+				$class = 'classes/query';
 			}
-			elseif ( $class == "DustPress\Model" ) {
-				$class = "classes/model";
+			elseif ( $class == 'DustPress\Model' ) {
+				$class = 'classes/model';
 			}
-			elseif ( $class == "DustPress\Helper" ) {
-				$class = "classes/helper";
+			elseif ( $class == 'DustPress\Helper' ) {
+				$class = 'classes/helper';
 			}
-			elseif ( $class == "DustPress\Data" ) {
-				$class = "classes/data";
+			elseif ( $class == 'DustPress\Data' ) {
+				$class = 'classes/data';
 			}
 			else {
-				$class = $this->camelcase_to_dashed( $class, "-" );
+				$class = $this->camelcase_to_dashed( $class, '-' );
 			}
 
-			$filename = strtolower( $class ) .".php";
+			$filename = strtolower( $class ) .'.php';
 
 			// Store all paths when autoloading for the first time.
-            if (empty($this->autoload_paths)) {
+            if ( empty( $this->autoload_paths ) ) {
                 foreach ( $paths as $path ) {
                     if ( is_readable( $path ) ) {
-                        foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path ) ) as $file ) {
+                        foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
                             $file_basename = $file->getBaseName();
-                            $file_fullpath = $file->getPath()."/".$file->getFileName();
+                            $file_fullpath = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFileName();
 
                             // Ignore certain files as they do not contain any model files.
-                            if ($file_basename == '.' || $file_basename == '..' || !strstr($file_basename, '.') || strstr($file_fullpath, '/.git/')) { continue; }
+                            if ( ! strstr( $file_basename, '.' ) || strstr( $file_fullpath, '/.git/' ) ) {
+								continue;
+							}
 
                             // Only store filepath and filename from the SplFileObject.
-                            $this->autoload_paths[] = $file->getPath()."/".$file->getFileName();
+                            $this->autoload_paths[] = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFileName();
                         }
                     }
                     else {
-                        if ( dirname( __FILE__ ) ."/models" !== $path ) {
-                            die("DustPress error: Your theme does not have required directory ". $path);
+                        if ( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'models' !== $path ) {
+                            die( 'DustPress error: Your theme does not have required directory ' . $path);
                         }
                     }
                 }
             }
 
             // Find the file in the stored paths.
-            foreach ($this->autoload_paths as $file) {
-                if ( strpos( $file, "/" . $filename ) ) {
+            foreach ( $this->autoload_paths as $file ) {
+                if ( strpos( $file, DIRECTORY_SEPARATOR . $filename ) ) {
                     if ( is_readable( $file ) ) {
                         require_once( $file );
 
@@ -1461,13 +1511,13 @@ final class DustPress {
 
 		if ( isset( $append ) ) {
 			array_walk( $templatepaths, function( &$path ) use ( $append ) {
-				$path .= "/" . $append;
+				$path .= DIRECTORY_SEPARATOR . $append;
 			});
 		}
 
-		$templatepaths[] = dirname( __FILE__ ) ."/". $append;
+		$templatepaths[] = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $append;
 
-		$tag = $append ? "dustpress/" . $append : false;
+		$tag = $append ? 'dustpress' . DIRECTORY_SEPARATOR . $append : false;
 
 		if ( $tag ) {
 			$return = apply_filters( $tag, $templatepaths );
