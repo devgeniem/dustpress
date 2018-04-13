@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.14.0
+Version: 1.14.1
 */
 
 final class DustPress {
@@ -1034,6 +1034,8 @@ final class DustPress {
 	public function create_ajax_instance() {
 		global $post;
 
+		$model = false;
+
 		$request_body = file_get_contents( 'php://input' );
 		$json = json_decode( $request_body );
 
@@ -1082,9 +1084,15 @@ final class DustPress {
 
 		// Check if the data we got from the JS side has a function path
 		if ( isset( $request_data->path ) ) {
+
 			// If the path is set as a custom ajax function key, run the custom function
 			if ( isset( $this->ajax_functions[ $request_data->path ] ) ) {
-				$data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
+				try {
+					$data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
+				}
+				catch( Exception $e ) {
+					die( json_encode( [ 'error' => 'Function registered with \'' . $request_data->path . '\' could not be run. It should be publicly accessible.' ] ) );
+				}
 
 				if ( isset( $request_data->partial ) ) {
 					$partial = $request_data->partial;
@@ -1135,10 +1143,13 @@ final class DustPress {
 						$runs[] = $function;
 					}
 				}
+				else {
+					die( json_encode( [ 'error' => 'Custom AJAX function key \'' . $request_data->path . '\' was not found.' ] ) );
+				}
 			}
 		}
 
-		// If there was not model defined in JS call, use the one we already are in.
+		// If there was no model defined in the JS call, use the one we already are in.
 		if ( ! $model ) {
 			// Get current template name
 			$model = $this->get_template_filename();
@@ -1215,8 +1226,11 @@ final class DustPress {
 				die( wp_json_encode( $response ) );
 			}
 		}
+		elseif ( empty( $model ) ) {
+			die( wp_json_encode( [ 'error' => 'No model defined.' ] ) );
+		}
 		else {
-			die( wp_json_encode( [ 'error' => 'Model \'' . $model . '\ does not exist.' ] ) );
+			die( wp_json_encode( [ 'error' => 'Model \'' . $model . '\' does not exist.' ] ) );
 		}
 	}
 
