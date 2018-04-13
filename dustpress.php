@@ -1091,7 +1091,7 @@ final class DustPress {
 					$data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
 				}
 				catch( Exception $e ) {
-					die( json_encode( [ 'error' => 'Function registered with \'' . $request_data->path . '\' could not be run. It should be publicly accessible.' ] ) );
+					die( json_encode( [ 'error' => $e->getMessage() ] ) );
 				}
 
 				if ( isset( $request_data->partial ) ) {
