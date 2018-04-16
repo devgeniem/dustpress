@@ -8,6 +8,11 @@ These can be found in `models/user-activate.php` and `partials/user-activate.dus
 
 Be careful when editing the user-activate.php that nothing breaks! 
 
+If you want to extend the original without overriding it, you can specify the model with this filter. Then you can just extend the original UserActivate class.
+```
+add_filter(‘dustpress/template/useractivate’, function( $template ) { return ‘CustomUserActivate’; } );
+```
+
 ### Files
 ```
 models/user-activate.php
