@@ -29,6 +29,15 @@ class Comparison
             $chunk->setError('Must be in select or have key parameter');
         }
 
+        if ( isset( $params->type ) ) {
+            $type = $params->type;
+            
+            if ( $type === 'boolean' ) {
+                // Convert value to boolean.
+               $value = filter_var( $value, FILTER_VALIDATE_BOOLEAN );
+            }
+        }
+
         if ( $bodies->block === null ) {
             $bodies->block = new \Dust\Ast\Body(0);
         }
