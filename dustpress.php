@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.15.0
+Version: 1.15.1
 */
 
 final class DustPress {
@@ -68,16 +68,11 @@ final class DustPress {
 		// Create a DustPHP instance
 		$this->dust = new Dust\Dust();
 
-		// Set paths for where to look for partials and models
-		$this->paths = [
-			get_stylesheet_directory(),
-			get_template_directory()
-		];
-
-		$this->paths = array_values( array_unique( $this->paths ) );
-
 		// Dust template paths will be stored here so the filesystem has to be scanned only once.
 		$this->templates = [];
+
+		$this->add_theme_paths();
+		$this->add_core_paths();
 
         // Find and include Dust helpers from DustPress plugin
         $paths = [
@@ -1521,23 +1516,61 @@ final class DustPress {
 	 *  @return array  list of paths to look in
 	 */
 	private function get_template_paths( $append ) {
-		$templatepaths = $this->paths;
+		$tag = $append ? 'dustpress/' . $append : '';
 
-		if ( isset( $append ) ) {
-			array_walk( $templatepaths, function( &$path ) use ( $append ) {
-				$path .= DIRECTORY_SEPARATOR . $append;
-			});
-		}
-
-		$templatepaths[] = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $append;
-
-		$tag = $append ? 'dustpress' . DIRECTORY_SEPARATOR . $append : false;
-
-		if ( $tag ) {
-			$return = apply_filters( $tag, $templatepaths );
-		}
+		$return = apply_filters( $tag, [] );
 
 		return $return;
+	}
+
+	/**
+	 * Add themes to template paths array
+	 * 
+	 *  @type	function
+	 *  @date	25/05/2018
+	 *  @since	1.15.1
+	 *
+	 * @return void
+	 */
+	private function add_theme_paths() {
+		foreach ( [ 'models', 'partials' ] as $target ) {
+			add_filter( 'dustpress/' . $target, function( $paths ) use ( $target ) {
+				// Set paths for where to look for partials and models
+				$theme_paths = [
+					get_stylesheet_directory(),
+					get_template_directory()
+				];
+
+				$theme_paths = array_values( array_unique( $theme_paths ) );
+
+				array_walk( $theme_paths, function( &$path ) use ( $target ) {
+					$path .= DIRECTORY_SEPARATOR . $target;
+				});
+
+				$paths = $theme_paths + $paths;
+
+				return $paths;
+			}, 1000, 1 );
+		}
+	}
+
+	/**
+	 * Add core path to template paths array
+	 * 
+	 *  @type	function
+	 *  @date	25/05/2018
+	 *  @since	1.15.1
+	 *
+	 * @return void
+	 */
+	private function add_core_paths() {
+		foreach ( [ 'models', 'partials' ] as $target ) {
+			add_filter( 'dustpress/' . $target, function( $paths ) use ( $target ) {
+				$paths[] = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $target;
+
+				return $paths;
+			}, 1, 1 );
+		}
 	}
 
 	/**
