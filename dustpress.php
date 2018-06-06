@@ -1358,8 +1358,10 @@ final class DustPress {
 					if ( is_readable( $templatepath ) ) {
 						foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $templatepath, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
 							if ( is_readable( $file->getPathname() ) && substr( $file->getFilename(), -5 ) === '.dust' ) {
-								
-								$this->templates[ $file->getFilename() ] = $file->getPathname();
+								// Use only the first found template, do not override.
+								if ( empty( $this->templates[ $file->getFilename() ] ) ) {
+									$this->templates[ $file->getFilename() ] = $file->getPathname();
+								}
 							}
 						}
 					}
