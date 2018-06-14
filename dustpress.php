@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.15.3
+Version: 1.16.0
 */
 
 final class DustPress {
@@ -105,6 +105,32 @@ final class DustPress {
             }
 		}
 		else if ( $this->is_dustpress_ajax() ) {
+			// DustPress.js is never 404.
+			add_filter( 'status_header', function( $status, $header ) {
+				return 'status: 200';
+			}, 10, 2 );
+
+			// Make the main query to be as fast as possible within DustPress.js requests.
+			add_filter( 'posts_request', function( $request, \WP_Query $query ) {
+				// Target main home query
+				if ( $query->is_main_query() ) {
+					$request = str_replace( '1=1', '0=1', $request );
+				}
+
+				return $request;    
+
+			}, PHP_INT_MAX, 2 );
+
+			// Populate the main query posts variable with a dummy post to prevent errors and notices.
+			add_filter( 'posts_pre_query', function( $posts, \WP_Query $query ) {
+				if( $query->is_main_query() ){
+					$posts = [ new WP_Post( (object) [] ) ];
+					$query->found_posts = 1;
+				}
+
+				return $posts;
+			}, 10, 2 );
+
 			add_filter( 'template_include', [ $this, 'create_ajax_instance' ] );
 		}
 
