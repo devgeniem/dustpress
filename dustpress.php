@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.16.0
+Version: 1.16.1
 */
 
 final class DustPress {
@@ -105,31 +105,38 @@ final class DustPress {
             }
 		}
 		else if ( $this->is_dustpress_ajax() ) {
-			// DustPress.js is never 404.
-			add_filter( 'status_header', function( $status, $header ) {
-				return 'status: 200';
-			}, 10, 2 );
+			$this->parse_request_data();
 
-			// Make the main query to be as fast as possible within DustPress.js requests.
-			add_filter( 'posts_request', function( $request, \WP_Query $query ) {
-				// Target main home query
-				if ( $query->is_main_query() ) {
-					$request = str_replace( '1=1', '0=1', $request );
-				}
+			// Optimize the run if we don't want to run the main WP_Query at all.
+			if ( ( is_object( $this->request_data ) && ! empty( $this->request_data->bypassMainQuery ) ) ||
+			     ( is_array( $this->request_data ) && ! empty( $this->request_data['bypassMainQuery'] ) ) ) {
+				
+				// DustPress.js request is never 404.
+				add_filter( 'status_header', function( $status, $header ) {
+					return 'status: 200';
+				}, 10, 2 );
 
-				return $request;    
+				// Make the main query to be as fast as possible within DustPress.js requests.
+				add_filter( 'posts_request', function( $request, \WP_Query $query ) {
+					// Target main home query
+					if ( $query->is_main_query() ) {
+						$request = str_replace( '1=1', '0=1', $request );
+					}
 
-			}, PHP_INT_MAX, 2 );
+					return $request;    
 
-			// Populate the main query posts variable with a dummy post to prevent errors and notices.
-			add_filter( 'posts_pre_query', function( $posts, \WP_Query $query ) {
-				if( $query->is_main_query() ){
-					$posts = [ new WP_Post( (object) [] ) ];
-					$query->found_posts = 1;
-				}
+				}, PHP_INT_MAX, 2 );
 
-				return $posts;
-			}, 10, 2 );
+				// Populate the main query posts variable with a dummy post to prevent errors and notices.
+				add_filter( 'posts_pre_query', function( $posts, \WP_Query $query ) {
+					if( $query->is_main_query() ){
+						$posts = [ new WP_Post( (object) [] ) ];
+						$query->found_posts = 1;
+					}
+
+					return $posts;
+				}, 10, 2 );
+			}
 
 			add_filter( 'template_include', [ $this, 'create_ajax_instance' ] );
 		}
@@ -1057,22 +1064,7 @@ final class DustPress {
 
 		$model = false;
 
-		$request_body = file_get_contents( 'php://input' );
-		$json = json_decode( $request_body );
-
-		if ( isset( $json->dustpress_data ) ) {
-			$request_data = $json->dustpress_data;
-		}
-		elseif ( isset( $_POST['dustpress_data'] ) ) {
-			$request_data = (object) $_POST['dustpress_data'];
-
-			// Parse old data to correct format and assume it to be false if it isn't defined
-			$request_data->tidy = ( isset( $request_data->tidy ) && $request_data->tidy === 'true' ) ? true : false;
-			$request_data->render = ( isset( $request_data->render ) && $request_data->render === 'true' ) ? true : false;
-		}
-		else {
-			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
-		}
+		$request_data = $this->request_data;
 
 		if ( ! empty( $request_data->token ) && ! empty( $_COOKIE[ 'dpjs_token' ] ) ) {
 			$token = ( $request_data->token === $_COOKIE[ 'dpjs_token' ] );
@@ -1616,6 +1608,34 @@ final class DustPress {
 		add_action( 'init', function() use ( $route, $template ) {
 			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
 		}, 30);
+	}
+
+	/**
+	 * Parse DustPress.js request data
+	 * 
+	 * @type  function
+	 * @date  20/06/2018
+	 * @since 1.16.1
+	 *
+	 * @return void
+	 */
+	private function parse_request_data() {
+		$request_body = file_get_contents( 'php://input' );
+		$json = json_decode( $request_body );
+
+		if ( isset( $json->dustpress_data ) ) {
+			$this->request_data = $json->dustpress_data;
+		}
+		elseif ( isset( $_POST['dustpress_data'] ) ) {
+			$this->request_data = (object) $_POST['dustpress_data'];
+
+			// Parse old data to correct format and assume it to be false if it isn't defined
+			$this->request_data->tidy = ( isset( $this->request_data->tidy ) && $this->request_data->tidy === 'true' ) ? true : false;
+			$this->request_data->render = ( isset( $this->request_data->render ) && $this->request_data->render === 'true' ) ? true : false;
+		}
+		else {
+			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
+		}
 	}
 }
 
