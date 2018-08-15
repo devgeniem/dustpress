@@ -664,6 +664,8 @@ final class DustPress {
 			$type = 'json';
 		}
 
+		$type = apply_filter( 'dustpress_default_format', $type );
+
 		$types = array(
 			'html' => function( $data, $partial, $dust ) {
 
