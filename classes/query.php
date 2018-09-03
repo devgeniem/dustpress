@@ -49,7 +49,7 @@ class Query {
 		extract( $options );
 
 		// If id is not the same as global post get_post by id.
-		if ( $id ) {
+		if ( $post->ID !== $id ) {
 			$post = get_post( $id );
 		}
 
@@ -83,7 +83,7 @@ class Query {
 	 *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
-	public static function get_acf_post( $post_id = null, $args = array() ) {
+	public static function get_acf_post( $id = null, $args = array() ) {
 
 		global $post;
 
@@ -100,8 +100,8 @@ class Query {
 
 		extract( $options );
 
-		if ( $post_id ) {
-			$acfpost = get_post( $post_id );
+		if ( $post->ID !== $id ) {
+			$acfpost = get_post( $id );
 		} else {
 			$acfpost = $post;
 		}
