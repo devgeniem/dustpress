@@ -34,7 +34,10 @@ class Query {
 	 *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
-	public static function get_post( $id, $args = array() ) {
+	public static function get_post( $id = null, $args = array() ) {
+
+		global $post;
+
 		$defaults = [
 			'meta_keys' => 'null',
 			'single' 	=> false,
@@ -45,20 +48,23 @@ class Query {
 
 		extract( $options );
 
-		$post_data = get_post( $id, 'ARRAY_A' );
+		// If id is not the same as global post get_post by id.
+		if ( $id ) {
+			$post = get_post( $id );
+		}
 
-		if ( is_array( $post_data ) ) {
-			self::get_post_meta( $post_data, $post_data['ID'], $meta_keys, $single );
+		if ( is_object( $post ) ) {
+			self::get_post_meta( $post, $meta_keys, $single );
 		} else {
 		    // Return null.
-		    return $post_data;
+		    return $post;
         }
 
-		$post_data['permalink'] = get_permalink( $id );
-		$post_data['image_id']  = get_post_thumbnail_id( $id );
+		$post->permalink = get_permalink( $post->ID );
+		$post->image_id  = get_post_thumbnail_id( $post->ID );
 
 		// Cast the post and return.
-		return self::cast_post_to_type( $post_data, $output );
+		return self::cast_post_to_type( $post, $output );
 	}
 
 	/**
@@ -77,7 +83,9 @@ class Query {
 	 *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
-	public static function get_acf_post( $id, $args = array() ) {
+	public static function get_acf_post( $post_id = null, $args = array() ) {
+
+		global $post;
 
 		$defaults = [
 			'meta_keys' 				=> null,
@@ -92,10 +100,14 @@ class Query {
 
 		extract( $options );
 
-		$acfpost = get_post( $id, 'ARRAY_A' );
+		if ( $post_id ) {
+			$acfpost = get_post( $post_id );
+		} else {
+			$acfpost = $post;
+		}
 
-		if ( is_array( $acfpost ) ) {
-			$acfpost['fields'] = get_fields( $id );
+		if ( is_object( $acfpost ) ) {
+			$acfpost->fields = get_fields( $post->ID );
 
 			// Get fields with relational post data as a whole acf object
 			if ( $current_recursion_level < $max_recursion_level ) {
@@ -103,28 +115,30 @@ class Query {
 				// Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
 				$options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
 
-				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
-					foreach ( $acfpost['fields'] as &$field ) {
+				if ( is_object( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
+					foreach ( $acfpost->fields as &$field ) {
 						$field = self::handle_field( $field, $options );
 					}
 				}
 			} elseif ( true == $whole_fields ) {
-				if ( is_array( $acfpost['fields'] ) && count( $acfpost['fields'] ) > 0 ) {
-					foreach( $acfpost['fields'] as $name => &$field ) {
-						$field = get_field_object($name, $id, true);
+				if ( is_object( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
+					foreach( $acfpost->fields as $name => &$field ) {
+						$field = get_field_object( $name, $post->ID, true );
 					}
 				}
 			}
-			self::get_post_meta( $acfpost, $id, $meta_keys, $single );
+
+			self::get_post_meta( $acfpost, $meta_keys, $single );
 		}
 
-		$acfpost['permalink'] = get_permalink( $id );
+		$acfpost->permalink = get_permalink( $post->ID );
 
-		if ( function_exists("acf_get_attachment") ) {
-			$attachment_id = get_post_thumbnail_id( $id );
+		// Get ACF image object.
+		if ( function_exists( 'acf_get_attachment' ) ) {
+			$attachment_id = get_post_thumbnail_id( $post->ID );
 
 			if ( $attachment_id ) {
-				$acfpost['image'] = acf_get_attachment( $attachment_id );
+				$acfpost->image = acf_get_attachment( $attachment_id );
 			}
 		}
 
@@ -370,26 +384,26 @@ class Query {
 	 * @since	0.0.1
 	 *
 	 * @param  array		&$post    	The queried post.
-	 * @param  int 			$id        	Id for the post.
 	 * @param  array/string $meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
 	 * @param  boolean 		$single 	If true, return only the first value of the specified meta_key.
      *
 	 * @return array
 	 */
-    private static function get_post_meta( &$post, $id, $meta_keys = NULL, $single ) {
+    private static function get_post_meta( &$post, $meta_keys = NULL, $single = false ) {
+
 		$meta = array();
 
 		if ( $meta_keys === 'all' ) {
 		    // Get all metadata.
-			$meta = get_metadata( 'post', $id, '', $single );
+			$meta = get_metadata( 'post', $post->ID, '', $single );
 		} elseif ( is_array( $meta_keys ) ) {
 		    // Get the wanted metadata by defined keys.
 			foreach ( $meta_keys as $key ) {
-				$meta[$key] = get_metadata( 'post', $id, $key, $single );
+				$meta[$key] = get_metadata( 'post', $post->ID, $key, $single );
 			}
 		}
 
-		$post['meta'] = $meta;
+		$post->meta = $meta;
 	}
 
 	/**
@@ -428,6 +442,7 @@ class Query {
 
 	/**
 	 * Used to cast posts to a desired type.
+	 * Defaults to standard WordPress object.
 	 *
 	 * @type	function
 	 * @date	26/1/2016
@@ -440,13 +455,12 @@ class Query {
 	 */
 	private static function cast_post_to_type( $post, $type ) {
 
-        if ( 'OBJECT' === $type ) {
-            return (object) $post;
-        } elseif ( 'ARRAY_N' === $type ) {
-            return array_values( $post );
-        }
+        if ( $type === 'ARRAY_N' ) {
+            $post = array_values( $_post->to_array() );
+        } elseif ( $type === 'ARRAY_A' ) {
+			$post = $post->to_array();
+		}
 
-        // Defaults to ARRAY_A
 		return $post;
 	}
 
