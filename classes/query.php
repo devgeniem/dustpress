@@ -455,11 +455,11 @@ class Query {
 	 */
 	private static function cast_post_to_type( $post, $type ) {
 
-        if ( $type === 'ARRAY_N' ) {
-            $post = array_values( $_post->to_array() );
-        } elseif ( $type === 'ARRAY_A' ) {
+		if ( $type === 'ARRAY_A' ) {
 			$post = $post->to_array();
-		}
+		} elseif ( $type === 'ARRAY_N' ) {
+            $post = array_values( $post->to_array() );
+        }
 
 		return $post;
 	}
