@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.16.1
+Version: 1.16.2
 */
 
 final class DustPress {
@@ -194,8 +194,8 @@ final class DustPress {
             // Filter for wanted post ID
             $new_post = apply_filters( 'dustpress/router', $post_id );
 
-            // If developer wanted a post ID, make it happen
-            if ( ! is_null( $new_post ) ) {
+            // If developer wanted a post by post ID.
+            if ( $new_post !== $post_id ) {
                 $post = get_post( $new_post );
 
                 setup_postdata( $post );

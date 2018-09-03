@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.16.2] - 2018-09-03
+
+### Changed
+- Fixed 'dustpress/router' filter for WordPress preview functionality.
+- Removed unnecessary `$id` parameter from `get_post_meta()`.
+- Changed functions `get_post()` and `get_acf_post()` to use global post if desired post id same as global post.
+
 ## [1.16.1] - 2018-06-20
 
 ### Added
