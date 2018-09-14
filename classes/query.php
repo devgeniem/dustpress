@@ -459,7 +459,10 @@ class Query {
 			$current_post = $post->to_array();
 		} elseif ( $type === 'ARRAY_N' ) {
             $current_post = array_values( $post->to_array() );
-        }
+		}
+		else {
+			$current_post = $post;
+		}
 
 		return $current_post;
 	}

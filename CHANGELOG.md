@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.16.4] - 2018-09-14
+
+### Fixed
+- A minor bug in the previous release.
+
 ## [1.16.3] - 2018-09-14
 
-### Changed
-- Fixed a bug where `get_post()` and `get_acf_post()` would not work with proper IDs if used multiple times in a pageload.
+### Fixed
+- A bug where `get_post()` and `get_acf_post()` would not work with proper IDs if used multiple times in a pageload.
 
 ## [1.16.2] - 2018-09-03
 
