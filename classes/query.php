@@ -50,21 +50,21 @@ class Query {
 
 		// If id is not the same as global post get_post by id.
 		if ( $post->ID !== $id ) {
-			$post = get_post( $id );
+			$current_post = get_post( $id );
 		}
 
-		if ( is_object( $post ) ) {
-			self::get_post_meta( $post, $meta_keys, $single );
+		if ( is_object( $current_post ) ) {
+			self::get_post_meta( $current_post, $meta_keys, $single );
 		} else {
 		    // Return null.
 		    return $post;
         }
 
-		$post->permalink = get_permalink( $post->ID );
-		$post->image_id  = get_post_thumbnail_id( $post->ID );
+		$current_post->permalink = get_permalink( $current_post->ID );
+		$current_post->image_id  = get_post_thumbnail_id( $current_post->ID );
 
 		// Cast the post and return.
-		return self::cast_post_to_type( $post, $output );
+		return self::cast_post_to_type( $current_post, $output );
 	}
 
 	/**
@@ -107,7 +107,7 @@ class Query {
 		}
 
 		if ( is_object( $acfpost ) ) {
-			$acfpost->fields = get_fields( $post->ID );
+			$acfpost->fields = get_fields( $acfpost->ID );
 
 			// Get fields with relational post data as a whole acf object
 			if ( $current_recursion_level < $max_recursion_level ) {
@@ -123,7 +123,7 @@ class Query {
 			} elseif ( true == $whole_fields ) {
 				if ( is_object( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
 					foreach( $acfpost->fields as $name => &$field ) {
-						$field = get_field_object( $name, $post->ID, true );
+						$field = get_field_object( $name, $acfpost->ID, true );
 					}
 				}
 			}
@@ -131,11 +131,11 @@ class Query {
 			self::get_post_meta( $acfpost, $meta_keys, $single );
 		}
 
-		$acfpost->permalink = get_permalink( $post->ID );
+		$acfpost->permalink = get_permalink( $acfpost->ID );
 
 		// Get ACF image object.
 		if ( function_exists( 'acf_get_attachment' ) ) {
-			$attachment_id = get_post_thumbnail_id( $post->ID );
+			$attachment_id = get_post_thumbnail_id( $acfpost->ID );
 
 			if ( $attachment_id ) {
 				$acfpost->image = acf_get_attachment( $attachment_id );
@@ -456,12 +456,12 @@ class Query {
 	private static function cast_post_to_type( $post, $type ) {
 
 		if ( $type === 'ARRAY_A' ) {
-			$post = $post->to_array();
+			$current_post = $post->to_array();
 		} elseif ( $type === 'ARRAY_N' ) {
-            $post = array_values( $post->to_array() );
+            $current_post = array_values( $post->to_array() );
         }
 
-		return $post;
+		return $current_post;
 	}
 
 	/**
