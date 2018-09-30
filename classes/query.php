@@ -115,13 +115,13 @@ class Query {
 				// Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
 				$options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
 
-				if ( is_object( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
+				if ( is_array( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
 					foreach ( $acfpost->fields as &$field ) {
 						$field = self::handle_field( $field, $options );
 					}
 				}
 			} elseif ( true == $whole_fields ) {
-				if ( is_object( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
+				if ( is_array( $acfpost->fields ) && count( $acfpost->fields ) > 0 ) {
 					foreach( $acfpost->fields as $name => &$field ) {
 						$field = get_field_object( $name, $acfpost->ID, true );
 					}
