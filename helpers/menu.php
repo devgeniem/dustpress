@@ -268,19 +268,19 @@ class Menu extends Helper {
      * @return boolean
      */
     private static function is_current( $item, $override ) {
-        if ( is_tax() ) {
+        if ( \is_category() || \is_tag() || \is_tax() ) {
             $term_id = \get_queried_object()->term_id;
+
+            $return = ( $item->object_id == $term_id && 'taxonomy' == $item->type )
+                    ||  ( $item->object_id == $override );
         }
         else {
-            $term_id = null;
+            $return = ( \get_the_ID() == $item->object_id
+                    &&  'post_type' == $item->type )
+                    // Check if on a static page that shows posts.
+                    ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
+                    ||  ( $item->object_id == $override );
         }
-
-        $return = (    \get_the_ID() == $item->object_id
-                &&  'post_type' == $item->type )
-                // Check if on a static page that shows posts.
-                ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
-                ||  ( $item->object_id == $term_id && 'taxonomy' == $item->type )
-                ||  ( $item->object_id == $override );
 
         return apply_filters( "dustpress/menu/is_current", $return, $item );
     }
