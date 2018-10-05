@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `DustPress\Query::get_acf_post()` method returns null if no post is found with the given id. Fixes [#87](https://github.com/devgeniem/dustpress/issues/87).
+- `DustPress\Query::get_acf_post()` will not throw an error if ACF is not active.
+
 ## [1.16.5] - 2018-09-30
 
 ### Fixed
