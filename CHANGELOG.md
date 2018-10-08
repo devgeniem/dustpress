@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.17.0-beta] - 2018-10-08
+
+### Fixed
+- Make the menuhelper show the correct current item even on category or tag archives.
+
 ## [1.16.6] - 2018-10-05
 
 ### Fixed
