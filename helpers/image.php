@@ -267,6 +267,8 @@ class Image extends Helper {
                 $image_sizes_string .
                 $image_close_string;
 
+        $html = apply_filters( "dustpress/image/markup", $html );
+
         return $html;
     }
 
