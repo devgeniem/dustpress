@@ -52,8 +52,11 @@ class Query {
 		if ( $post->ID !== $id ) {
 			$current_post = get_post( $id );
 		}
+		else {
+			$current_post = $post;
+		}
 
-		if ( is_object( $current_post ) ) {
+		if ( isset( $current_post ) && is_object( $current_post ) ) {
 			self::get_post_meta( $current_post, $meta_keys, $single );
 		}
 		else {
