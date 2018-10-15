@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Make the menuhelper show the correct current item even on category or tag archives.
 
+## [1.16.8] - 2018-10-15
+
+### Fixed
+- A bug in the Query class that caused a notice in certain situations.
+
 ## [1.16.7] - 2018-10-10
 
 ### Added
