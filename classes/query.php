@@ -48,10 +48,15 @@ class Query {
 
 		extract( $options );
 
-		// If id is not the same as global post get_post by id.
-		if ( $post->ID !== $id ) {
+		// Throw error if we have no post to fetch
+		if ( empty( $post ) && empty( $id ) ) {
+			throw new \Exception( 'DustPress\Query::get_post() requires either global post object existence or defined $id parameter.' );
+		}
+		// Get the post from $id parameter if it's different from the global post object or the global object does not exist.
+		else if ( empty( $post ) || $post->ID !== $id ) {
 			$current_post = get_post( $id );
 		}
+		// Use global post
 		else {
 			$current_post = $post;
 		}
@@ -104,11 +109,17 @@ class Query {
 
 		extract( $options );
 
-		if ( $post->ID !== $id ) {
-			$acfpost = get_post( $id );
+		// Throw error if we have no post to fetch
+		if ( empty( $post ) && empty( $id ) ) {
+			throw new \Exception( 'DustPress\Query::get_post() requires either global post object existence or defined $id parameter.' );
 		}
+		// Get the post from $id parameter if it's different from the global post object or the global object does not exist.
+		else if ( empty( $post ) || $post->ID !== $id ) {
+			$current_post = get_post( $id );
+		}
+		// Use global post
 		else {
-			$acfpost = $post;
+			$current_post = $post;
 		}
 
 		// No post was found with the given id or the global post is empty.

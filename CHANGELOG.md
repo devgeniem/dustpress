@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Make the menuhelper show the correct current item even on category or tag archives.
+- Query::get_post() and Query::get_acf_post() methods to function properly without global post object existence.
 
 ## [1.16.8] - 2018-10-15
 
