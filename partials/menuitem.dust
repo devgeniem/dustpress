@@ -13,6 +13,7 @@
 		{/sub_menu}
 		{?sub_menu}
 			</ul>
+			{@set key="depth_now" subtract=1 /}
 		{/sub_menu}
 	{/eq}
 {/show_submenu}
