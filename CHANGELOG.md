@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Cache DustPHP template file paths during runtime to prevent multiple recursive directory searches for same template requests.
+
 ## [1.17.0] - 2018-10-19
 
 ### Fixed
