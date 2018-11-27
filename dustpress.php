@@ -1007,7 +1007,7 @@ final class DustPress {
 	*
 	*  @return	(boolean)
 	*/
-	private function is_dustpress_ajax() {
+	public function is_dustpress_ajax() {
 		$request_body = file_get_contents( 'php://input' );
 		$json = json_decode( $request_body );
 
