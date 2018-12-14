@@ -28,19 +28,23 @@ class Image extends Helper {
 
             // SRC also given.
             if ( null !== $image_data['src'] ) {
-
-                return '<p><strong>Dustpress image helper error:</strong>
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                    return '<p><strong>Dustpress image helper error:</strong>
                         <em>Image id and custom src both given.
                         Only one of these parameters can be used.</em></p>';
+                }
+                return;
 
             } else { // Only the ID given as the original image source.
 
                 if ( null === $image_data['size'] ) {
-
-                    return '<p><strong>Dustpress image helper error:</strong>
-                            <em>No image size attribute given. When
-                            using the ID, you have to give a registered size name to
-                            the helper. </em></p>';
+                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                        return '<p><strong>Dustpress image helper error:</strong>
+                                <em>No image size attribute given. When
+                                using the ID, you have to give a registered size name to
+                                the helper. </em></p>';
+                    }
+                    return;
 
                 } else { // ID and size given.
 
@@ -61,18 +65,21 @@ class Image extends Helper {
                             return $the_image_markup;
 
                         } else {
-
-                            return '<p><strong>Dustpress image helper error:</strong>
-                                    <em>No image found from the database with the given id.</em></p>';
-
+                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                                return '<p><strong>Dustpress image helper error:</strong>
+                                        <em>No image found from the database with the given id.</em></p>';
+                            }
+                            return;
                         }
                     } else { // Custom responsive parameters are given.
 
                         // SRCSET exists but no SIZES attribute is given.
                         if ( null === $image_data['sizes'] ) {
-
-                            return '<p><strong>Dustpress image helper error:</strong>
-                                    <em>Srcset exists but no sizes attribute is given.</em></p>';
+                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                                return '<p><strong>Dustpress image helper error:</strong>
+                                        <em>Srcset exists but no sizes attribute is given.</em></p>';
+                                }
+                            return;
 
                         } else { // Both custom responsive parameters and the id is given.
 
@@ -86,27 +93,33 @@ class Image extends Helper {
 
             // No SRC given either.
             if ( null === $image_data['src'] ) {
-
-                return '<p><strong>Dustpress image helper error:</strong>
-                        <em>Image id or custom src not given.
-                        The helper needs at least one of these parameters.</em></p>';
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                    return '<p><strong>Dustpress image helper error:</strong>
+                            <em>Image id or custom src not given.
+                            The helper needs at least one of these parameters.</em></p>';
+                }
+                return;
 
             } else { // Only the SRC given as the original image source.
 
                 // When using the custom SRC, both SRCSET and SIZES need to be given.
                 if ( null === $image_data['srcset'] ) {
-
-                    return '<p><strong>Dustpress image helper error:</strong>
-                            <em>Srcset not given. Both the srcset and the sizes are
-                            needed when using a custom src.</em></p>';
+                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                        return '<p><strong>Dustpress image helper error:</strong>
+                                <em>Srcset not given. Both the srcset and the sizes are
+                                needed when using a custom src.</em></p>';
+                    }
+                    return;
                 }
 
                 // When using the custom SRC, both SRCSET and SIZES need to be given.
                 if ( null === $image_data['sizes'] ) {
-
-                    return '<p><strong>Dustpress image helper error:</strong>
-                            <em>Sizes not given. Both the srcset and the sizes are
-                            needed when using a custom src.</em></p>';
+                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                        return '<p><strong>Dustpress image helper error:</strong>
+                                <em>Sizes not given. Both the srcset and the sizes are
+                                needed when using a custom src.</em></p>';
+                    }
+                    return;
 
                 }
 
@@ -204,10 +217,11 @@ class Image extends Helper {
                                     '" src="' . $image_src . '"';
 
             } else { // Else return an error.
-
-                return '<p><strong>Dustpress image helper error:</strong>
-                <em>No image found from the database with the given id.</em></p>';
-
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                    return '<p><strong>Dustpress image helper error:</strong>
+                    <em>No image found from the database with the given id.</em></p>';
+                }
+                return;
             }
         }
 
@@ -228,9 +242,11 @@ class Image extends Helper {
 
         // Check that the srcset is given as an array.
         if ( ! is_array( $sizes ) ) {
-
-            return '<p><strong>Dustpress image helper error:</strong>
-                    <em>Given sizes attribute is not an array.</em></p>';
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                return '<p><strong>Dustpress image helper error:</strong>
+                        <em>Given sizes attribute is not an array.</em></p>';
+                }
+            return;
 
         }
 
@@ -247,9 +263,11 @@ class Image extends Helper {
 
         // Check that the srcset is given as an array.
         if ( ! is_array( $srcset_array ) ) {
-
-            return '<p><strong>Dustpress image helper error:</strong>
-                    <em>Given srcset attribute is not an array.</em></p>';
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG === true ) {
+                return '<p><strong>Dustpress image helper error:</strong>
+                        <em>Given srcset attribute is not an array.</em></p>';
+                }
+            return;
 
         }
 
