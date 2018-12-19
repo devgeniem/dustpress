@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [1.19.0] - 2018-12-19
+
 ### Changed
+- Rendered HTML is not cached by default anymore as it may cause problems with object cache drop-ins.
 - Only show image helper error messages if WP_DEBUG is set to true
 
 ## [1.18.0] - 2018-10-23
