@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [1.19.1] - 2019-01-07
+
+### Changed
+- Added a version check for the user activation feature because WordPress 5.0 breaks the backwards compatibility of the customization.
 
 ## [1.19.0] - 2018-12-19
 
