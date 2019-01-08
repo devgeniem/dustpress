@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.19.0
+Version: 1.20.0
 */
 
 final class DustPress {
@@ -40,6 +40,9 @@ final class DustPress {
 
 	// Registered custom ajax functions
 	private $ajax_functions;
+
+	// Custom routes
+	private $custom_routes = [];
 
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -255,6 +258,33 @@ final class DustPress {
 				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 			}
 		}
+	}
+
+	/**
+	 * This function returns the model name of current custom route, or false if we are not on a custom route.
+	 * 
+	 *  @type	function
+	 *  @date	8/1/2019
+	 *  @since	1.20.0
+	 *
+	 *  @param	N/A
+	 *  @return	string|boolean
+	 */
+	public function get_custom_route() {
+		global $wp_query;
+
+		$custom_route = $wp_query->get( 'dustpress_custom_route' );
+
+		if ( ! empty( $custom_route ) ) {
+			if ( isset( $this->custom_routes[ $custom_route ] ) ) {
+				return [
+					'template' => $custom_route,
+					'route'    => $this->custom_routes[ $custom_route ],
+				];
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -1608,6 +1638,8 @@ final class DustPress {
 	 * @return void
 	 */
 	public function register_custom_route( $route, $template ) {
+		$this->custom_routes[ $template ] = $route;
+
 		add_action( 'init', function() use ( $route, $template ) {
 			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
 		}, 30);
