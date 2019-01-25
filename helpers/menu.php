@@ -303,7 +303,7 @@ class Menu extends Helper {
      *
      * @return bool|array
      */
-    protected static function get_cached_menu_items( int $menu_id ) {
+    protected static function get_cached_menu_items( ?int $menu_id ) {
         if ( static::disable_cache() ) {
             return false;
         }
@@ -319,7 +319,7 @@ class Menu extends Helper {
      *
      * @return bool
      */
-    protected static function set_cached_menu_items( int $menu_id, $menu_items ) {
+    protected static function set_cached_menu_items( ?int $menu_id, ?array $menu_items = [] ) {
         if ( static::disable_cache() ) {
             return false;
         }
@@ -337,7 +337,7 @@ class Menu extends Helper {
      *
      * @return bool
      */
-    public static function delete_cache_menu_items( $menu_id = 0 ) {
+    public static function delete_cached_menu_items( $menu_id = 0 ) {
         if ( static::disable_cache() ) {
             return false;
         }
@@ -359,4 +359,4 @@ class Menu extends Helper {
 $this->add_helper( 'menu', new Menu() );
 
 // Add hook to delete menu items cache if a menu is updated.
-add_action( 'wp_update_nav_menu', [ Menu::class, 'delete_cache_menu_items' ], 1, 1 );
+add_action( 'wp_update_nav_menu', [ Menu::class, 'delete_cached_menu_items' ], 1, 1 );
