@@ -76,7 +76,8 @@ class Pagination extends Helper {
             if ( $cur_page === $first_page ) {
                 $hellip_start  = '';
                 $on_first_page = true;
-                for ( $i = 0; $i < $visible; $i++ ) {
+                $max = ( $page_count < $visible ) ? $page_count : $visible;
+                for ( $i = 0; $i < $max; $i++ ) {
                     if ( ( $i + 1 ) > $page_count ) {
                         $hellip_end = '';
                         break;
