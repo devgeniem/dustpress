@@ -258,7 +258,7 @@ class Menu extends Helper {
                         $item->classes = array_filter( $item->classes );
                     }
 
-                    $item->classes = apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
+                    $item->classes = (array) apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
                     $item = apply_filters( "dustpress/menu/item", $item );
 
                     $item->classes[] = 'menu-item';
