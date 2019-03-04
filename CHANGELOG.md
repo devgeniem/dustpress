@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.21.2] - 2019-02-04
 
 ### Fixed
-
 - Pagination helper fixed $page_count to return int not float. This caused failure on current page active state in some cases.
+- A bug with the menu helper and WordPress Customizer.
 
 ## [1.21.1] - 2019-02-26
 
