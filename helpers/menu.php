@@ -153,7 +153,7 @@ class Menu extends Helper {
         if ( isset( $menu_object) ) {
             $menu_items = static::get_cached_menu_items( $menu_object->term_id );
 
-            if ( empty( $menu_items ) || \is_customizer_preview() ) {
+            if ( empty( $menu_items ) || \is_customize_preview() ) {
                 $menu_items = \wp_get_nav_menu_items( $menu_object );
 
                 static::set_cached_menu_items( $menu_object->term_id, $menu_items );
