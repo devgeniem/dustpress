@@ -153,7 +153,7 @@ class Menu extends Helper {
         if ( isset( $menu_object) ) {
             $menu_items = static::get_cached_menu_items( $menu_object->term_id );
 
-            if ( empty( $menu_items ) ) {
+            if ( empty( $menu_items ) || \is_customizer_preview() ) {
                 $menu_items = \wp_get_nav_menu_items( $menu_object );
 
                 static::set_cached_menu_items( $menu_object->term_id, $menu_items );
@@ -258,7 +258,7 @@ class Menu extends Helper {
                         $item->classes = array_filter( $item->classes );
                     }
 
-                    $item->classes = apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
+                    $item->classes = (array) apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
                     $item = apply_filters( "dustpress/menu/item", $item );
 
                     $item->classes[] = 'menu-item';
