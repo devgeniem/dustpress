@@ -231,6 +231,11 @@ class Menu extends Helper {
                 if ( $item->menu_item_parent == $parent ) {
                     $item->sub_menu = self::build_menu( $menu_items, $item->ID, $item->object, $override );
 
+                    // Make sure $item->classes is an array. Needed to work with the Customizer.
+                    if ( ! is_array( $item->classes ) ) {
+                        $item->classes = [];
+                    }
+
                     if ( is_array( $item->sub_menu ) && count( $item->sub_menu ) > 0 ) {
                         $item->classes[] = 'menu-item-has-children';
                     }
