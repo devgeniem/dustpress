@@ -1649,7 +1649,7 @@ final class DustPress {
 	 * @param string $render   How to render the output. Defaults to HTML which means the Dust template system.
 	 * @return void
 	 */
-	public function register_custom_route( $route, $template, $render = 'html' ) {
+	public function register_custom_route( $route, $template, $render = 'default' ) {
 		$this->custom_routes[ $template ] = $route;
 
 		add_action( 'init', function() use ( $route, $template, $render ) {
