@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.22.0
+Version: 1.22.1-beta
 */
 
 final class DustPress {
@@ -669,21 +669,16 @@ final class DustPress {
 	*  @return	true/false (boolean)
 	*/
 	public function render( $args = array() ) {
-		global 	$dustpress;
+		global 	$dustpress,
 				$hash;
 
 		$defaults = [
-			'data' => false,
-			'type' => 'default',
-			'echo' => true,
-			'main' => false,
+			'data'    => false,
+			'type'    => 'default',
+			'echo'    => true,
+			'main'    => false,
+			'partial' => null,
 		];
-
-		if ( is_array( $args ) ) {
-			if ( ! isset( $args['partial'] ) ) {
-				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
-			}
-		}
 
 		$options = array_merge( $defaults, (array) $args );
 
@@ -705,7 +700,35 @@ final class DustPress {
 		}
 
 		$types = array(
-			'html' => function( $data, $partial, $dust ) {
+			'html' => function( $data, $partial ) {
+
+				if ( ! isset( $partial ) ) {
+					die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
+				}
+
+				// Ensure we have a DustPHP instance.
+				if ( ! isset( $this->dust ) ) {
+					die( 'DustPress error: Something very unexpected happened: there is no DustPHP.' );
+				}
+				else {
+					$dust = $this->dust;
+				}
+
+				$this->dust->helpers = apply_filters( 'dustpress/helpers', $this->dust->helpers );
+
+				$this->dust->includedDirectories = $this->get_template_paths( 'partials' );
+
+				// Fetch Dust partial by given name. Throw error if there is something wrong.
+				try {
+					$template = $this->get_template( $partial );
+
+					$helpers = $this->prerender( $partial );
+
+					$this->prerun_helpers( $helpers );
+				}
+				catch ( Exception $e ) {
+					die( 'DustPress error: '. $e->getMessage() );
+				}
 
 				try {
 					if ( apply_filters( 'dustpress/cache/partials', false ) && apply_filters( 'dustpress/cache/partials/' . $partial, true ) ) {
@@ -740,7 +763,7 @@ final class DustPress {
 
 				return $rendered;
 			},
-			'json' => function( $data, $partial, $dust ) {
+			'json' => function( $data, $partial ) {
 				try {
 					$output = json_encode( $data );
 					header( 'Content-Type: application/json' );
@@ -761,28 +784,6 @@ final class DustPress {
 			$this->model->data['WP'] = $this->populate_data_collection();
 		}
 
-		// Ensure we have a DustPHP instance.
-		if ( isset( $this->dust ) ) {
-			$dust = $this->dust;
-		}
-		else {
-			die( 'DustPress error: Something very unexpected happened: there is no DustPHP.' );
-		}
-
-		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
-
-		// Fetch Dust partial by given name. Throw error if there is something wrong.
-		try {
-			$template = $this->get_template( $partial );
-
-			$helpers = $this->prerender( $partial );
-
-			$this->prerun_helpers( $helpers );
-		}
-		catch ( Exception $e ) {
-			die( 'DustPress error: '. $e->getMessage() );
-		}
-
 		if ( ! empty( $data ) ) {
 			$render_data = apply_filters( 'dustpress/data', $data );
 		}
@@ -794,10 +795,8 @@ final class DustPress {
 			$render_data = null;
 		}
 
-		$this->dust->includedDirectories = $this->get_template_paths( 'partials' );
-
 		// Create output with wanted format.
-		$output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
+		$output = call_user_func_array( $types[$type], [ $render_data, $partial ] );
 
 		// Filter output
 		$output = apply_filters( 'dustpress/output', $output, $options );
