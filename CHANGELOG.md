@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Fixed case in menu helper build_menu method when $item->classes is not an array (e.g. certain cases in Customizer)
+
+## [1.21.3] - 2019-03-04
+
+### Fixed
+- A minor bug caused by the last update.
+
+## [1.21.2] - 2019-03-04
+
+### Fixed
+- Pagination helper fixed $page_count to return int not float. This caused failure on current page active state in some cases.
+- A bug with the menu helper and WordPress Customizer.
+
+## [1.21.1] - 2019-02-26
+
+### Fixed
+- A bug that caused a notice when a template was rendered manually with empty data block.
+
+## [1.21.0] - 2019-02-01
+
+### Added
+
+- Object caching for the menu helper.
+
 ## [1.20.0] - 2019-01-08
 
 ### Added

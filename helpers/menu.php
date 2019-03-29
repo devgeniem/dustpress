@@ -11,6 +11,11 @@ namespace DustPress;
 class Menu extends Helper {
 
     /**
+     * The object cache key prefix.
+     */
+    const CACHE_KEY_PREFIX = 'dustpress_menu_helper_';
+
+    /**
      * Renders and outputs the menu HTML.
      *
      * @return $output (string)
@@ -146,7 +151,13 @@ class Menu extends Helper {
         }
 
         if ( isset( $menu_object) ) {
-            $menu_items = \wp_get_nav_menu_items( $menu_object );
+            $menu_items = static::get_cached_menu_items( $menu_object->term_id );
+
+            if ( empty( $menu_items ) || \is_customize_preview() ) {
+                $menu_items = \wp_get_nav_menu_items( $menu_object );
+
+                static::set_cached_menu_items( $menu_object->term_id, $menu_items );
+            }
 
             // Add menu object location to the menu object.
             // You can use this to filter specific menu items.
@@ -173,24 +184,24 @@ class Menu extends Helper {
 
         if ( $menu_items ) {
 
-                $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
+            $built_menu_items = self::build_menu( $menu_items, $parent_id, null, $override );
 
-                $active = array_keys( $built_menu_items, 'active' );
+            $active = array_keys( $built_menu_items, 'active' );
 
-                foreach( $active as $index ) {
-                    unset( $built_menu_items[ $index ] );
-                }
-                
-                if ( 0 === array_search( 'active', $built_menu_items ) ) {
-                        unset( $built_menu_items[0] );
-                }
+            foreach( $active as $index ) {
+                unset( $built_menu_items[ $index ] );
+            }
 
-                // return menu object and menu items
-                $menu = [];
-                $menu['menu_object'] = apply_filters( 'dustpress/menu/object/location=' . $menu_object->location, $menu_object );
-                $menu['menu_items'] = apply_filters( 'dustpress/menu/items/location=' . $menu_object->location, $built_menu_items );
+            if ( 0 === array_search( 'active', $built_menu_items ) ) {
+                unset( $built_menu_items[0] );
+            }
 
-                return apply_filters( 'dustpress/menu', $menu );
+            // return menu object and menu items
+            $menu = [];
+            $menu['menu_object'] = apply_filters( 'dustpress/menu/object/location=' . $menu_object->location, $menu_object );
+            $menu['menu_items'] = apply_filters( 'dustpress/menu/items/location=' . $menu_object->location, $built_menu_items );
+
+            return apply_filters( 'dustpress/menu', $menu );
         }
     }
 
@@ -216,9 +227,14 @@ class Menu extends Helper {
         }
 
         if ( count( $menu_items ) > 0 ) {
-            foreach ( $menu_items as $item ) {  
+            foreach ( $menu_items as $item ) {
                 if ( $item->menu_item_parent == $parent ) {
                     $item->sub_menu = self::build_menu( $menu_items, $item->ID, $item->object, $override );
+
+                    // Make sure $item->classes is an array. Needed to work with the Customizer.
+                    if ( ! is_array( $item->classes ) ) {
+                        $item->classes = [];
+                    }
 
                     if ( is_array( $item->sub_menu ) && count( $item->sub_menu ) > 0 ) {
                         $item->classes[] = 'menu-item-has-children';
@@ -247,7 +263,7 @@ class Menu extends Helper {
                         $item->classes = array_filter( $item->classes );
                     }
 
-                    $item->classes = apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
+                    $item->classes = (array) apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
                     $item = apply_filters( "dustpress/menu/item", $item );
 
                     $item->classes[] = 'menu-item';
@@ -272,18 +288,80 @@ class Menu extends Helper {
             $term_id = \get_queried_object()->term_id;
 
             $return = ( $item->object_id == $term_id && 'taxonomy' == $item->type )
-                    ||  ( $item->object_id == $override );
+                      ||  ( $item->object_id == $override );
         }
         else {
             $return = ( \get_the_ID() == $item->object_id
-                    &&  'post_type' == $item->type )
-                    // Check if on a static page that shows posts.
-                    ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
-                    ||  ( $item->object_id == $override );
+                        &&  'post_type' == $item->type )
+                      // Check if on a static page that shows posts.
+                      ||  ( \is_home() && ! \is_front_page() && \get_queried_object_id() == $item->object_id )
+                      ||  ( $item->object_id == $override );
         }
 
         return apply_filters( "dustpress/menu/is_current", $return, $item );
     }
+
+    /**
+     * Get the cached menu items.
+     *
+     * @param mixed $menu_id The menu id.
+     *
+     * @return bool|array
+     */
+    protected static function get_cached_menu_items( ?int $menu_id ) {
+        if ( static::disable_cache() ) {
+            return false;
+        }
+        $cache = wp_cache_get( static::CACHE_KEY_PREFIX . $menu_id );
+        return $cache;
+    }
+
+    /**
+     * Set menu items into cache.
+     *
+     * @param mixed $menu_id    The menu id.
+     * @param array $menu_items The menu items.
+     *
+     * @return bool
+     */
+    protected static function set_cached_menu_items( ?int $menu_id, ?array $menu_items = [] ) {
+        if ( static::disable_cache() ) {
+            return false;
+        }
+
+        // Define the cache expiration time in secods.
+        $expire = defined( 'DUSTPRESS_MENU_HELPER_CACHE_EXPIRE' ) ? DUSTPRESS_MENU_HELPER_CACHE_EXPIRE : 15 * MINUTE_IN_SECONDS;
+
+        return wp_cache_set( static::CACHE_KEY_PREFIX . $menu_id, $menu_items, null, $expire );
+    }
+
+    /**
+     * Delete menu items cache when a menu is updated.
+     *
+     * @param int $menu_id The menu id.
+     *
+     * @return bool
+     */
+    public static function delete_cached_menu_items( $menu_id = 0 ) {
+        if ( static::disable_cache() ) {
+            return false;
+        }
+
+        return wp_cache_delete( static::CACHE_KEY_PREFIX . $menu_id );
+    }
+
+    /**
+     * Defines whether to disable caching.
+     *
+     * @return bool
+     */
+    protected static function disable_cache() {
+        $disable = defined( 'DUSTPRESS_MENU_HELPER_CACHE_DISABLE' ) && DUSTPRESS_MENU_HELPER_CACHE_DISABLE === true;
+        return $disable;
+    }
 }
 
 $this->add_helper( 'menu', new Menu() );
+
+// Add hook to delete menu items cache if a menu is updated.
+add_action( 'wp_update_nav_menu', [ Menu::class, 'delete_cached_menu_items' ], 1, 1 );

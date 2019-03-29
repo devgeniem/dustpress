@@ -336,6 +336,17 @@ add_filter( "dustpress/cache/rendered", "__return_false" );
 
 **Note!** When enabled, [DustPress Debugger](https://github.com/devgeniem/dustpress-debugger) turns both partial and end-result caching off.
 
+### Menu caching
+
+The menu helper uses [WP Object Cache](https://codex.wordpress.org/Class_Reference/WP_Object_Cache) to cache loaded menu items for each menu. The menu id (more specifically the term id of the menu) is used to build the cache key. No cache group is used. The menu helper also handles deleting the cache automatically when the menu is updated. To enable persistent caching you must install some third party plugin for it, for example [Redis Object Cache for WordPress](https://github.com/devgeniem/wp-redis-object-cache-dropin/).
+
+#### Configuration constants
+
+You can define the following PHP constants to control menu helper caching:
+
+- `DUSTPRESS_MENU_HELPER_CACHE_EXPIRE : int`: The menu items cache expiration time in seconds. The default value used is 15 minutes (900) if the constant is not set.
+- `DUSTPRESS_MENU_HELPER_CACHE_DISABLE : bool`: Set to `true` if you want to disable caching. The cache is enabled by default.
+
 ## Dust templates
 
 DustPHP templates are 100% compatible with Dust.js templates. See the official [Dust.js website](http://www.dustjs.com/) for documentation or the [LinkedIn Dust Tutorial](https://github.com/linkedin/dustjs/wiki/Dust-Tutorial).
