@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.21.3
+Version: 1.22.0
 */
 
 final class DustPress {
@@ -171,6 +171,7 @@ final class DustPress {
 		add_rewrite_tag( '%dustpress_custom_route%', '([^\/]+)' );
 		add_rewrite_tag( '%dustpress_custom_route_route%', '(.+)' );
 		add_rewrite_tag( '%dustpress_custom_route_parameters%', '(.+)' );
+		add_rewrite_tag( '%dustpress_custom_route_render%', '(.+)' );
 	}
 
 	/**
@@ -223,12 +224,12 @@ final class DustPress {
 		$custom_route            = $wp_query->get( 'dustpress_custom_route' );
 		$custom_route_parameters = $wp_query->get( 'dustpress_custom_route_parameters' );
 
-	
 		// Handle registered DustPress custom routes
 		if ( ! empty( $custom_route ) ) {
 			$template = $custom_route;
-			
-			$custom_route_args[ 'route' ] = $wp_query->get( 'dustpress_custom_route_route' );
+
+			$custom_route_args[ 'route' ]  = $wp_query->get( 'dustpress_custom_route_route' );
+			$custom_route_args[ 'render' ] = $wp_query->get( 'dustpress_custom_route_render' );
 
 			if ( ! empty( $custom_route_parameters ) ) {
 				$custom_route_args['params'] = explode( DIRECTORY_SEPARATOR, $custom_route_parameters );
@@ -252,7 +253,13 @@ final class DustPress {
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-				$this->render( [ 'partial' => $partial, 'main' => true ] );
+				$type = $custom_route_args['render'] ?? 'default';
+
+				$this->render([
+					'partial' => $partial,
+					'main' => true,
+					'type' => $type
+				]);
 			}
 			else {
 				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
@@ -262,7 +269,7 @@ final class DustPress {
 
 	/**
 	 * This function returns the model name of current custom route, or false if we are not on a custom route.
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	8/1/2019
 	 *  @since	1.20.0
@@ -736,6 +743,7 @@ final class DustPress {
 			'json' => function( $data, $partial, $dust ) {
 				try {
 					$output = json_encode( $data );
+					header( 'Content-Type: application/json' );
 				}
 				catch ( Exception $e ) {
 					die( 'JSON encode error: ' . $e->getMessage() );
@@ -1631,20 +1639,25 @@ final class DustPress {
 
 	/**
 	 * Register a custom route for a model to be used outside the posts context.
-	 * 
+	 *
 	 * @type   function
 	 * @date   15/03/2018
 	 * @since  1.13.0
 	 *
 	 * @param string $route    A regular expression to be used as the route.
 	 * @param string $template The model name to be used with the matching route.
+	 * @param string $render   How to render the output. Defaults to HTML which means the Dust template system.
 	 * @return void
 	 */
-	public function register_custom_route( $route, $template ) {
+	public function register_custom_route( $route, $template, $render = 'default' ) {
 		$this->custom_routes[ $template ] = $route;
 
-		add_action( 'init', function() use ( $route, $template ) {
-			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
+		add_action( 'init', function() use ( $route, $template, $render ) {
+			add_rewrite_rule(
+				'(' . $route . ')(\/(.+))?\/?$',
+				'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]&dustpress_custom_route_render='. $render,
+				'top'
+			);
 		}, 30);
 	}
 
