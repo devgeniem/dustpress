@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.22.0
+Version: 1.22.1
 */
 
 final class DustPress {
@@ -253,7 +253,7 @@ final class DustPress {
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-				$type = $custom_route_args['render'] ?? 'default';
+				$type = $custom_route_args['render'] ?: 'default';
 
 				$this->render([
 					'partial' => $partial,
