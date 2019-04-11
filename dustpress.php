@@ -151,7 +151,7 @@ final class DustPress {
 		add_action( 'init', [ $this, 'init_settings' ] );
 
 		// Register custom route rewrite tag
-		add_action( 'init', [ $this, 'rewrite_tags' ], 20 );
+		add_action( 'after_setup_theme', [ $this, 'rewrite_tags' ], 20 );
 
 		return;
 	}
@@ -246,6 +246,10 @@ final class DustPress {
 				$this->model = new $template( $custom_route_args );
 
 				$this->model->fetch_data();
+
+				if ( $this->model->get_terminated() ) {
+					return;
+				}
 
 				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
@@ -1686,6 +1690,57 @@ final class DustPress {
 		}
 		else {
 			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
+		}
+	}
+
+	/**
+	 * Force 404 page and status from anywhere
+	 *
+	 * @type  function
+	 * @date  03/04/2019
+	 * @since 1.23.0
+	 *
+	 * @return void
+	 */
+	public function error404( \DustPress\Model $model ) {
+		global $wp_query;
+
+		$model->terminate();
+
+		\status_header( 404 );
+
+		$template = 'Error404';
+
+		if ( class_exists ( $template ) ) {
+			$this->model = new $template();
+
+			$this->model->fetch_data();
+
+			$this->model->terminate();
+
+			do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
+
+			$template_override = $this->model->get_template();
+
+			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
+
+			// Set page title for custom route.
+			add_filter( 'wp_title', function( $title, $sep ) {
+				$sep   = ' | ';
+				$title = '404' . $sep . get_bloginfo( 'name' );
+				return $title;
+			}, 10, 2 );
+
+			$this->render([
+				'partial' => $partial,
+				'main'    => true,
+				'type'    => 'default'
+			]);
+
+			$this->disable();
+		}
+		else {
+			die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 		}
 	}
 }

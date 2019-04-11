@@ -825,7 +825,11 @@ class Model {
         return false;
     }
 
-    protected function terminate() {
+    public function terminate() {
         $this->terminated = true;
+    }
+
+    public function get_terminated() {
+        return $this->terminated;
     }
 }
