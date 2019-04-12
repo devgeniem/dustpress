@@ -1724,13 +1724,6 @@ final class DustPress {
 
 			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-			// Set page title for custom route.
-			add_filter( 'wp_title', function( $title, $sep ) {
-				$sep   = ' | ';
-				$title = '404' . $sep . get_bloginfo( 'name' );
-				return $title;
-			}, 10, 2 );
-
 			$this->render([
 				'partial' => $partial,
 				'main'    => true,
