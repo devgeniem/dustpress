@@ -44,6 +44,10 @@ final class DustPress {
 	// Custom routes
 	private $custom_routes = [];
 
+	private $request_data;
+
+	private $autoload_paths;
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
@@ -57,9 +61,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	10/8/2015
 	*  @since	0.2.0
-	*
-	*  @param	N/A
-	*  @return	N/A
 	*/
 
 	protected function __construct() {
@@ -162,9 +163,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	19/3/2019
 	*  @since	1.13.1
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function rewrite_tags() {
 		// Register custom route rewrite tag
@@ -180,9 +178,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	19/3/2015
 	*  @since	0.0.1
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function create_instance() {
 		global $post, $wp_query;
@@ -274,7 +269,6 @@ final class DustPress {
 	 *  @date	8/1/2019
 	 *  @since	1.20.0
 	 *
-	 *  @param	N/A
 	 *  @return	string|boolean
 	 */
 	public function get_custom_route() {
@@ -301,8 +295,7 @@ final class DustPress {
 	*  @date	19/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	N/A
-	*  @return	$filename (string)
+	*  @return	string
 	*/
 
 	private function get_template_filename( &$debugs = array() ) {
@@ -579,9 +572,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	17/3/2015
 	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	N/A
 	*/
 	private function populate_data_collection() {
 		$wp_data = array();
@@ -663,14 +653,12 @@ final class DustPress {
 	*  @date	17/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$partial (string)
-	*  @param	$data (N/A)
-	*  @param	$type (string)
-	*  @return	true/false (boolean)
+	*  @param	array $args
+	*  @return	bool
 	*/
 	public function render( $args = array() ) {
-		global 	$dustpress;
-				$hash;
+		global $dustpress;
+		global $hash;
 
 		$defaults = [
 			'data' => false,
@@ -687,6 +675,7 @@ final class DustPress {
 
 		$options = array_merge( $defaults, (array) $args );
 
+// FIXME -> WP function
 		extract( $options );
 
 		if ( 'default' == $type && ! get_option( 'dustpress_default_format' ) ) {
@@ -833,7 +822,7 @@ final class DustPress {
 	*  @date	17/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$partial (string)
+	*  @param	string $partial
 	*  @return	$template (string)
 	*/
 	private function get_template( $partial ) {
@@ -867,8 +856,6 @@ final class DustPress {
 	*  @type    function
 	*  @date    01/04/2016
 	*  @since   0.4.0
-	*
-	*  @return  N/A
 	*/
 
 	public function init_settings() {
@@ -918,8 +905,7 @@ final class DustPress {
 	*  @date	9/4/2015
 	*  @since	0.0.7
 	*
-	*  @param	N/A
-	*  @return	true/false (boolean)
+	*  @return	bool
 	*/
 
 	public function is_login_page() {
@@ -934,8 +920,8 @@ final class DustPress {
 	*  @date	15/6/2015
 	*  @since	0.1.0
 	*
-	*  @param	$string (string)
-	*  @param   $char (string)
+	*  @param	string $string
+	*  @param   string $char
 	*  @return	(string)
 	*/
 	public function camelcase_to_dashed( $string, $char = '-' ) {
@@ -956,8 +942,8 @@ final class DustPress {
 	*  @date	1/10/2016
 	*  @since	1.2.9
 	*
-	*  @param	$string (string)
-	*  @param   $char (string)
+	*  @param	string $string
+	*  @param   string $char
 	*  @return	(string)
 	*/
 	public function dashed_to_camelcase( $string, $char = '-' ) {
@@ -1070,8 +1056,8 @@ final class DustPress {
 	 * @date    25/11/2016
 	 * @since   1.3.2
 	 *
-	 * @param   $key (string)
-	 * @param   $callable (mixed)
+	 * @param   string $key
+	 * @param   mixed $callable
 	 *
 	 * @return  void
 	 */
@@ -1099,9 +1085,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	17/12/2015
 	*  @since	0.3.0
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function create_ajax_instance() {
 		global $post;
@@ -1299,7 +1282,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $partial (string)
+	*  @param   string $partial
 	*  @param   $already (array|string) (optional)
 	*  @return	$helpers (array|string)
 	*/
@@ -1353,7 +1336,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $partial (string)
+	*  @param   string $partial
 	*  @return	$file (string)
 	*/
 	public function get_prerender_file( $partial ) {
@@ -1374,8 +1357,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $helpers (array|string)
-	*  @return	N/A
+	*  @param   array|string $helpers
 	*/
 	public function prerun_helpers( $helpers ) {
 		if ( is_array( $helpers ) ) {
@@ -1404,7 +1386,7 @@ final class DustPress {
 	*  @date	21/03/2018
 	*  @since	1.14.0
 	*
-	*  @param   N/A
+	*  @param   bool $force
 	*  @return	array
 	*/
 	public function get_templates( $force = false ) {
@@ -1443,7 +1425,7 @@ final class DustPress {
 	*  @date	02/06/2016
 	*  @since	0.3.3
 	*
-	*  @param   $param (mixed)
+	*  @param   mixed $param
 	*  @return	$param
 	*/
 	public function disable( $param = null ) {
@@ -1459,7 +1441,7 @@ final class DustPress {
 	*  @date	08/06/2016
 	*  @since	0.4.0
 	*
-	*  @param   $param (mixed)
+	*  @param   mixed $param
 	*  @return	$param
 	*/
 	public function add_helper( $name, $instance ) {
@@ -1472,9 +1454,6 @@ final class DustPress {
 	 *  @type 	function
 	 *  @date 	08/06/2016
 	 *  @since  0.04.0
-	 *
-	 *  @param  N/A
-	 *  @return N/A
 	 */
 	private function register_autoloaders() {
 		// Autoload DustPHP classes

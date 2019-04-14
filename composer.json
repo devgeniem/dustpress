@@ -19,8 +19,19 @@
     "wordpress", "dustjs", "dustpress", "theme", "framework", "javascript"
   ],
   "license": "GPL-3.0",
-  "minimum-stability": "dev",
-  "autoload": {
-    "files": ["dustpress.php"]
-  }
+    "require": {
+        "giacocorsiglia/wordpress-stubs": "^4.9"
+    },
+    "autoload": {
+        "files": ["dustpress.php"],
+        "psr-4": {
+            "PHPStan\\WordPress\\": "test/"
+        }
+    },
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "classmap-authoritative": true
+    }
 }
