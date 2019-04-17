@@ -191,7 +191,7 @@ class Pagination extends Helper {
         // Add this data to DustPress debuggers output.
         $debugger_class = __NAMESPACE__ . '\Debugger';
         if ( \class_exists( $debugger_class ) && \method_exists( $debugger_class, 'set_debugger_data' )  ) {
-            Debugger::set_debugger_data( 'Pagination', $data );
+            $debugger_class::set_debugger_data( 'Pagination', $data );
         }
 
         return dustpress()->render(
