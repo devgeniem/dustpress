@@ -995,7 +995,9 @@ final class DustPress {
             },
 			function() {
 				return ! (
-					$_SERVER['REQUEST_URI'] === '/feed' || strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false
+					$_SERVER['REQUEST_URI'] === '/feed' ||
+					strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false ||
+					strpos( $_SERVER['REQUEST_URI'], '?feed=' ) !== false
 				);
 			},
 			function() {
