@@ -117,7 +117,7 @@ final class DustPress {
 			// Optimize the run if we don't want to run the main WP_Query at all.
 			if ( ( is_object( $this->request_data ) && ! empty( $this->request_data->bypassMainQuery ) ) ||
 			     ( is_array( $this->request_data ) && ! empty( $this->request_data['bypassMainQuery'] ) ) ) {
-				
+
 				// DustPress.js request is never 404.
 				add_filter( 'status_header', function( $status, $header ) {
 					return 'status: 200';
@@ -130,7 +130,7 @@ final class DustPress {
 						$request = str_replace( '1=1', '0=1', $request );
 					}
 
-					return $request;    
+					return $request;
 
 				}, PHP_INT_MAX, 2 );
 
@@ -994,7 +994,7 @@ final class DustPress {
                 }
             },
 			function() {
-				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed' ) !== false );
+				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false );
 			},
 			function() {
 				return ! isset( $_GET['_wpcf7_is_ajax_call'] );
@@ -1568,7 +1568,7 @@ final class DustPress {
 
 	/**
 	 * Add themes to template paths array
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	25/05/2018
 	 *  @since	1.15.1
@@ -1599,7 +1599,7 @@ final class DustPress {
 
 	/**
 	 * Add core path to template paths array
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	25/05/2018
 	 *  @since	1.15.1
@@ -1642,7 +1642,7 @@ final class DustPress {
 
 	/**
 	 * Parse DustPress.js request data
-	 * 
+	 *
 	 * @type  function
 	 * @date  20/06/2018
 	 * @since 1.16.1
