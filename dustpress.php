@@ -994,7 +994,9 @@ final class DustPress {
                 }
             },
 			function() {
-				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false );
+				return ! (
+					$_SERVER['REQUEST_URI'] === '/feed' || strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false
+				);
 			},
 			function() {
 				return ! isset( $_GET['_wpcf7_is_ajax_call'] );
