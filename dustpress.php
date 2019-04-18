@@ -1009,8 +1009,11 @@ final class DustPress {
             },
 			function() {
 
+				// Remove trailing slash.
+				$request_uri = rtrim( $_SERVER['REQUEST_URI'], '/\\' );
+
 				// Check if url end is /feed.
-				if( substr( $_SERVER['REQUEST_URI'] , -5 ) === '/feed' ) {
+				if( substr( $request_uri , -5 ) === '/feed' ) {
 					return false;
 				}
 
