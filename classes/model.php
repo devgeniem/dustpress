@@ -40,11 +40,14 @@ class Model {
     // Is execution terminated
     private $terminated;
 
-    private $ttl;
+    // Called submodels
+    protected $called_subs;
 
-    private $called_subs;
+    // Methods that are allowed to run externally
+    protected $api;
 
-    private $api;
+    // The TTL for model cache
+    protected $ttl;
 
     /**
      * Constructor for DustPress model class.

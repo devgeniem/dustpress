@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.23.1] - 2019-06-04
+
+### Fixed
+- A bug in the AJAX single method running function.
+
 ## [1.23.0] - 2019-06-04
 
 ### Changed
