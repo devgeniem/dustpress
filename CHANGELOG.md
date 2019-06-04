@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.23.0] - 2019-06-04
+
+### Changed
+- Optimized the loading of Dust partials so that the file matching is done only once per file.
+
 ## [1.22.3] - 2019-05-23
 
 ## Fixed
-
 - Fixed the inaccurate matching for WordPress feed urls in the core autoloader checking.
 
 ## [1.22.2] - 2019-04-08
