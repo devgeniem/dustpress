@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.23.1
+Version: 1.23.2
 */
 
 final class DustPress {
@@ -297,7 +297,6 @@ final class DustPress {
 	*
 	*  @return	string
 	*/
-
 	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
@@ -342,7 +341,9 @@ final class DustPress {
 
 		if ( is_page() ) {
 			$hierarchy[ 'is_page' ] = [
+				'Page' . $this->dashed_to_camelcase( $template, '_' ),
 				'Page' . $this->dashed_to_camelcase( $template ),
+				'Page' . $this->dashed_to_camelcase( $post->post_name, '_' ),
 				'Page' . $this->dashed_to_camelcase( $post->post_name ),
 				'Page' . $post->ID,
 				'Page'
@@ -353,6 +354,7 @@ final class DustPress {
 			$cat = get_category( get_query_var( 'cat' ) );
 
 			$hierarchy[ 'is_category' ] = [
+				'Category' . $this->dashed_to_camelcase( $cat->slug, '_' ),
 				'Category' . $this->dashed_to_camelcase( $cat->slug ),
 				'Category' . $cat->term_id,
 				'Category',
@@ -365,6 +367,7 @@ final class DustPress {
 			$term = get_term_by( 'id', $term_id, 'post_tag' );
 
 			$hierarchy[ 'is_tag' ] = [
+				'Tag' . $this->dashed_to_camelcase( $term->slug. '_' ),
 				'Tag' . $this->dashed_to_camelcase( $term->slug ),
 				'Tag',
 				'Archive'
@@ -376,7 +379,9 @@ final class DustPress {
 			$term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
 
 			$hierarchy[ 'is_tax' ] = [
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ) . $this->dashed_to_camelcase( $term->slug ),
 				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ),
 				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
 				'Taxonomy',
 				'Archive'
@@ -387,6 +392,7 @@ final class DustPress {
 			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
 
 			$hierarchy[ 'is_author' ] = [
+				'Author' . $this->dashed_to_camelcase( $author->user_nicename, '_' ),
 				'Author' . $this->dashed_to_camelcase( $author->user_nicename ),
 				'Author' . $author->ID,
 				'Author',
@@ -460,7 +466,9 @@ final class DustPress {
 			$type = get_post_type();
 
 			$hierarchy[ 'is_single' ] = [
+				'Single' . $this->dashed_to_camelcase( $template, '_' ),
 				'Single' . $this->dashed_to_camelcase( $template ),
+				'Single' . $this->dashed_to_camelcase( $type, '_' ),
 				'Single' . $this->dashed_to_camelcase( $type ),
 				'Single'
 			];
