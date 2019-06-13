@@ -27,7 +27,7 @@
     }
   ],
   "require": {
-    "devgeniem/dust-php": "^0.1.2"
+    "devgeniem/dust-php": "*"
   },
   "autoload": {
     "files": ["dustpress.php"]
