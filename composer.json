@@ -20,6 +20,15 @@
   ],
   "license": "GPL-3.0",
   "minimum-stability": "dev",
+  "repositories": [
+    {
+        "type": "git",
+        "url": "git@github.com:devgeniem/dust-php.git"
+    }
+  ],
+  "require": {
+    "devgeniem/dust-php": "^0.1.2"
+  },
   "autoload": {
     "files": ["dustpress.php"]
   }
