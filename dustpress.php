@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.23.2
+Version: 1.24.0-beta
 */
 
 final class DustPress {
@@ -257,6 +257,7 @@ final class DustPress {
 				]);
 			}
 			else {
+				http_response_code(500);
 				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 			}
 		}
@@ -677,6 +678,7 @@ final class DustPress {
 
 		if ( is_array( $args ) ) {
 			if ( ! isset( $args['partial'] ) ) {
+				http_response_code(500);
 				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
 			}
 		}
@@ -717,6 +719,7 @@ final class DustPress {
 					}
 				}
 				catch ( Exception $e ) {
+					http_response_code(500);
 					die( 'DustPress error: '. $e->getMessage() );
 				}
 
@@ -743,6 +746,7 @@ final class DustPress {
 					header( 'Content-Type: application/json' );
 				}
 				catch ( Exception $e ) {
+					http_response_code(500);
 					die( 'JSON encode error: ' . $e->getMessage() );
 				}
 
@@ -777,6 +781,7 @@ final class DustPress {
 			$this->prerun_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
+			http_response_code(500);
 			die( 'DustPress error: '. $e->getMessage() );
 		}
 
@@ -1541,6 +1546,7 @@ final class DustPress {
                     }
                     else {
                         if ( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'models' !== $path ) {
+							http_response_code(500);
                             die( 'DustPress error: Your theme does not have required directory ' . $path);
                         }
                     }
@@ -1676,6 +1682,7 @@ final class DustPress {
 			$this->request_data->render = ( isset( $this->request_data->render ) && $this->request_data->render === 'true' ) ? true : false;
 		}
 		else {
+			http_response_code(500);
 			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
 		}
 	}
