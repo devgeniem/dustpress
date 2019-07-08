@@ -142,16 +142,10 @@ namespace Dust
          * @return null|string
          */
         public function resolveAbsoluteDustFilePath($path, $basePath = NULL) {
-
             //add extension if necessary
             if(substr_compare($path, self::FILE_EXTENSION, -5, 5) !== 0)
             {
                 $path .= self::FILE_EXTENSION;
-            }
-
-            // Get from cache if the file is already found.
-            if ( isset( static::$dustFileCache[ $path ] ) ) {
-                return static::$dustFileCache[ $path ];
             }
 
             //try the current path
@@ -162,21 +156,21 @@ namespace Dust
                 return $possible;
             }
 
-            //now try each of the included directories
-            foreach ( $this->includedDirectories as $directory ) {
-                foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $directory, \RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
-                    if ( substr_compare($file, "/".$path, strlen($file)-strlen("/".$path), strlen("/".$path)) === 0 ) {
-
-                        // Cache the found file.
-                        static::$dustFileCache[ $path ] = (string) $file;
-
-                        return (string)$file;
+            // Populate cache when run the first time.
+            if (empty(static::$dustFileCache)) {
+                foreach ($this->includedDirectories as $directory) {
+                    foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+                        static::$dustFileCache[] = $file;
                     }
                 }
             }
 
-            // Cache the not found result to prevent subsequent searches.
-            static::$dustFileCache[ $path ] = NULL;
+            // Loop through the cache.
+            foreach (static::$dustFileCache as $file) {
+                if (substr_compare($file, "/" . $path, strlen($file) - strlen("/" . $path), strlen("/" . $path)) === 0) {
+                    return (string)$file;
+                }
+            }
 
             return NULL;
         }
