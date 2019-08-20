@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+- A bug where overridden methods in extended models would get run twice.
+
 ## [1.24.0] - 2019-08-14
 
 ### Changed

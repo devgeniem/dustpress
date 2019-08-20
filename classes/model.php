@@ -196,6 +196,22 @@ class Model {
         // Fetch all methods from given class and in its parents.
         $methods = $this->get_class_methods( $this->class_name );
 
+        $method_names = [];
+
+        // If a method has been overridden, remove duplicate instances so that they won't get run twice.
+        foreach ( $methods as $model => $values ) {
+            foreach ( $values as $key => $value ) {
+                if ( isset( $method_names[ $value ] ) ) {
+                    unset( $methods[ $model ][ $key ] );
+                }
+                else {
+                    $method_names[ $value ] = true;
+                }
+            }
+        }
+
+        unset( $method_names );
+
         // Check that all asked functions exist
         if ( is_array( $functions ) && count( $functions ) > 0 ) {
             foreach ( $functions as $function ) {
