@@ -4,10 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.22.1-beta] - 2019-03-29
+## [1.24.2] - 2019-09-02
 
 ### Fixed
 - Custom routes that are rendered as JSON do not require a Dust file.
+
+## [1.24.1] - 2019-08-20
+
+### Fixed
+- A bug where overridden methods in extended models would get run twice.
+
+## [1.24.0] - 2019-08-14
+
+### Changed
+- Error handlers now send HTTP status code 500 in error situations.
+
+## [1.23.2] - 2019-06-05
+
+### Fixed
+- A bug in how class names with multiple word spaces should be formed.
+
+## [1.23.1] - 2019-06-04
+
+### Fixed
+- A bug in the AJAX single method running function.
+
+## [1.23.0] - 2019-06-04
+
+### Changed
+- Optimized the loading of Dust partials so that the file matching is done only once per file.
+
+## [1.22.3] - 2019-05-23
+
+## Fixed
+- Fixed the inaccurate matching for WordPress feed urls in the core autoloader checking.
+
+## [1.22.2] - 2019-04-08
+
+### Fixed
+- Another minor bug regarding the custom route rendering type setting.
+
+## [1.22.1] - 2019-04-02
+
+### Fixed
+- An error where not giving a rendering type for custom routes would cause a notice.
 
 ## [1.22.0] - 2019-03-29
 

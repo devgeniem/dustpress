@@ -7,6 +7,7 @@ class UserActivate extends \DustPress\Model {
 
     private $state;
     private $print;
+    private $signup;
 
     /**
      * Returns the state of the page and sets the right strings for printing.
@@ -57,6 +58,7 @@ class UserActivate extends \DustPress\Model {
                 }
             }
             else {
+// FIXME $user, $url
                 $this->print['username'] = $user->user_login;
                 $this->print['password'] = $result['password'];
                 $state = "account-active-no-mail";
@@ -79,8 +81,6 @@ class UserActivate extends \DustPress\Model {
 
         return $state;
     }
-
-
 
     /**
      * Returns strings for printing.

@@ -23,7 +23,7 @@ class Model {
     protected $class_name;
 
     // Arguments of this instance
-    private $args;
+    private $args = array();
 
     // Instances of all submodels initiated from this class
     private $submodels;
@@ -40,6 +40,15 @@ class Model {
     // Is execution terminated
     private $terminated;
 
+    // Called submodels
+    protected $called_subs;
+
+    // Methods that are allowed to run externally
+    protected $api;
+
+    // The TTL for model cache
+    protected $ttl;
+
     /**
      * Constructor for DustPress model class.
      *
@@ -47,8 +56,8 @@ class Model {
      * @date   10/8/2015
      * @since  0.2.0
      *
-     * @param  load (boolean)
-     * @return N/A
+     * @param  array  $args
+     * @param  mixed $parent
      */
     public function __construct( $args = [], $parent = null ) {
         $this->fix_deprecated();
@@ -69,7 +78,7 @@ class Model {
      * @date  3/6/2016
      * @since 0.4.0
      *
-     * @return void
+     * @return array
      */
     public function get_args() {
         return $this->args;
@@ -109,7 +118,7 @@ class Model {
      * @date  3/6/2016
      * @since 0.4.0
      *
-     * @return Dustpress\Model
+     * @return \Dustpress\Model
      */
     public function get_submodel( $name ) {
         return $this->submodels->{$name};
@@ -135,7 +144,7 @@ class Model {
      * @date  3/6/2016
      * @since 0.4.0
      *
-     * @return Dustpress\Model
+     * @return \Dustpress\Model
      */
     public function get_ancestor( $model = null ) {
         if ( ! isset( $model ) ) {
@@ -157,9 +166,6 @@ class Model {
      * @type   function
      * @date   16/02/2017
      * @since  1.5.5
-     *
-     * @param  N/A
-     * @return N/A
      */
     public function fix_deprecated() {
         // Reassign deprecated "allowed_functions" to "api".
@@ -176,17 +182,35 @@ class Model {
      * @date   15/10/2015
      * @since  0.2.0
      *
-     * @param  N/A
-     * @return N/A
+     * @param string $functions
+     * @param bool   $tidy
+     *
+     * @return mixed
      */
     public function fetch_data( $functions = null, $tidy = false ) {
         $this->class_name = get_class( $this );
 
         // Create a place to store the wanted data in the global data structure.
-        if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
+        if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \stdClass();
 
         // Fetch all methods from given class and in its parents.
         $methods = $this->get_class_methods( $this->class_name );
+
+        $method_names = [];
+
+        // If a method has been overridden, remove duplicate instances so that they won't get run twice.
+        foreach ( $methods as $model => $values ) {
+            foreach ( $values as $key => $value ) {
+                if ( isset( $method_names[ $value ] ) ) {
+                    unset( $methods[ $model ][ $key ] );
+                }
+                else {
+                    $method_names[ $value ] = true;
+                }
+            }
+        }
+
+        unset( $method_names );
 
         // Check that all asked functions exist
         if ( is_array( $functions ) && count( $functions ) > 0 ) {
@@ -213,7 +237,7 @@ class Model {
                     }
                     else {
                         if ( ! $this->is_function_allowed( $method_item ) ) {
-                            die( json_encode( [ "error" => "Method '". $function ."' is not allowed to be run via AJAX or does not exist." ] ) );
+                            die( json_encode( [ "error" => "Method '". $method_item ."' is not allowed to be run via AJAX or does not exist." ] ) );
                         }
                         else if ( $reflection->isProtected() || $reflection->isPrivate() ) {
                             $private_methods[] = $method_item;
@@ -353,8 +377,8 @@ class Model {
      * @date   19/3/2015
      * @since  0.0.1
      *
-     * @param  $class_name (string)
-     * @param  $methods (array)
+     * @param  string $class_name
+     * @param  array $methods
      * @return $methods (array)
      */
     private function get_class_methods( $class_name, $methods = array() ) {
@@ -448,7 +472,7 @@ class Model {
         }
 
         if ( $model->terminated == true ) {
-            $this-terminate();
+            $this->terminate();
         }
     }
 
@@ -460,9 +484,9 @@ class Model {
      *   @date   17/3/2015
      *   @since  0.0.1
      *
-     *   @param  $data (N/A)
-     *   @param  $key (string)
-     *   @param  $model (string)
+     *   @param  N/A $data
+     *   @param  string $key
+     *   @param  string $model
      *   @return true/false (boolean)
      */
     public function bind( $data, $key = null, $model = null ) {
@@ -476,7 +500,7 @@ class Model {
 
         if ( $model ) {
             // Create a place to store the wanted data in the global data structure.
-            if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \StdClass();
+            if ( ! isset( $this->data[ $model ] ) ) $this->data[ $model ] = new \stdClass();
 
             if ( ! isset( $this->data[ $model ] ) ) {
                 $this->data[ $model ] = (object)[];
@@ -485,7 +509,7 @@ class Model {
         }
         else {
             // Create a place to store the wanted data in the global data structure.
-            if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \StdClass();
+            if ( ! isset( $this->data[ $this->class_name ] ) ) $this->data[ $this->class_name ] = new \stdClass();
 
             if ( ! $this->parent ) {
                 if ( is_array( $data ) ) {
@@ -534,8 +558,7 @@ class Model {
      * @date   15/10/2015
      * @since  0.2.0
      *
-     * @param  $template (string)
-     * @return N/A
+     * @param  string $template
      */
     public function set_template( $template ) {
         $ancestor = $this->get_ancestor();
@@ -561,8 +584,9 @@ class Model {
      * @date   29/01/2016
      * @since  0.3.1
      *
-     * @param  $m (string)
-     * @return N/A
+     * @param  string $m
+     *
+     * @return mixed
      */
     private function run_function( $m, $class = null ) {
         $cached = $this->get_cached( $m );
@@ -607,8 +631,9 @@ class Model {
      * @date   29/01/2016
      * @since  0.3.1
      *
-     * @param  $m (string)
-     * @return N/A
+     * @param  string $m
+     *
+     * @return mixed|bool
      */
     private function get_cached( $m ) {
 
@@ -644,42 +669,42 @@ class Model {
      * @date   29/01/2016
      * @since  0.3.1
      *
-     * @param  $m (string), $data (any), $subs (array)
-     * @return N/A
+     * @param  string $m
+     * @param  mixed $data
+     * @param  array $subs
      */
     private function maybe_cache( $m, $data, $subs ) {
 
         // Check whether cache is enabled and model has ttl-settings.
-        if ( dustpress()->get_setting('cache') && $this->is_cacheable_function( $m ) ) {
-
-            // Extend data with submodels
-            $to_cache = (object)[ 'data' => $data, 'subs' => $subs ];
-
-            set_transient( $this->hash, $to_cache, $this->ttl[ $m ] );
-
-            // If no hash key exists, bail
-            if ( ! isset( $this->hash ) ) {
-                return;
-            }
-
-            // Index key for cache clearing
-            $index      = $this->generate_cache_key( $this->class_name, $m );
-            $hash_index = get_transient( $index );
-
-            if ( ! is_array( $hash_index ) ) {
-                $hash_index = [];
-            }
-
-            // Set the data hash key to the index array of this model function
-            if ( ! in_array( $this->hash, $hash_index ) ) {
-                $hash_index[] = $this->hash;
-            }
-
-            // Store transient for 30 days
-            set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
+        if ( ! dustpress()->get_setting('cache') || ! $this->is_cacheable_function( $m ) ) {
+            return;
         }
 
-        return false;
+        // If no hash key exists, bail out
+        if ( empty( $this->hash ) ) {
+            return;
+        }
+
+        // Extend data with submodels
+        $to_cache = (object)[ 'data' => $data, 'subs' => $subs ];
+
+        set_transient( $this->hash, $to_cache, $this->ttl[ $m ] );
+
+        // Index key for cache clearing
+        $index      = $this->generate_cache_key( $this->class_name, $m );
+        $hash_index = get_transient( $index );
+
+        if ( ! is_array( $hash_index ) ) {
+            $hash_index = [];
+        }
+
+        // Set the data hash key to the index array of this model function
+        if ( ! in_array( $this->hash, $hash_index ) ) {
+            $hash_index[] = $this->hash;
+        }
+
+        // Store transient for 30 days
+        set_transient( $index, $hash_index, 30 * DAY_IN_SECONDS );
     }
 
     /**
@@ -712,7 +737,7 @@ class Model {
      * @date   17/12/2015
      * @since  0.3.0
      *
-     * @param   $function (string)
+     * @param   string $function
      * @return  $allowed (boolean)
      */
     private function is_function_allowed( $function ) {
@@ -740,7 +765,7 @@ class Model {
      * @date   17/12/2015
      * @since  0.3.0
      *
-     * @param  $args (ellipsis)
+     * @param  ellipsis $args
      * @return $key (string)
      */
     private function generate_cache_key() {
@@ -765,8 +790,8 @@ class Model {
      * @since  0.3.0
      *
      *
-     * @param   $function (string)
-     * @param   $args (array)
+     * @param   string $function
+     * @param   array $args
      * @return mixed
      */
     public function run_restricted( $function ) {
@@ -786,8 +811,8 @@ class Model {
      * @since  1.2.0
      *
      *
-     * @param   $function (string)
-     * @param   $args (array)
+     * @param   string $function
+     * @param   array $args
      * @return mixed
      */
     protected function rename_model( $name ) {
@@ -811,7 +836,7 @@ class Model {
     /**
      * A recursive array search.
      *
-     * @param  any      $needle
+     * @param  mixed    $needle
      * @param  array    $haystack
      * @param  boolean  $strict
      * @return boolean
