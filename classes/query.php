@@ -29,8 +29,8 @@ class Query {
 	 * @date	20/3/2015
 	 * @since	0.0.1
 	 *
-	 * @param	$id (int)
-	 * @param	$args (array)
+	 * @param	int $id
+	 * @param	array $args
 	 *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
@@ -87,8 +87,8 @@ class Query {
 	 * @date	20/3/2015
 	 * @since	0.0.1
 	 *
-	 * @param	$id (int)
-	 * @param	$args (array)
+	 * @param	int $id
+	 * @param	array $args
 	 *
      * @return array|object|null Type corresponding to output type on success or null on failure.
 	 */
@@ -107,6 +107,7 @@ class Query {
 
 		$options = array_merge( $defaults, $args );
 
+// FIXME -> WP func.
 		extract( $options );
 
 		// Throw error if we have no post to fetch
@@ -175,10 +176,10 @@ class Query {
 	 * @date	16/8/2016
 	 * @since	1.1.5
 	 *
-	 * @param	array|object $field      The current ACF field object.
-	 * @param	object       $options    Recurion options.
+	 * @param	array|object $field   The current ACF field object.
+	 * @param	object       $options Recurion options.
 	 *
-	 * @return  any $field  Returns the same type it is given, possibly extended.
+	 * @return  mixed                 Returns the same type it is given, possibly extended.
 	 */
 	private static function handle_field( $field, $options ) {
 		// No recursion for these post types
@@ -236,6 +237,7 @@ class Query {
 
         $options = array_merge( $defaults, $args );
 
+// FIXME -> WP function
         extract( $options );
 
 		self::$query = new WP_Query( $options );
@@ -262,9 +264,9 @@ class Query {
 
             // Return in the desired format.
 			return self::query_return_value_format( self::$query , $query_object, $no_found_rows );
-		} else {
-            return false;
-        }
+		}
+
+		return false;
 	}
 
 	/**
@@ -277,7 +279,7 @@ class Query {
 	 *
 	 * @param	array $args Arguments to override the defaults defined in get_wp_query_defaults.
      *
-	 * @return	array/boolean Array of posts as an associative array with acf fields and meta data
+	 * @return	array|boolean Array of posts as an associative array with acf fields and meta data
 	 */
 	public static function get_acf_posts( $args ) {
 
@@ -347,11 +349,11 @@ class Query {
     /**
      * A wrapper for posts query function return value formatting.
      *
-     * @param objecy  $query         The WP_Query object.
-     * @param boolean $query_object  Do we want the whole query object?
-     * @param boolean $no_found_rows Was the query paginated?
+     * @param \WP_Query $query         The WP_Query object.
+     * @param boolean   $query_object  Do we want the whole query object?
+     * @param boolean   $no_found_rows Was the query paginated?
      *
-     * @return object|array
+     * @return \WP_Query|array
      */
     private static function query_return_value_format( $query, $query_object, $no_found_rows ) {
         // Maybe return the whole query object

@@ -7,8 +7,71 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
-
 - Fixed a bug in the pagination helper first page handling.
+- Fixed a bug in user-active.php caused by a change in WP core.
+
+## [1.24.1] - 2019-08-20
+
+### Fixed
+- A bug where overridden methods in extended models would get run twice.
+
+## [1.24.0] - 2019-08-14
+
+### Changed
+- Error handlers now send HTTP status code 500 in error situations.
+
+## [1.23.2] - 2019-06<<<<
+### Fixed
+- A bug in how class names with multiple word spaces should be formed.
+
+## [1.23.1] - 2019-06-04
+
+### Fixed
+- A bug in the AJAX single method running function.
+
+## [1.23.0] - 2019-06-04
+
+### Changed
+- Optimized the loading of Dust partials so that the file matching is done only once per file.
+
+## [1.22.3] - 2019-05-23
+
+## Fixed
+- Fixed the inaccurate matching for WordPress feed urls in the core autoloader checking.
+
+## [1.22.2] - 2019-04-08
+
+### Fixed
+- Another minor bug regarding the custom route rendering type setting.
+
+## [1.22.1] - 2019-04-02
+
+### Fixed
+- An error where not giving a rendering type for custom routes would cause a notice.
+
+## [1.22.0] - 2019-03-29
+
+### Added
+- The ability to modify the output format of a custom route by giving it a third parameter to for example use custom routes as JSON endpoints.
+
+### Fixed
+- Fixed case in menu helper build_menu method when $item->classes is not an array (e.g. certain cases in Customizer).
+
+## [1.21.3] - 2019-03-04
+
+### Fixed
+- A minor bug caused by the last update.
+
+## [1.21.2] - 2019-03-04
+
+### Fixed
+- Pagination helper fixed $page_count to return int not float. This caused failure on current page active state in some cases.
+- A bug with the menu helper and WordPress Customizer.
+
+## [1.21.1] - 2019-02-26
+
+### Fixed
+- A bug that caused a notice when a template was rendered manually with empty data block.
 
 ## [1.21.0] - 2019-02-01
 

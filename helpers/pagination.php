@@ -58,7 +58,7 @@ class Pagination extends Helper {
 
         // Prevent dividing if there are zero items.
         if ( $per_page > 0 ) {
-            $page_count = ceil( $items / $per_page );
+            $page_count = (int) ceil( $items / $per_page );
         }
         else {
             $page_count = 1;
@@ -192,7 +192,7 @@ class Pagination extends Helper {
         // Add this data to DustPress debuggers output.
         $debugger_class = __NAMESPACE__ . '\Debugger';
         if ( \class_exists( $debugger_class ) && \method_exists( $debugger_class, 'set_debugger_data' )  ) {
-            Debugger::set_debugger_data( 'Pagination', $data );
+            $debugger_class::set_debugger_data( 'Pagination', $data );
         }
 
         return dustpress()->render(

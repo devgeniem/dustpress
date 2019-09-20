@@ -7,6 +7,7 @@ class UserActivate extends \DustPress\Model {
 
     private $state;
     private $print;
+    private $signup;
 
     /**
      * Returns the state of the page and sets the right strings for printing.
@@ -22,14 +23,25 @@ class UserActivate extends \DustPress\Model {
      * @return  $state (string)    State of the view.
      */
     public function State() {
-        if ( empty( $_GET['key'] ) && empty( $_POST['key'] ) ) {
+        // Get the key from cookie if set
+        $activate_cookie = 'wp-activate-' . COOKIEHASH;
+
+        if ( isset( $_COOKIE[ $activate_cookie ] ) ) {
+            $key = $_COOKIE[ $activate_cookie ];
+        }
+
+        if ( ! $key && empty( $_GET['key'] ) && empty( $_POST['key'] ) ) {
             // activation key required
-            $state                             = "no-key";
+            $state                           = "no-key";
             $this->print['title']            = __( 'Activation Key Required' );
             $this->print['wp-activate-link'] = network_site_url( 'wp-activate.php' );
         }
         else {
-            $key    = ! empty( $_GET['key'] ) ? $_GET['key'] : $_POST['key'];
+            // Get key from GET or POST if not set via cookie
+            if ( ! $key ) {
+                $key = ! empty( $_GET['key'] ) ? $_GET['key'] : $_POST['key'];
+            }
+
             $result = wpmu_activate_signup( $key );
             if ( is_wp_error( $result ) ) {
                 if ( 'already_active' == $result->get_error_code() || 'blog_taken' == $result->get_error_code() ) {
@@ -57,6 +69,7 @@ class UserActivate extends \DustPress\Model {
                 }
             }
             else {
+// FIXME $user, $url
                 $this->print['username'] = $user->user_login;
                 $this->print['password'] = $result['password'];
                 $state = "account-active-no-mail";
@@ -79,8 +92,6 @@ class UserActivate extends \DustPress\Model {
 
         return $state;
     }
-
-
 
     /**
      * Returns strings for printing.

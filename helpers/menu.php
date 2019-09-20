@@ -153,7 +153,7 @@ class Menu extends Helper {
         if ( isset( $menu_object) ) {
             $menu_items = static::get_cached_menu_items( $menu_object->term_id );
 
-            if ( empty( $menu_items ) ) {
+            if ( empty( $menu_items ) || \is_customize_preview() ) {
                 $menu_items = \wp_get_nav_menu_items( $menu_object );
 
                 static::set_cached_menu_items( $menu_object->term_id, $menu_items );
@@ -231,6 +231,11 @@ class Menu extends Helper {
                 if ( $item->menu_item_parent == $parent ) {
                     $item->sub_menu = self::build_menu( $menu_items, $item->ID, $item->object, $override );
 
+                    // Make sure $item->classes is an array. Needed to work with the Customizer.
+                    if ( ! is_array( $item->classes ) ) {
+                        $item->classes = [];
+                    }
+
                     if ( is_array( $item->sub_menu ) && count( $item->sub_menu ) > 0 ) {
                         $item->classes[] = 'menu-item-has-children';
                     }
@@ -258,7 +263,7 @@ class Menu extends Helper {
                         $item->classes = array_filter( $item->classes );
                     }
 
-                    $item->classes = apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
+                    $item->classes = (array) apply_filters( "dustpress/menu/item/classes", $item->classes, $item );
                     $item = apply_filters( "dustpress/menu/item", $item );
 
                     $item->classes[] = 'menu-item';

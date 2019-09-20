@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.20.0
+Version: 1.24.1
 */
 
 final class DustPress {
@@ -44,6 +44,10 @@ final class DustPress {
 	// Custom routes
 	private $custom_routes = [];
 
+	private $request_data;
+
+	private $autoload_paths;
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
@@ -57,9 +61,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	10/8/2015
 	*  @since	0.2.0
-	*
-	*  @param	N/A
-	*  @return	N/A
 	*/
 
 	protected function __construct() {
@@ -116,7 +117,7 @@ final class DustPress {
 			// Optimize the run if we don't want to run the main WP_Query at all.
 			if ( ( is_object( $this->request_data ) && ! empty( $this->request_data->bypassMainQuery ) ) ||
 			     ( is_array( $this->request_data ) && ! empty( $this->request_data['bypassMainQuery'] ) ) ) {
-				
+
 				// DustPress.js request is never 404.
 				add_filter( 'status_header', function( $status, $header ) {
 					return 'status: 200';
@@ -129,7 +130,7 @@ final class DustPress {
 						$request = str_replace( '1=1', '0=1', $request );
 					}
 
-					return $request;    
+					return $request;
 
 				}, PHP_INT_MAX, 2 );
 
@@ -151,7 +152,7 @@ final class DustPress {
 		add_action( 'init', [ $this, 'init_settings' ] );
 
 		// Register custom route rewrite tag
-		add_action( 'init', [ $this, 'rewrite_tags' ], 20 );
+		add_action( 'after_setup_theme', [ $this, 'rewrite_tags' ], 20 );
 
 		return;
 	}
@@ -162,15 +163,13 @@ final class DustPress {
 	*  @type	function
 	*  @date	19/3/2019
 	*  @since	1.13.1
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function rewrite_tags() {
 		// Register custom route rewrite tag
 		add_rewrite_tag( '%dustpress_custom_route%', '([^\/]+)' );
 		add_rewrite_tag( '%dustpress_custom_route_route%', '(.+)' );
 		add_rewrite_tag( '%dustpress_custom_route_parameters%', '(.+)' );
+		add_rewrite_tag( '%dustpress_custom_route_render%', '(.+)' );
 	}
 
 	/**
@@ -179,9 +178,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	19/3/2015
 	*  @since	0.0.1
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function create_instance() {
 		global $post, $wp_query;
@@ -223,16 +219,18 @@ final class DustPress {
 		$custom_route            = $wp_query->get( 'dustpress_custom_route' );
 		$custom_route_parameters = $wp_query->get( 'dustpress_custom_route_parameters' );
 
-	
 		// Handle registered DustPress custom routes
 		if ( ! empty( $custom_route ) ) {
 			$template = $custom_route;
-			
-			$custom_route_args[ 'route' ] = $wp_query->get( 'dustpress_custom_route_route' );
+
+			$custom_route_args[ 'route' ]  = $wp_query->get( 'dustpress_custom_route_route' );
+			$custom_route_args[ 'render' ] = $wp_query->get( 'dustpress_custom_route_render' );
 
 			if ( ! empty( $custom_route_parameters ) ) {
 				$custom_route_args['params'] = explode( DIRECTORY_SEPARATOR, $custom_route_parameters );
 			}
+
+			$type = $custom_route_args['render'] ?: 'default';
 		}
 
 		$template = apply_filters( 'dustpress/template', $template, $custom_route_args );
@@ -246,15 +244,24 @@ final class DustPress {
 
 				$this->model->fetch_data();
 
+				if ( $this->model->get_terminated() ) {
+					return;
+				}
+
 				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
 				$template_override = $this->model->get_template();
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
-				$this->render( [ 'partial' => $partial, 'main' => true ] );
+				$this->render([
+					'partial' => $partial,
+					'main' => true,
+					'type' => $type ?? 'default'
+				]);
 			}
 			else {
+				http_response_code(500);
 				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 			}
 		}
@@ -262,12 +269,11 @@ final class DustPress {
 
 	/**
 	 * This function returns the model name of current custom route, or false if we are not on a custom route.
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	8/1/2019
 	 *  @since	1.20.0
 	 *
-	 *  @param	N/A
 	 *  @return	string|boolean
 	 */
 	public function get_custom_route() {
@@ -294,10 +300,8 @@ final class DustPress {
 	*  @date	19/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	N/A
-	*  @return	$filename (string)
+	*  @return	string
 	*/
-
 	private function get_template_filename( &$debugs = array() ) {
 		global $post;
 
@@ -342,7 +346,9 @@ final class DustPress {
 
 		if ( is_page() ) {
 			$hierarchy[ 'is_page' ] = [
+				'Page' . $this->dashed_to_camelcase( $template, '_' ),
 				'Page' . $this->dashed_to_camelcase( $template ),
+				'Page' . $this->dashed_to_camelcase( $post->post_name, '_' ),
 				'Page' . $this->dashed_to_camelcase( $post->post_name ),
 				'Page' . $post->ID,
 				'Page'
@@ -353,6 +359,7 @@ final class DustPress {
 			$cat = get_category( get_query_var( 'cat' ) );
 
 			$hierarchy[ 'is_category' ] = [
+				'Category' . $this->dashed_to_camelcase( $cat->slug, '_' ),
 				'Category' . $this->dashed_to_camelcase( $cat->slug ),
 				'Category' . $cat->term_id,
 				'Category',
@@ -365,6 +372,7 @@ final class DustPress {
 			$term = get_term_by( 'id', $term_id, 'post_tag' );
 
 			$hierarchy[ 'is_tag' ] = [
+				'Tag' . $this->dashed_to_camelcase( $term->slug. '_' ),
 				'Tag' . $this->dashed_to_camelcase( $term->slug ),
 				'Tag',
 				'Archive'
@@ -376,7 +384,9 @@ final class DustPress {
 			$term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
 
 			$hierarchy[ 'is_tax' ] = [
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ) . $this->dashed_to_camelcase( $term->slug ),
 				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
+				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ),
 				'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
 				'Taxonomy',
 				'Archive'
@@ -387,6 +397,7 @@ final class DustPress {
 			$author = get_user_by( 'slug', get_query_var( 'author_name' ) );
 
 			$hierarchy[ 'is_author' ] = [
+				'Author' . $this->dashed_to_camelcase( $author->user_nicename, '_' ),
 				'Author' . $this->dashed_to_camelcase( $author->user_nicename ),
 				'Author' . $author->ID,
 				'Author',
@@ -460,7 +471,9 @@ final class DustPress {
 			$type = get_post_type();
 
 			$hierarchy[ 'is_single' ] = [
+				'Single' . $this->dashed_to_camelcase( $template, '_' ),
 				'Single' . $this->dashed_to_camelcase( $template ),
+				'Single' . $this->dashed_to_camelcase( $type, '_' ),
 				'Single' . $this->dashed_to_camelcase( $type ),
 				'Single'
 			];
@@ -572,9 +585,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	17/3/2015
 	*  @since	0.0.1
-	*
-	*  @param	N/A
-	*  @return	N/A
 	*/
 	private function populate_data_collection() {
 		$wp_data = array();
@@ -656,14 +666,12 @@ final class DustPress {
 	*  @date	17/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$partial (string)
-	*  @param	$data (N/A)
-	*  @param	$type (string)
-	*  @return	true/false (boolean)
+	*  @param	array $args
+	*  @return	bool
 	*/
 	public function render( $args = array() ) {
-		global 	$dustpress;
-				$hash;
+		global $dustpress;
+		global $hash;
 
 		$defaults = [
 			'data' => false,
@@ -674,12 +682,14 @@ final class DustPress {
 
 		if ( is_array( $args ) ) {
 			if ( ! isset( $args['partial'] ) ) {
+				http_response_code(500);
 				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
 			}
 		}
 
 		$options = array_merge( $defaults, (array) $args );
 
+// FIXME -> WP function
 		extract( $options );
 
 		if ( 'default' == $type && ! get_option( 'dustpress_default_format' ) ) {
@@ -713,6 +723,7 @@ final class DustPress {
 					}
 				}
 				catch ( Exception $e ) {
+					http_response_code(500);
 					die( 'DustPress error: '. $e->getMessage() );
 				}
 
@@ -736,8 +747,10 @@ final class DustPress {
 			'json' => function( $data, $partial, $dust ) {
 				try {
 					$output = json_encode( $data );
+					header( 'Content-Type: application/json' );
 				}
 				catch ( Exception $e ) {
+					http_response_code(500);
 					die( 'JSON encode error: ' . $e->getMessage() );
 				}
 
@@ -747,7 +760,7 @@ final class DustPress {
 
 		$types = apply_filters( 'dustpress/formats', $types );
 
-		if ( ! $data ) {
+		if ( ! $data && ! empty( $this->model ) ) {
 			$this->model->data = (array) $this->model->data;
 
 			$this->model->data['WP'] = $this->populate_data_collection();
@@ -772,15 +785,19 @@ final class DustPress {
 			$this->prerun_helpers( $helpers );
 		}
 		catch ( Exception $e ) {
+			http_response_code(500);
 			die( 'DustPress error: '. $e->getMessage() );
 		}
 
-		if ( $data ) {
+		if ( ! empty( $data ) ) {
 			$render_data = apply_filters( 'dustpress/data', $data );
 		}
-		else {
+		elseif ( ! empty( $this->model->data ) ) {
 			$render_data = apply_filters( 'dustpress/data', $this->model->data );
 			$render_data = apply_filters( 'dustpress/data/main', $render_data );
+		}
+		else {
+			$render_data = null;
 		}
 
 		$this->dust->includedDirectories = $this->get_template_paths( 'partials' );
@@ -822,7 +839,7 @@ final class DustPress {
 	*  @date	17/3/2015
 	*  @since	0.0.1
 	*
-	*  @param	$partial (string)
+	*  @param	string $partial
 	*  @return	$template (string)
 	*/
 	private function get_template( $partial ) {
@@ -856,8 +873,6 @@ final class DustPress {
 	*  @type    function
 	*  @date    01/04/2016
 	*  @since   0.4.0
-	*
-	*  @return  N/A
 	*/
 
 	public function init_settings() {
@@ -907,8 +922,7 @@ final class DustPress {
 	*  @date	9/4/2015
 	*  @since	0.0.7
 	*
-	*  @param	N/A
-	*  @return	true/false (boolean)
+	*  @return	bool
 	*/
 
 	public function is_login_page() {
@@ -923,8 +937,8 @@ final class DustPress {
 	*  @date	15/6/2015
 	*  @since	0.1.0
 	*
-	*  @param	$string (string)
-	*  @param   $char (string)
+	*  @param	string $string
+	*  @param   string $char
 	*  @return	(string)
 	*/
 	public function camelcase_to_dashed( $string, $char = '-' ) {
@@ -945,8 +959,8 @@ final class DustPress {
 	*  @date	1/10/2016
 	*  @since	1.2.9
 	*
-	*  @param	$string (string)
-	*  @param   $char (string)
+	*  @param	string $string
+	*  @param   string $char
 	*  @return	(string)
 	*/
 	public function dashed_to_camelcase( $string, $char = '-' ) {
@@ -997,7 +1011,11 @@ final class DustPress {
                 }
             },
 			function() {
-				return ! ( strpos( $_SERVER['REQUEST_URI'], '/feed' ) !== false );
+				return ! (
+					substr( $_SERVER['REQUEST_URI'], -5 ) === '/feed' ||
+					strpos( $_SERVER['REQUEST_URI'], '/feed/' ) !== false ||
+					strpos( $_SERVER['REQUEST_URI'], 'feed=' ) !== false
+				);
 			},
 			function() {
 				return ! isset( $_GET['_wpcf7_is_ajax_call'] );
@@ -1059,8 +1077,8 @@ final class DustPress {
 	 * @date    25/11/2016
 	 * @since   1.3.2
 	 *
-	 * @param   $key (string)
-	 * @param   $callable (mixed)
+	 * @param   string $key
+	 * @param   mixed $callable
 	 *
 	 * @return  void
 	 */
@@ -1088,9 +1106,6 @@ final class DustPress {
 	*  @type	function
 	*  @date	17/12/2015
 	*  @since	0.3.0
-	*
-	*  @param   N/A
-	*  @return	N/A
 	*/
 	public function create_ajax_instance() {
 		global $post;
@@ -1288,7 +1303,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $partial (string)
+	*  @param   string $partial
 	*  @param   $already (array|string) (optional)
 	*  @return	$helpers (array|string)
 	*/
@@ -1342,7 +1357,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $partial (string)
+	*  @param   string $partial
 	*  @return	$file (string)
 	*/
 	public function get_prerender_file( $partial ) {
@@ -1363,8 +1378,7 @@ final class DustPress {
 	*  @date	17/12/2015
 	*  @since	0.3.0
 	*
-	*  @param   $helpers (array|string)
-	*  @return	N/A
+	*  @param   array|string $helpers
 	*/
 	public function prerun_helpers( $helpers ) {
 		if ( is_array( $helpers ) ) {
@@ -1393,7 +1407,7 @@ final class DustPress {
 	*  @date	21/03/2018
 	*  @since	1.14.0
 	*
-	*  @param   N/A
+	*  @param   bool $force
 	*  @return	array
 	*/
 	public function get_templates( $force = false ) {
@@ -1432,7 +1446,7 @@ final class DustPress {
 	*  @date	02/06/2016
 	*  @since	0.3.3
 	*
-	*  @param   $param (mixed)
+	*  @param   mixed $param
 	*  @return	$param
 	*/
 	public function disable( $param = null ) {
@@ -1448,7 +1462,7 @@ final class DustPress {
 	*  @date	08/06/2016
 	*  @since	0.4.0
 	*
-	*  @param   $param (mixed)
+	*  @param   mixed $param
 	*  @return	$param
 	*/
 	public function add_helper( $name, $instance ) {
@@ -1461,9 +1475,6 @@ final class DustPress {
 	 *  @type 	function
 	 *  @date 	08/06/2016
 	 *  @since  0.04.0
-	 *
-	 *  @param  N/A
-	 *  @return N/A
 	 */
 	private function register_autoloaders() {
 		// Autoload DustPHP classes
@@ -1539,6 +1550,7 @@ final class DustPress {
                     }
                     else {
                         if ( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'models' !== $path ) {
+							http_response_code(500);
                             die( 'DustPress error: Your theme does not have required directory ' . $path);
                         }
                     }
@@ -1578,7 +1590,7 @@ final class DustPress {
 
 	/**
 	 * Add themes to template paths array
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	25/05/2018
 	 *  @since	1.15.1
@@ -1609,7 +1621,7 @@ final class DustPress {
 
 	/**
 	 * Add core path to template paths array
-	 * 
+	 *
 	 *  @type	function
 	 *  @date	25/05/2018
 	 *  @since	1.15.1
@@ -1628,26 +1640,31 @@ final class DustPress {
 
 	/**
 	 * Register a custom route for a model to be used outside the posts context.
-	 * 
+	 *
 	 * @type   function
 	 * @date   15/03/2018
 	 * @since  1.13.0
 	 *
 	 * @param string $route    A regular expression to be used as the route.
 	 * @param string $template The model name to be used with the matching route.
+	 * @param string $render   How to render the output. Defaults to HTML which means the Dust template system.
 	 * @return void
 	 */
-	public function register_custom_route( $route, $template ) {
+	public function register_custom_route( $route, $template, $render = 'default' ) {
 		$this->custom_routes[ $template ] = $route;
 
-		add_action( 'init', function() use ( $route, $template ) {
-			add_rewrite_rule( '(' . $route . ')(\/(.+))?\/?$', 'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]', 'top' );
+		add_action( 'init', function() use ( $route, $template, $render ) {
+			add_rewrite_rule(
+				'(' . $route . ')(\/(.+))?\/?$',
+				'index.php?dustpress_custom_route=' . $template . '&dustpress_custom_route_route=$matches[1]&dustpress_custom_route_parameters=$matches[3]&dustpress_custom_route_render='. $render,
+				'top'
+			);
 		}, 30);
 	}
 
 	/**
 	 * Parse DustPress.js request data
-	 * 
+	 *
 	 * @type  function
 	 * @date  20/06/2018
 	 * @since 1.16.1
@@ -1669,7 +1686,52 @@ final class DustPress {
 			$this->request_data->render = ( isset( $this->request_data->render ) && $this->request_data->render === 'true' ) ? true : false;
 		}
 		else {
+			http_response_code(500);
 			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
+		}
+	}
+
+	/**
+	 * Force 404 page and status from anywhere
+	 *
+	 * @type  function
+	 * @date  03/04/2019
+	 * @since 1.23.0
+	 *
+	 * @return void
+	 */
+	public function error404( \DustPress\Model $model ) {
+		global $wp_query;
+
+		$model->terminate();
+
+		\status_header( 404 );
+
+		$template = 'Error404';
+
+		if ( class_exists ( $template ) ) {
+			$this->model = new $template();
+
+			$this->model->fetch_data();
+
+			$this->model->terminate();
+
+			do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
+
+			$template_override = $this->model->get_template();
+
+			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
+
+			$this->render([
+				'partial' => $partial,
+				'main'    => true,
+				'type'    => 'default'
+			]);
+
+			$this->disable();
+		}
+		else {
+			die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 		}
 	}
 }
