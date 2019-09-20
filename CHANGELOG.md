@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Fixed a bug in the pagination helper first page handling.
 - Fixed a bug in user-active.php caused by a change in WP core.
 
 ## [1.24.1] - 2019-08-20
@@ -19,8 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Error handlers now send HTTP status code 500 in error situations.
 
-## [1.23.2] - 2019-06-05
-
+## [1.23.2] - 2019-06<<<<
 ### Fixed
 - A bug in how class names with multiple word spaces should be formed.
 
