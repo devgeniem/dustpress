@@ -1,6 +1,9 @@
-<ul class="menu-depth-1{?ul_classes} {ul_classes}{/ul_classes}"{?ul_id} id="{ul_id}"{/ul_id}>
-	{#items}
-		{@set key="depth_now" value=1 /}
-		{>"{menuitem_partial}" /}
-	{/items}
-</ul>
+{! Print out the menu only when the menu_object variable is not NULL !}
+{?menu_object}
+	<ul class="menu-depth-1{?ul_classes} {ul_classes}{/ul_classes}"{?ul_id} id="{ul_id}"{/ul_id}>
+		{#items}
+			{@set key="depth_now" value=1 /}
+			{>"{menuitem_partial}" /}
+		{/items}
+	</ul>
+{/menu_object}

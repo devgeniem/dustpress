@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Added user email to the data for the partial in UserActivate model.
+
+### Fixed
+- Fixed the menu helper partial, which printed out an empty ul element when the requested menu doesn't exist.
+
 ## [1.25.0-beta] - 2019-19-20
 
 ### Fixed
@@ -20,7 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Error handlers now send HTTP status code 500 in error situations.
 
-## [1.23.2] - 2019-06<<<<
+## [1.23.2] - 2019-06-05
+
 ### Fixed
 - A bug in how class names with multiple word spaces should be formed.
 
