@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+- Added user email to the data for the partial in UserActivate model.
+
 ### Fixed
 - Fixed the menu helper partial, which printed out an empty ul element when the requested menu doesn't exist.
 

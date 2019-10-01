@@ -70,8 +70,10 @@ class UserActivate extends \DustPress\Model {
             }
             else {
 // FIXME $user, $url
-                $this->print['username'] = $user->user_login;
-                $this->print['password'] = $result['password'];
+                $this->print['username']  = $user->user_login;
+                $this->print['useremail'] = $user->user_email;
+                $this->print['password']  = $result['password'];
+
                 $state = "account-active-no-mail";
                 if ( $url && $url != network_home_url( '', 'http' ) ) {
                     switch_to_blog( (int) $result['blog_id'] );
