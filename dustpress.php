@@ -97,18 +97,15 @@ final class DustPress {
 		if ( $this->want_autoload() ) {
 			add_filter( 'template_include', [ $this, 'create_instance' ] );
 
-			// A fix to prevent the activation feature from causing bugs with newer WordPress versions.
-			if ( version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
-				// If we are on wp-activate.php hook into activate_header
-				if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
-					$this->activate = true;
-					// Run create_instance for use partial and model
-					add_action( 'activate_header', [ $this, 'create_instance' ] );
-					// Kill original wp-activate.php execution
-					add_action( 'activate_header', function() {
-						die();
-					});
-				}
+			// If we are on wp-activate.php hook into activate_header
+			if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
+				$this->activate = true;
+				// Run create_instance for use partial and model
+				add_action( 'activate_header', [ $this, 'create_instance' ] );
+				// Kill original wp-activate.php execution
+				add_action( 'activate_header', function() {
+					die();
+				});
 			}
 		}
 		else if ( $this->is_dustpress_ajax() ) {
