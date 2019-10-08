@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+- Show 404 page when suitable model is not found.
+
 ## [1.25.1] - 2019-10-01
 
 ### Added

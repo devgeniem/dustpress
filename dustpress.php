@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.25.0-beta
+Version: 1.25.2-beta
 */
 
 final class DustPress {
@@ -261,8 +261,8 @@ final class DustPress {
 				]);
 			}
 			else {
-				http_response_code(500);
-				die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
+				$wp_query->is_404 = true;
+				$this->error404();
 			}
 		}
 	}
@@ -1700,10 +1700,12 @@ final class DustPress {
 	 *
 	 * @return void
 	 */
-	public function error404( \DustPress\Model $model ) {
+	public function error404( ?\DustPress\Model $model = null ) {
 		global $wp_query;
 
-		$model->terminate();
+		if ( ! empty( $model ) ) {
+			$model->terminate();
+		}
 
 		\status_header( 404 );
 
@@ -1731,7 +1733,7 @@ final class DustPress {
 			$this->disable();
 		}
 		else {
-			die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
+			die( 'DustPress error: No suitable model found. One of these is required: Error404' );
 		}
 	}
 }
