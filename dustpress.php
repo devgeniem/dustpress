@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.25.0-beta
+Version: 1.25.2-beta
 */
 
 final class DustPress {
@@ -240,10 +240,6 @@ final class DustPress {
 				$this->model = new $template( $custom_route_args );
 
 				$this->model->fetch_data();
-
-				if ( $this->model->get_terminated() ) {
-					return;
-				}
 
 				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
@@ -1702,34 +1698,27 @@ final class DustPress {
 
 		$model->terminate();
 
+		$wp_query->is_404 = true;
 		\status_header( 404 );
 
-		$template = 'Error404';
+		$debugs = [];
 
-		if ( class_exists ( $template ) ) {
-			$this->model = new $template();
+		foreach ( [ 'Error404', 'Index' ] as $new_model ) {
+			if ( class_exists( $new_model ) ) {
+				$template = $this->camelcase_to_dashed( $new_model );
+				$model->set_template( $template );
 
-			$this->model->fetch_data();
+				$instance = new $new_model();
 
-			$this->model->terminate();
-
-			do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
-
-			$template_override = $this->model->get_template();
-
-			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
-
-			$this->render([
-				'partial' => $partial,
-				'main'    => true,
-				'type'    => 'default'
-			]);
-
-			$this->disable();
+				$model->data[ $new_model ] = $instance->fetch_data();
+				return;
+			}
+			else {
+				$debugs[] = $new_model;
+			}
 		}
-		else {
-			die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
-		}
+
+		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 	}
 }
 
