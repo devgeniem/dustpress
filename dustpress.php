@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.25.0-beta
+Version: 1.25.2-beta
 */
 
 final class DustPress {
@@ -240,10 +240,6 @@ final class DustPress {
 				$this->model = new $template( $custom_route_args );
 
 				$this->model->fetch_data();
-
-				if ( $this->model->get_terminated() ) {
-					return;
-				}
 
 				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
@@ -1700,36 +1696,34 @@ final class DustPress {
 	public function error404( \DustPress\Model $model ) {
 		global $wp_query;
 
+		// Terminate the parent model's execution.
 		$model->terminate();
 
-		\status_header( 404 );
+		$wp_query->is_404 = true;
 
-		$template = 'Error404';
+		$debugs = [];
 
-		if ( class_exists ( $template ) ) {
-			$this->model = new $template();
+		// We have a very limited list of models to try when it comes to the 404 page.
+		foreach ( [ 'Error404', 'Index' ] as $new_model ) {
+			if ( class_exists( $new_model ) ) {
+				$template = $this->camelcase_to_dashed( $new_model );
+				$model->set_template( $template );
 
-			$this->model->fetch_data();
+				$instance = new $new_model();
 
-			$this->model->terminate();
-
-			do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
-
-			$template_override = $this->model->get_template();
-
-			$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
-
-			$this->render([
-				'partial' => $partial,
-				'main'    => true,
-				'type'    => 'default'
-			]);
-
-			$this->disable();
+				// Set the newly fetched data to the global data to be rendered.
+				$model->data[ $new_model ] = $instance->fetch_data();
+				\status_header( 404 );
+				return;
+			}
+			else {
+				$debugs[] = $new_model;
+			}
 		}
-		else {
-			die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
-		}
+
+		// Set the proper status code and show error message for not found templates.
+		\status_header( 500 );
+		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 	}
 }
 

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Fixed
+- The model's terminating (`$this->terminate();`) feature which was broken because of the forced 404 feature.
+
 ## [1.25.1] - 2019-10-01
 
 ### Added
