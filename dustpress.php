@@ -1696,13 +1696,14 @@ final class DustPress {
 	public function error404( \DustPress\Model $model ) {
 		global $wp_query;
 
+		// Terminate the parent model's execution.
 		$model->terminate();
 
 		$wp_query->is_404 = true;
-		\status_header( 404 );
 
 		$debugs = [];
 
+		// We have a very limited list of models to try when it comes to the 404 page.
 		foreach ( [ 'Error404', 'Index' ] as $new_model ) {
 			if ( class_exists( $new_model ) ) {
 				$template = $this->camelcase_to_dashed( $new_model );
@@ -1710,7 +1711,9 @@ final class DustPress {
 
 				$instance = new $new_model();
 
+				// Set the newly fetched data to the global data to be rendered.
 				$model->data[ $new_model ] = $instance->fetch_data();
+				\status_header( 404 );
 				return;
 			}
 			else {
@@ -1718,6 +1721,8 @@ final class DustPress {
 			}
 		}
 
+		// Set the proper status code and show error message for not found templates.
+		\status_heder( 500 );
 		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 	}
 }
