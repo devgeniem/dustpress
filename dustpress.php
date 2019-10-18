@@ -1722,7 +1722,7 @@ final class DustPress {
 		}
 
 		// Set the proper status code and show error message for not found templates.
-		\status_heder( 500 );
+		\status_header( 500 );
 		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 	}
 }
