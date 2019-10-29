@@ -156,7 +156,9 @@ class Menu extends Helper {
             if ( empty( $menu_items ) || \is_customize_preview() ) {
                 $menu_items = \wp_get_nav_menu_items( $menu_object );
 
-                static::set_cached_menu_items( $menu_object->term_id, $menu_items );
+                if ( ! empty( $menu_items ) ) {
+                    static::set_cached_menu_items( $menu_object->term_id, $menu_items );
+                }
             }
 
             // Add menu object location to the menu object.

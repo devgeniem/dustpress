@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.25.3] - 2019-10-29
+
+### Fixed
+- A bug in the menu helper that caused fatal errors when the menu was empty.
+
 ## [1.25.2] - 2019-10-18
 
 ### Fixed
