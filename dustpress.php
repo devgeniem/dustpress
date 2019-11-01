@@ -646,13 +646,45 @@ final class DustPress {
 		$wp_data['admin_ajax_url'] = admin_url( 'admin-ajax.php' );
 
 		// Insert current page permalink
-		$wp_data['permalink'] = get_permalink();
+		$wp_data['permalink'] = $this->get_permalink_by_view();
 
 		// Insert body classes
 		$wp_data['body_class'] = get_body_class();
 
 		// Return collection after filters
 		return apply_filters( 'dustpress/data/wp', $wp_data );
+	}
+
+	/**
+	*  Gets permalink by view.
+	*
+	*  @type	function
+	*  @date	11/1/2019
+	*  @since	1.24.2
+	*
+	*  @return	string Permalink.
+	*/
+	public function get_permalink_by_view() {
+
+		// We can have different kind of archives.
+		if ( is_archive() ) {
+
+			// Taxonomies.
+			if ( is_tax() ) {
+				$tax 	   = \get_queried_object();
+				$permalink = \get_term_link( $tax );
+			}
+			// If post type archive.
+			else {
+				$permalink = \get_post_type_archive_link( get_post_type() );
+			}
+		}
+		// If we have an id we can use get_permalink.
+		else {
+			$permalink = \get_permalink();
+		}
+
+		return $permalink;
 	}
 
 	/**
