@@ -1132,7 +1132,7 @@ final class DustPress {
 			$args = [];
 		}
 
-		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data->path ) ) {
+		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff,\/]*$/', $request_data->path ) ) {
 			die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
 		}
 
