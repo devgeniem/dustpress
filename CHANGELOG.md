@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.25.4] - 2019-11-05
 
 ### Fixed
+
+## [1.25.4] - 2019-11-5
 - Fixed the ability to run multiple methods with a single DustPress.js AJAX requests.
 
 ## [1.25.3] - 2019-10-29
