@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.25.3
+Version: 1.26.0
 */
 
 final class DustPress {
@@ -871,7 +871,7 @@ final class DustPress {
 	public function init_settings() {
 		$this->settings = [
 			'cache' => false,
-			'debug_data_block_name' => 'Helper data',
+			'debug_data_block_name' => 'Debug',
 			'rendered_expire_time' => 7*60*60*24,
 			'json_url' => false,
 			'json_headers' => false,
@@ -1132,7 +1132,7 @@ final class DustPress {
 			$args = [];
 		}
 
-		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data->path ) ) {
+		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff,\/]*$/', $request_data->path ) ) {
 			die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
 		}
 
@@ -1172,7 +1172,8 @@ final class DustPress {
 					}
 
 					if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
-						$response[ 'debug' ] = $data;
+						$response[ 'data' ] = $data;
+						$response[ 'debug' ] = \DustPress\Debugger::$data['Debugs'];
 					}
 
 					die( wp_json_encode( $response ) );
@@ -1248,6 +1249,10 @@ final class DustPress {
 					$output[ 'data' ] = $instance->data;
 				}
 
+				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+					$output[ 'debug' ] = \DustPress\Debugger::$data['Debugs'] ?? null;
+				}
+
 				die( wp_json_encode( $output ) );
 			}
 			else {
@@ -1274,7 +1279,8 @@ final class DustPress {
 				}
 
 				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
-					$response[ 'debug' ] = $data;
+					$response[ 'data' ] = $data;
+					$response[ 'debug' ] = \DustPress\Debugger::$data['Debugs'];
 				}
 
 				die( wp_json_encode( $response ) );

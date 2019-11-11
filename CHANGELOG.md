@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.26.0] - 2019-11-11
+
+### Added
+- Debugging data from DustPress.js calls added to DustPress Debugger view as well.
+
+### Changed
+- Default name for the debugging data block to "Debug" instead of "Helper data".
+
+## [1.25.4] - 2019-11-05
+
+### Fixed
+- Fixed the ability to run multiple methods with a single DustPress.js AJAX requests.
+
 ## [1.25.3] - 2019-10-29
 
 ### Fixed
