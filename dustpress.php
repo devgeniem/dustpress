@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.26.0
+Version: 1.26.1
 */
 
 final class DustPress {
@@ -1173,7 +1173,7 @@ final class DustPress {
 
 					if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
 						$response[ 'data' ] = $data;
-						$response[ 'debug' ] = \DustPress\Debugger::$data['Debugs'];
+						$response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs');
 					}
 
 					die( wp_json_encode( $response ) );
@@ -1250,7 +1250,7 @@ final class DustPress {
 				}
 
 				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
-					$output[ 'debug' ] = \DustPress\Debugger::$data['Debugs'] ?? null;
+					$output[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
 				}
 
 				die( wp_json_encode( $output ) );
@@ -1280,7 +1280,7 @@ final class DustPress {
 
 				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
 					$response[ 'data' ] = $data;
-					$response[ 'debug' ] = \DustPress\Debugger::$data['Debugs'];
+					$response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
 				}
 
 				die( wp_json_encode( $response ) );
