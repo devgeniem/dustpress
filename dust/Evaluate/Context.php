@@ -164,7 +164,7 @@ class Context
         if(is_object($parent) && !is_numeric($key))
         {
             //prop or method
-            if(array_key_exists($key, $parent))
+            if(property_exists($parent, $key))
             {
                 return $parent->{$key};
             }
