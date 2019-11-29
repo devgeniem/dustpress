@@ -183,6 +183,8 @@ class Image extends Helper {
             $image_data['attrs']['alt'] = $params->alt;
         }
 
+        $image_data = \apply_filters( 'dustpress/image/image_data', $image_data );
+
         return $image_data;
     }
 
