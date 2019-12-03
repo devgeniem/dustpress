@@ -150,7 +150,7 @@ class Menu extends Helper {
             }
         }
 
-        if ( isset( $menu_object) ) {
+        if ( ! empty( $menu_object ) ) {
             $menu_items = static::get_cached_menu_items( $menu_object->term_id );
 
             if ( empty( $menu_items ) || \is_customize_preview() ) {
