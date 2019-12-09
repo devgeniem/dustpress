@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [image-helper-network-support] - 2019-12-09
+
+### Added
+- Added network support for the image helper
+
 ## [image-helper-data-filter] - 2019-12-03
 
 ### Added
