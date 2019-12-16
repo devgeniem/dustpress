@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.24.1
+Version: 1.27.1
 */
 
 final class DustPress {
@@ -97,18 +97,15 @@ final class DustPress {
 		if ( $this->want_autoload() ) {
 			add_filter( 'template_include', [ $this, 'create_instance' ] );
 
-			// A fix to prevent the activation feature from causing bugs with newer WordPress versions.
-			if ( version_compare( get_bloginfo( 'version' ), '5.0', '<' ) ) {
-				// If we are on wp-activate.php hook into activate_header
-				if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
-					$this->activate = true;
-					// Run create_instance for use partial and model
-					add_action( 'activate_header', [ $this, 'create_instance' ] );
-					// Kill original wp-activate.php execution
-					add_action( 'activate_header', function() {
-						die();
-					});
-				}
+			// If we are on wp-activate.php hook into activate_header
+			if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
+				$this->activate = true;
+				// Run create_instance for use partial and model
+				add_action( 'activate_header', [ $this, 'create_instance' ] );
+				// Kill original wp-activate.php execution
+				add_action( 'activate_header', function() {
+					die();
+				});
 			}
 		}
 		else if ( $this->is_dustpress_ajax() ) {
@@ -152,7 +149,7 @@ final class DustPress {
 		add_action( 'init', [ $this, 'init_settings' ] );
 
 		// Register custom route rewrite tag
-		add_action( 'init', [ $this, 'rewrite_tags' ], 20 );
+		add_action( 'after_setup_theme', [ $this, 'rewrite_tags' ], 20 );
 
 		return;
 	}
@@ -944,7 +941,7 @@ final class DustPress {
 	public function init_settings() {
 		$this->settings = [
 			'cache' => false,
-			'debug_data_block_name' => 'Helper data',
+			'debug_data_block_name' => 'Debug',
 			'rendered_expire_time' => 7*60*60*24,
 			'json_url' => false,
 			'json_headers' => false,
@@ -1205,7 +1202,7 @@ final class DustPress {
 			$args = [];
 		}
 
-		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*$/', $request_data->path ) ) {
+		if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff,\/]*$/', $request_data->path ) ) {
 			die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
 		}
 
@@ -1245,7 +1242,8 @@ final class DustPress {
 					}
 
 					if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
-						$response[ 'debug' ] = $data;
+						$response[ 'data' ] = $data;
+						$response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs');
 					}
 
 					die( wp_json_encode( $response ) );
@@ -1321,6 +1319,10 @@ final class DustPress {
 					$output[ 'data' ] = $instance->data;
 				}
 
+				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+					$output[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
+				}
+
 				die( wp_json_encode( $output ) );
 			}
 			else {
@@ -1347,7 +1349,8 @@ final class DustPress {
 				}
 
 				if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
-					$response[ 'debug' ] = $data;
+					$response[ 'data' ] = $data;
+					$response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
 				}
 
 				die( wp_json_encode( $response ) );
@@ -1755,6 +1758,48 @@ final class DustPress {
 			http_response_code(500);
 			die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
 		}
+	}
+
+	/**
+	 * Force 404 page and status from anywhere
+	 *
+	 * @type  function
+	 * @date  03/04/2019
+	 * @since 1.23.0
+	 *
+	 * @return void
+	 */
+	public function error404( \DustPress\Model $model ) {
+		global $wp_query;
+
+		// Terminate the parent model's execution.
+		$model->terminate();
+
+		$wp_query->is_404 = true;
+
+		$debugs = [];
+
+		// We have a very limited list of models to try when it comes to the 404 page.
+		foreach ( [ 'Error404', 'Index' ] as $new_model ) {
+			if ( class_exists( $new_model ) ) {
+				$template = $this->camelcase_to_dashed( $new_model );
+				$model->set_template( $template );
+
+				$instance = new $new_model();
+
+				// Set the newly fetched data to the global data to be rendered.
+				$model->data[ $new_model ] = $instance->fetch_data();
+				\status_header( 404 );
+				return;
+			}
+			else {
+				$debugs[] = $new_model;
+			}
+		}
+
+		// Set the proper status code and show error message for not found templates.
+		\status_header( 500 );
+		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
 	}
 }
 

@@ -28,6 +28,13 @@ If you don't provide the alt parameter when using the helper with an image id, i
 
 ``` {@image id=image.id size="medium_large" class="myclass" alt="An alternative text" /} ```
 
+#### Blog id
+You can add parameter `blogid` if needed in cross network queries.
+
+Example
+
+``` {@image id=image.id size="large" blogid=data.blogid /} ```
+
 #### A settings model
 
 We recommend using a separate settings model in your DustPress installation for easily defining custom settings for images. This model can be bound to chosen models or even to the middle model which is extended by page and post models.
@@ -57,3 +64,25 @@ class Settings extends \DustPress\Model {
         ];
     }
 } 
+```
+
+#### Image data filter
+You can filter $image_data variable with filter `dustpress/image/image_data`.
+Example about adding loading="lazy" attribute for all the images with the filter.
+
+```php
+/**
+ * Filter image helper data.
+ *
+ * @param array $image_data DustPress image helper data.
+ *
+ * @return mixed
+ */
+function filter_image_helper_data( $image_data ) {
+
+    $image_data['attrs']['loading'] = 'lazy';
+
+    return $image_data;
+}
+\add_filter( 'dustpress/image/image_data', 'filter_image_helper_data', 1 );
+```

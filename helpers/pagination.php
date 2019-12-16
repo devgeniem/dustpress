@@ -76,7 +76,8 @@ class Pagination extends Helper {
             if ( $cur_page === $first_page ) {
                 $hellip_start  = '';
                 $on_first_page = true;
-                for ( $i = 0; $i < 7; $i++ ) {
+                $max = ( $page_count < $visible ) ? $page_count : $visible;
+                for ( $i = 0; $i < $max; $i++ ) {
                     if ( ( $i + 1 ) > $page_count ) {
                         $hellip_end = '';
                         break;
@@ -131,7 +132,7 @@ class Pagination extends Helper {
                     $hellip_end = '';
                 }
 
-                // display max number of pages
+                // Display max number of pages.
                 $max_pages = $start + ( $visible - 1 );
                 if ( $max_pages <= $page_count ) {
                     for ( $i = $start; $i <= $max_pages; $i++ ) {
@@ -142,7 +143,7 @@ class Pagination extends Helper {
                         }
                     }
                 }
-                // display less
+                // Display less.
                 else {
                     for ( $i = $start; $i <= $end; $i++ ) {
                         $pages[ $i ]       = (object) [];

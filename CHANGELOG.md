@@ -9,6 +9,70 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixes permalink data on WP object in archive views.
 
+## [1.27.1] - 2019-12-13
+
+### Added
+- Added network support for the image helper
+
+## [1.27.0] - 2019-12-03
+
+### Added
+- A filter for image helper `$image_data`.
+
+## [1.26.3] - 2019-12-03
+
+### Fixed
+- A bug in the menu helper that caused fatal errors when the menu did not exist.
+
+## [1.26.2] - 2019-11-13
+
+### Fixed
+- Small fix to DustPHP for PHP 7.4 compatibility.
+
+## [1.26.1] - 2019-11-13
+
+### Fixed
+- A bug that prevented DustPress Debugger for working properly with AJAX calls.
+
+## [1.26.0] - 2019-11-11
+
+### Added
+- Debugging data from DustPress.js calls added to DustPress Debugger view as well.
+
+### Changed
+- Default name for the debugging data block to "Debug" instead of "Helper data".
+
+## [1.25.4] - 2019-11-05
+
+### Fixed
+
+## [1.25.4] - 2019-11-5
+- Fixed the ability to run multiple methods with a single DustPress.js AJAX requests.
+
+## [1.25.3] - 2019-10-29
+
+### Fixed
+- A bug in the menu helper that caused fatal errors when the menu was empty.
+
+## [1.25.2] - 2019-10-18
+
+### Fixed
+- The model's terminating (`$this->terminate();`) feature which was broken because of the forced 404 feature.
+
+## [1.25.1] - 2019-10-01
+
+### Added
+- Added user email to the data for the partial in UserActivate model.
+
+### Fixed
+- Fixed the menu helper partial, which printed out an empty ul element when the requested menu doesn't exist.
+
+## [1.25.0] - 2019-09-20
+
+### Fixed
+- Fixed a bug in the pagination helper first page handling.
+- Fixed a bug in user-active.php caused by a change in WP core.
+
 ## [1.24.1] - 2019-08-20
 
 ### Fixed
