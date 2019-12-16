@@ -643,13 +643,83 @@ final class DustPress {
 		$wp_data['admin_ajax_url'] = admin_url( 'admin-ajax.php' );
 
 		// Insert current page permalink
-		$wp_data['permalink'] = get_permalink();
+		$wp_data['permalink'] = $this->dp_get_permalink();
 
 		// Insert body classes
 		$wp_data['body_class'] = get_body_class();
 
 		// Return collection after filters
 		return apply_filters( 'dustpress/data/wp', $wp_data );
+	}
+
+	/**
+	*  Gets permalink.
+	*
+	*  @type	function
+	*  @date	11/1/2019
+	*  @since	1.24.2
+	*
+	*  @return	string Permalink.
+	*/
+	public function dp_get_permalink() {
+
+		// Get request uri safely.
+		$request_uri = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL );
+		$permalink 	 = $this->dp_get_home_url() . $request_uri;
+
+		return $permalink;
+	}
+
+	/**
+	 * This has been copied from the WordPress core.
+	 * WPML does filter the home_url so we cannot use the original function get_home_url() here.
+	 *
+	 * Original doc block:
+	 * Retrieves the URL for a given site where the front end is accessible.
+	 *
+	 * Returns the 'home' option with the appropriate protocol. The protocol will be 'https'
+	 * if is_ssl() evaluates to true; otherwise, it will be the same as the 'home' option.
+	 * If `$scheme` is 'http' or 'https', is_ssl() is overridden.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @global string $pagenow
+	 *
+	 * @param  int         $blog_id Optional. Site ID. Default null (current site).
+	 * @param  string      $path    Optional. Path relative to the home URL. Default empty.
+	 * @param  string|null $scheme  Optional. Scheme to give the home URL context. Accepts
+	 *                              'http', 'https', 'relative', 'rest', or null. Default null.
+	 * @return string Home URL link with optional path appended.
+	 */
+	public function dp_get_home_url( $blog_id = null, $path = '', $scheme = null ) {
+
+		global $pagenow;
+
+		$orig_scheme = $scheme;
+
+		if ( empty( $blog_id ) || ! is_multisite() ) {
+			$url = get_option( 'home' );
+		} else {
+			switch_to_blog( $blog_id );
+			$url = get_option( 'home' );
+			restore_current_blog();
+		}
+
+		if ( ! in_array( $scheme, array( 'http', 'https', 'relative' ) ) ) {
+			if ( is_ssl() && ! is_admin() && 'wp-login.php' !== $pagenow ) {
+				$scheme = 'https';
+			} else {
+				$scheme = parse_url( $url, PHP_URL_SCHEME );
+			}
+		}
+
+		$url = set_url_scheme( $url, $scheme );
+
+		if ( $path && is_string( $path ) ) {
+			$url .= '/' . ltrim( $path, '/' );
+		}
+
+		return $url;
 	}
 
 	/**
