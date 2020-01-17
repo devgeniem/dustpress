@@ -673,13 +673,6 @@ final class DustPress {
 			'main' => false,
 		];
 
-		if ( is_array( $args ) ) {
-			if ( ! isset( $args['partial'] ) ) {
-				http_response_code(500);
-				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
-			}
-		}
-
 		$options = array_merge( $defaults, (array) $args );
 
 // FIXME -> WP function
@@ -751,6 +744,8 @@ final class DustPress {
 			}
 		);
 
+		add_filter( 'dustpress/formats/use_dust/html', '__return_true' );
+
 		$types = apply_filters( 'dustpress/formats', $types );
 
 		if ( ! $data && ! empty( $this->model ) ) {
@@ -759,27 +754,39 @@ final class DustPress {
 			$this->model->data['WP'] = $this->populate_data_collection();
 		}
 
-		// Ensure we have a DustPHP instance.
-		if ( isset( $this->dust ) ) {
-			$dust = $this->dust;
+		if ( apply_filters( 'dustpress/formats/use_dust/' . $type, false ) ) {
+			// Ensure we have a DustPHP instance.
+			if ( isset( $this->dust ) ) {
+				$dust = $this->dust;
+			}
+			else {
+				http_response_code(500);
+				die( 'DustPress error: Something very unexpected happened: there is no DustPHP.' );
+			}
+
+			if ( ! isset( $args['partial'] ) ) {
+				http_response_code(500);
+				die( '<p><b>DustPress error:</b> No partial is given to the render function.</p>' );
+			}
+
+			$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
+
+			// Fetch Dust partial by given name. Throw error if there is something wrong.
+			try {
+				$template = $this->get_template( $partial );
+
+				$helpers = $this->prerender( $partial );
+
+				$this->prerun_helpers( $helpers );
+			}
+			catch ( Exception $e ) {
+				http_response_code(500);
+				die( 'DustPress error: '. $e->getMessage() );
+			}
 		}
 		else {
-			die( 'DustPress error: Something very unexpected happened: there is no DustPHP.' );
-		}
-
-		$dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
-
-		// Fetch Dust partial by given name. Throw error if there is something wrong.
-		try {
-			$template = $this->get_template( $partial );
-
-			$helpers = $this->prerender( $partial );
-
-			$this->prerun_helpers( $helpers );
-		}
-		catch ( Exception $e ) {
-			http_response_code(500);
-			die( 'DustPress error: '. $e->getMessage() );
+			$dust = null;
+			$template = $partial;
 		}
 
 		if ( ! empty( $data ) ) {
