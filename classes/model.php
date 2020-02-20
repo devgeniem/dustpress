@@ -285,6 +285,8 @@ class Model {
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
         foreach( $methods as $class => $class_methods ) {
             foreach( $class_methods as $name => $m ) {
+                dustpress()->start_performance( "Models." . json_encode( $m ));
+
                 if ( is_array( $m ) ) {
                     if ( isset( $m[1] ) && is_string( $m[1] ) ) {
                         if ( $m[1] == "__construct" ) {
@@ -333,6 +335,8 @@ class Model {
                         }
                     }
                 }
+
+                dustpress()->save_performance( "Models." . json_encode( $m ));
 
                 if ( $this->terminated == true ) {
                     break 2;

@@ -48,6 +48,13 @@ final class DustPress {
 
 	private $autoload_paths;
 
+	// Runtime performance is stored here.
+	// DustPress Debugger will read it after the page has been rendered.
+	public $performance = [];
+
+	// Multiple microtime(true) values stored here for execution time calculations.
+	private $performance_timers = [];
+
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
@@ -64,6 +71,9 @@ final class DustPress {
 	*/
 
 	protected function __construct() {
+		$this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
+		$this->start_performance( 'DustPress total' );
+
 		// Autoload paths will be stored here so the filesystem has to be scanned only once.
 		$this->autoload_paths = [];
 
@@ -237,16 +247,20 @@ final class DustPress {
 			// We do not throw error if the class does not exist, to ensure that you can still create
 			// templates in traditional style if needed.
 			if ( class_exists ( $template ) ) {
+				$this->start_performance( 'Models total' );
 				$this->model = new $template( $custom_route_args );
-
 				$this->model->fetch_data();
+				$this->save_performance( 'Models total' );
 
 				do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
+				$this->start_performance( 'Templates total' );
 				$template_override = $this->model->get_template();
+				$this->save_performance( 'Templates total' );
 
 				$partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
 
+				$this->start_performance( 'Rendering' );
 				$this->render([
 					'partial' => $partial,
 					'main' => true,
@@ -803,6 +817,9 @@ final class DustPress {
 
 		// Do something with the data after rendering
 		apply_filters( 'dustpress/data/after_render', $render_data );
+
+		$this->save_performance( 'Rendering' );
+		$this->save_performance( 'DustPress total' );
 
 		if ( $echo ) {
 			if ( empty ( strlen( $output ) ) ) {
@@ -1730,6 +1747,64 @@ final class DustPress {
 		// Set the proper status code and show error message for not found templates.
 		\status_header( 500 );
 		die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
+	}
+
+	/**
+	*  Starts performance time measuring.
+	*
+	*  @type	function
+	*  @date	20/2/2019
+	*  @since	1.28.0
+	*
+	*  @param	string $name
+	*/
+	public function start_performance( $name ) {
+		$this->performance_timers[$name] = microtime( true );
+	}
+
+	/**
+	*  Stops performance time measuring and saves the measurement.
+	*  Can be used with or without start_perforance(). If used without, $start_time must be provided.
+	*
+	*  @type	function
+	*  @date	20/2/2019
+	*  @since	1.28.0
+	*
+	*  @param	string $name
+	*/
+	public function save_performance( $name, $start_time = false ) {
+		if ( ! $start_time ) {
+			if ( ! empty( $this->performance_timers[$name] ) ) {
+				$start_time = $this->performance_timers[$name];
+
+				unset( $this->performance_timers[$name] );
+			}
+		}
+
+		if ( ! $start_time ) {
+			return false;
+		}
+
+		$execution_time = microtime( true ) - $start_time;
+
+		// Having all irrelevant times marked as "< 0.1" speeds up the reading of the performance report.
+		if ( $execution_time < 0.1 ) {
+			$execution_time = '< 0.1';
+		}
+
+		// The dot syntax can be used to created "groups".
+		// Models.myFunction() becomes [Models][myFunction()].
+		if ( stristr( $name, '.' ) ) {
+			// Converts the name from [\"ArchiveEvent\",\"ResultCount\"]" to ArchiveEvent->ResultCount().
+			$name_explode = explode( '.', str_replace(['[', ']', '\\', '"'], '', $name ) );
+			$group_name = $name_explode[0];
+			$function_name = str_replace( ',', '->', $name_explode[1]).'()';
+
+			$this->performance[$group_name][$function_name] = $execution_time.'s';
+		}
+		else {
+			$this->performance[$name] = $execution_time.'s';
+		}
 	}
 }
 
