@@ -1878,11 +1878,10 @@ final class DustPress {
 										// The callback is an array. Usually it means a method within an object (both static and instantiated).
 										if ( is_array( $callback['function'] ) ) {
 											// Object->method() or Object::method().
-											if ( $tmp = $this->parse_hook_callback_name( $callback['function'], $callback_key ) ) {
-												$tmp_action = $tmp;
-											}
+											$tmp_action = $this->parse_hook_callback_name( $callback['function'], $callback_key );
+
 											// This usually doesn't happen. It's a backup to catch any rare circumstances.
-											else {
+											if ( ! $tmp_action ) {
 												foreach ( $callback['function'] as $function ) {
 													if ( ! is_array( $tmp_action ) ) {
 														$tmp_action = [];
