@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.28.0
+Version: 1.28.1
 */
 
 final class DustPress {
@@ -73,6 +73,7 @@ final class DustPress {
 	protected function __construct() {
 		$this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
 		$this->start_performance( 'DustPress total' );
+		$this->measure_hooks_performance();
 
 		// Autoload paths will be stored here so the filesystem has to be scanned only once.
 		$this->autoload_paths = [];
@@ -1798,13 +1799,168 @@ final class DustPress {
 			// Converts the name from [\"ArchiveEvent\",\"ResultCount\"]" to ArchiveEvent->ResultCount().
 			$name_explode = explode( '.', str_replace(['[', ']', '\\', '"'], '', $name ) );
 			$group_name = $name_explode[0];
-			$function_name = str_replace( ',', '->', $name_explode[1]).'()';
+			$function_name = str_replace( ',', '->', $name_explode[1]);
+
+			// Hooks are not functions so do not append them with a ().
+			if ( $group_name !== 'Hooks' ) {
+				$function_name .= '()';
+			}
 
 			$this->performance[$group_name][$function_name] = $execution_time.'s';
 		}
 		else {
 			$this->performance[$name] = $execution_time.'s';
 		}
+	}
+
+	/**
+	*  Measures how much time passes between the first and last action of each hook.
+	*
+	*  @type	function
+	*  @date	24/2/2020
+	*  @since	1.28.1
+	*/
+	private function measure_hooks_performance() {
+		// All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
+		$hooks = [
+			'load_textdomain', 'after_setup_theme', 'auth_cookie_malformed', 'auth_cookie_valid', 'set_current_user', 
+			'init', 'widgets_init', 'register_sidebar', 'wp_register_sidebar_widget', 'wp_default_scripts', 
+			'wp_default_styles', 'admin_bar_init', 'add_admin_bar_menus', 'wp_loaded', 'parse_request', 
+			'send_headers', 'parse_query', 'pre_get_posts', 'posts_selection', 'wp', 'template_redirect', 
+			'get_header', 'wp_enqueue_scripts', 'twentyeleven_enqueue_color_scheme', 'wp_head', 'wp_print_styles', 
+			'wp_print_scripts', 'get_search_form', 'loop_start', 'the_post', 'get_template_part_content', 'loop_end', 
+			'get_sidebar', 'dynamic_sidebar', 'get_search_form', 'pre_get_comments', 'wp_meta', 'get_footer', 
+			'get_sidebar', 'twentyeleven_credits', 'wp_footer', 'wp_print_footer_scripts', 'admin_bar_menu', 
+			'wp_before_admin_bar_render', 'wp_after_admin_bar_render', 'shutdown'
+		];
+
+		// Add a measuring action in the beginning and end of each hook.
+		foreach ($hooks as $hook) {
+			add_action( $hook, function() use( $hook ) {
+				$this->start_performance( 'Hooks.' . $hook );
+			}, PHP_INT_MIN);
+
+			add_action( $hook, function() use( $hook ) {
+				$this->save_performance( 'Hooks.' . $hook );
+			}, PHP_INT_MAX);
+		}
+
+		// Measure all slow hooks actions in more detail.
+		add_action( 'dustpress/data/after_render', function() {
+			$this->parse_hook_callbacks();
+		}, 102);
+	}
+
+	/**
+	*  Parses the $wp_filter to see what actions are being run in each of the slow hooks.
+	*
+	*  @type	function
+	*  @date	2425/2/2020
+	*  @since	1.28.1
+	*/
+	public function parse_hook_callbacks() {
+		global $wp_filter;
+
+		if ( array_key_exists( 'Hooks', $this->performance ) ) {
+			foreach ( $this->performance['Hooks'] as $hook_name => $execution_time ) {
+				// Only analyze hooks that took over 0.1s to execute.
+				if ( $execution_time !== '< 0.1s' ) {
+					// Make sure there are hooks to parse.
+					if ( property_exists( $wp_filter[$hook_name], 'callbacks' ) ) {
+						$callback_data = [];
+						
+						foreach ( $wp_filter[$hook_name]->callbacks as $priority => $callbacks ) {
+							if ( ! empty( $callbacks ) ) {
+								foreach( $callbacks as $callback_key => $callback ) {
+									$tmp_action = false;
+									
+									if ( array_key_exists( 'function', $callback ) ) {
+										// The callback is an array. Usually it means a method within an object (both static and instantiated).
+										if ( is_array( $callback['function'] ) ) {
+											// Object->method() or Object::method().
+											if ( $tmp = $this->parse_hook_callback_name( $callback['function'], $callback_key ) ) {
+												$tmp_action = $tmp;
+											}
+											// This usually doesn't happen. It's a backup to catch any rare circumstances.
+											else {
+												foreach ( $callback['function'] as $function ) {
+													if ( ! is_array( $tmp_action ) ) {
+														$tmp_action = [];
+													}
+
+													$tmp_action = $this->parse_hook_callback_name( $function);
+												}
+											}
+										}
+										// The callback is a normal function without an object.
+										else {
+											$tmp_action = $this->parse_hook_callback_name( $callback['function'] );
+										}
+									}
+
+									// Group all actions by their priority.
+									if ( ! empty( $tmp_action ) ) {
+										$priority_key = 'Priority ' . $priority;
+
+										if ( ! array_key_exists( $priority_key, $callback_data ) ) {
+											$callback_data[$priority_key] = [];
+										}
+
+										$callback_data[$priority_key][] = $tmp_action;
+									}
+								}
+							}
+						}
+
+						if ( ! empty( $callback_data ) ) {
+							$this->performance["Slow hook actions"][$hook_name] = $callback_data;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	*  A helper function to convert $wp_filter data into meaningful object and method names.
+	*
+	*  @type	function
+	*  @date	24/2/2020
+	*  @since	1.28.1
+	*/
+	private function parse_hook_callback_name( $data, $callback_key = null ) {
+		// Check if the callback is Object->method() or Object::method().
+		if ( is_array( $data ) && count( $data ) === 2 ) {
+			// Object->method().
+			if ( is_object( $data[0] ) && is_string( $data[1] ) ) {
+				return get_class( $data[0] ) . '->' . $data[1]. '()';
+			}
+			// Object::method().
+			else if ( ! empty( $callback_key ) && stristr( $callback_key, '::' ) ) {
+				return $data[0] . '::' . $data[1]. '()';
+			}
+		}
+		else {
+			if ( $data instanceof Closure ) {
+				// Closures are quite tricky to debug as they are anonymous by nature.
+				// Cast the whole closure as text and debug the text itself.
+				$closure_string = print_r($data, true);
+				
+				// Ignores the performance measurements from the callback stack.
+				if ( empty( $closure_string ) || ! stristr( $closure_string, 'performance_timers:DustPress' ) ) {
+					return 'Closure';
+				}
+			}
+			else if ( is_object( $data ) ) {
+				return 'Class ' . get_class($data);
+			}
+			// The callback is a function.
+			else if ( is_string( $data ) ) {
+				return $data . '()';
+			}
+		}
+
+		return false;
 	}
 }
 
