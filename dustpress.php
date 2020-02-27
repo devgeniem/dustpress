@@ -1846,9 +1846,11 @@ final class DustPress {
 		}
 
 		// Measure all slow hooks actions in more detail.
-		add_action( 'dustpress/data/after_render', function() {
+		add_filter( 'dustpress/data/after_render', function( $data ) {
 			$this->parse_hook_callbacks();
-		}, 102);
+
+			return $data;
+		}, 98, 1 );
 	}
 
 	/**
