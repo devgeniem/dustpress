@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.28.2] - 2020-02-28
+
+### Added
+- More details for hook measurements.
+- Added $main for dustpress/data/after_render filter.
+
 ## [1.28.1] - 2020-02-25
 
 ### Added
