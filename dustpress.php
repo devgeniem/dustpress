@@ -2050,7 +2050,9 @@ final class DustPress {
 		}
 		else {
 			if ( $data instanceof Closure ) {
-				return 'Closure';
+				$reflection = new ReflectionFunction( $data );
+
+				return (string) $reflection;
 			}
 			else if ( is_object( $data ) ) {
 				return 'Class ' . get_class($data);
