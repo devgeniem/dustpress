@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.28.1
+Version: 1.28.2
 */
 
 final class DustPress {
@@ -49,8 +49,8 @@ final class DustPress {
 	private $autoload_paths;
 
 	// Runtime performance is stored here.
-	// DustPress Debugger will read it after the page has been rendered.
-	public $performance = [];
+	// DustPress Debugger will read it (via $this->get_performance_data) after the page has been rendered.
+	private $performance = [];
 
 	// Multiple microtime(true) values stored here for execution time calculations.
 	private $performance_timers = [];
@@ -817,7 +817,7 @@ final class DustPress {
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
 		// Do something with the data after rendering
-		apply_filters( 'dustpress/data/after_render', $render_data );
+		apply_filters( 'dustpress/data/after_render', $render_data, $main );
 
 		$this->save_performance( 'Rendering' );
 		$this->save_performance( 'DustPress total' );
@@ -1772,6 +1772,7 @@ final class DustPress {
 	*  @since	1.28.0
 	*
 	*  @param	string $name
+	*  @param   	integer $start_time
 	*/
 	public function save_performance( $name, $start_time = false ) {
 		if ( ! $start_time ) {
@@ -1792,6 +1793,9 @@ final class DustPress {
 		if ( $execution_time < 0.1 ) {
 			$execution_time = '< 0.1';
 		}
+		else {
+			$execution_time = round( $execution_time, 4 );
+		}
 
 		// The dot syntax can be used to created "groups".
 		// Models.myFunction() becomes [Models][myFunction()].
@@ -1802,14 +1806,14 @@ final class DustPress {
 			$function_name = str_replace( ',', '->', $name_explode[1]);
 
 			// Hooks are not functions so do not append them with a ().
-			if ( $group_name !== 'Hooks' ) {
+			if ( stristr( $group_name, 'hook' ) === false ) {
 				$function_name .= '()';
 			}
 
-			$this->performance[$group_name][$function_name] = $execution_time.'s';
+			$this->performance[$group_name][$function_name] = $execution_time . 's';
 		}
 		else {
-			$this->performance[$name] = $execution_time.'s';
+			$this->performance[$name] = $execution_time . 's';
 		}
 	}
 
@@ -1817,8 +1821,8 @@ final class DustPress {
 	*  Measures how much time passes between the first and last action of each hook.
 	*
 	*  @type	function
-	*  @date	24/2/2020
-	*  @since	1.28.1
+	*  @date	28/2/2020
+	*  @since	1.28.2
 	*/
 	private function measure_hooks_performance() {
 		// All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
@@ -1843,14 +1847,110 @@ final class DustPress {
 			add_action( $hook, function() use( $hook ) {
 				$this->save_performance( 'Hooks.' . $hook );
 			}, PHP_INT_MAX);
+
+			add_action( $hook, function() use ( $hook ) {
+				global $wp_filter;
+
+				if ( property_exists( $wp_filter[$hook], 'callbacks' ) ) {
+					foreach ( array_keys( $wp_filter[$hook]->callbacks ) as $priority ) {
+						
+						// The priority has to be decreased by a little and increased by a little so ignore values higher and lower than PHP_INT.
+						if ( $priority > PHP_INT_MIN && $priority < PHP_INT_MAX ) {
+							// Add an action just before and just after each invidual priority so we can measure how much each priority takes.
+							// The priority is deliberately casted as string, otherwise it ruins the sorting order of ksort(*, SORT_NUMERIC).
+							add_action( $hook, function() use( $hook, $priority ) {
+								$this->start_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+							}, strval($priority - 0.001));
+
+							add_action( $hook, function() use( $hook, $priority ) {
+								$this->save_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+							}, strval($priority + 0.001));
+						}
+					}
+				}
+				
+			}, PHP_INT_MIN);
 		}
+	}
+	
+	/**
+	*  Adds performance_per_priority data into slow_hooks data and unsets the aformentioned data.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*/
+	private function combine_slow_hooks_and_performance_per_priority_data() {
+		if ( ! empty( $this->performance ) ) {
+			if ( array_key_exists( 'Slow hook actions', $this->performance ) ) {
+				if ( array_key_exists( 'Hook performance per priority', $this->performance ) ) {
+					foreach ( $this->performance['Hook performance per priority'] as $hook_and_prio => $execution_time ) {
+						// The data looks like: init-10, first part being the hook name and the second one being the priority.
+						$explode = explode( '-', $hook_and_prio );
+						$hook_name = $explode[0];
+						$priority = $explode[1];
 
-		// Measure all slow hooks actions in more detail.
-		add_filter( 'dustpress/data/after_render', function( $data ) {
-			$this->parse_hook_callbacks();
+						if ( array_key_exists( $hook_name, $this->performance['Slow hook actions'] ) ) {
+							if ( array_key_exists( 'Priority ' . $priority, $this->performance['Slow hook actions'][$hook_name] ) ) {
+								// Add more detailed version of each priority to slow hook actions.
+								$this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority . ' (' . $execution_time . ')'] = $this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority];
+								
+								// Unset the less detailed version.
+								unset( $this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority] );
+							}
+						}
+					}
 
-			return $data;
-		}, 98, 1 );
+					unset( $this->performance['Hook performance per priority'] );
+				}
+			}
+		}
+	}
+
+	/**
+	*  Adds slow_hooks data into hooks data and unsets the aformentioned data.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*/
+	private function combine_slow_hooks_and_hooks_data() {
+		if ( ! empty( $this->performance ) ) {
+			if ( array_key_exists( 'Slow hook actions', $this->performance ) ) {
+				// Combines the $this->performance['Hooks'] with $this->performance['Slow hook actions'].
+				foreach ( $this->performance['Slow hook actions'] as $hook_name => $hook_performance_per_priority ) {
+					if ( array_key_exists( $hook_name, $this->performance['Hooks'] ) ) {
+						$hook_total_execution_time = $this->performance['Hooks'][$hook_name];
+
+						// Apply more detailed data of this hook to the array.
+						// The [] + [] is a hack to get the relevant info appear first in an associative array.
+						$this->performance['Hooks'] = [$hook_name . ' (' . $hook_total_execution_time . ')' => $hook_performance_per_priority] + $this->performance['Hooks'];
+
+						// Unset the original less detailed data.
+						unset( $this->performance['Hooks'][$hook_name] );
+					}
+				}
+
+				// Unset the slow hooks as they are no longer needed. They are now combined to $this->performance['Hooks'].
+				unset( $this->performance['Slow hook actions'] );
+			}
+		}
+	}
+
+	/**
+	*  A public method for DustPress Debugger to use to get the performance data.
+	*  This method also analyzes the hook performance data.
+	*
+	*  @type	function
+	*  @date	2425/2/2020
+	*  @since	1.28.2
+	*/
+	public function get_performance_data() {
+		$this->parse_slow_hook_actions();
+		$this->combine_slow_hooks_and_performance_per_priority_data();
+		$this->combine_slow_hooks_and_hooks_data();
+
+		return $this->performance;
 	}
 
 	/**
@@ -1858,9 +1958,9 @@ final class DustPress {
 	*
 	*  @type	function
 	*  @date	2425/2/2020
-	*  @since	1.28.1
+	*  @since	1.28.2
 	*/
-	public function parse_hook_callbacks() {
+	private function parse_slow_hook_actions() {
 		global $wp_filter;
 
 		if ( array_key_exists( 'Hooks', $this->performance ) ) {
@@ -1872,6 +1972,11 @@ final class DustPress {
 						$callback_data = [];
 						
 						foreach ( $wp_filter[$hook_name]->callbacks as $priority => $callbacks ) {
+							// Ignore hooks made by performance measurements itself.
+							if ( stristr( $priority, '.' ) !== false || $priority === PHP_INT_MIN || $priority === PHP_INT_MAX ) {
+								continue;
+							}
+
 							if ( ! empty( $callbacks ) ) {
 								foreach( $callbacks as $callback_key => $callback ) {
 									$tmp_action = false;
@@ -1926,8 +2031,10 @@ final class DustPress {
 	*  A helper function to convert $wp_filter data into meaningful object and method names.
 	*
 	*  @type	function
-	*  @date	24/2/2020
-	*  @since	1.28.1
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*  @param	mixed $data
+	*  @param	stirng $callback_key
 	*/
 	private function parse_hook_callback_name( $data, $callback_key = null ) {
 		// Check if the callback is Object->method() or Object::method().
@@ -1943,14 +2050,7 @@ final class DustPress {
 		}
 		else {
 			if ( $data instanceof Closure ) {
-				// Closures are quite tricky to debug as they are anonymous by nature.
-				// Cast the whole closure as text and debug the text itself.
-				$closure_string = print_r($data, true);
-				
-				// Ignores the performance measurements from the callback stack.
-				if ( empty( $closure_string ) || ! stristr( $closure_string, 'performance_timers:DustPress' ) ) {
-					return 'Closure';
-				}
+				return 'Closure';
 			}
 			else if ( is_object( $data ) ) {
 				return 'Class ' . get_class($data);
