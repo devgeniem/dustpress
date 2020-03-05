@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.28.0
+Version: 1.28.2
 */
 
 final class DustPress {
@@ -49,8 +49,8 @@ final class DustPress {
 	private $autoload_paths;
 
 	// Runtime performance is stored here.
-	// DustPress Debugger will read it after the page has been rendered.
-	public $performance = [];
+	// DustPress Debugger will read it (via $this->get_performance_data) after the page has been rendered.
+	private $performance = [];
 
 	// Multiple microtime(true) values stored here for execution time calculations.
 	private $performance_timers = [];
@@ -73,6 +73,7 @@ final class DustPress {
 	protected function __construct() {
 		$this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
 		$this->start_performance( 'DustPress total' );
+		$this->measure_hooks_performance();
 
 		// Autoload paths will be stored here so the filesystem has to be scanned only once.
 		$this->autoload_paths = [];
@@ -816,7 +817,7 @@ final class DustPress {
 		$output = apply_filters( 'dustpress/output', $output, $options );
 
 		// Do something with the data after rendering
-		apply_filters( 'dustpress/data/after_render', $render_data );
+		apply_filters( 'dustpress/data/after_render', $render_data, $main );
 
 		$this->save_performance( 'Rendering' );
 		$this->save_performance( 'DustPress total' );
@@ -1771,6 +1772,7 @@ final class DustPress {
 	*  @since	1.28.0
 	*
 	*  @param	string $name
+	*  @param   	integer $start_time
 	*/
 	public function save_performance( $name, $start_time = false ) {
 		if ( ! $start_time ) {
@@ -1791,6 +1793,9 @@ final class DustPress {
 		if ( $execution_time < 0.1 ) {
 			$execution_time = '< 0.1';
 		}
+		else {
+			$execution_time = round( $execution_time, 4 );
+		}
 
 		// The dot syntax can be used to created "groups".
 		// Models.myFunction() becomes [Models][myFunction()].
@@ -1798,13 +1803,267 @@ final class DustPress {
 			// Converts the name from [\"ArchiveEvent\",\"ResultCount\"]" to ArchiveEvent->ResultCount().
 			$name_explode = explode( '.', str_replace(['[', ']', '\\', '"'], '', $name ) );
 			$group_name = $name_explode[0];
-			$function_name = str_replace( ',', '->', $name_explode[1]).'()';
+			$function_name = str_replace( ',', '->', $name_explode[1]);
 
-			$this->performance[$group_name][$function_name] = $execution_time.'s';
+			// Hooks are not functions so do not append them with a ().
+			if ( stristr( $group_name, 'hook' ) === false ) {
+				$function_name .= '()';
+			}
+
+			$this->performance[$group_name][$function_name] = $execution_time . 's';
 		}
 		else {
-			$this->performance[$name] = $execution_time.'s';
+			$this->performance[$name] = $execution_time . 's';
 		}
+	}
+
+	/**
+	*  Measures how much time passes between the first and last action of each hook.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*/
+	private function measure_hooks_performance() {
+		// All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
+		$hooks = [
+			'load_textdomain', 'after_setup_theme', 'auth_cookie_malformed', 'auth_cookie_valid', 'set_current_user', 
+			'init', 'widgets_init', 'register_sidebar', 'wp_register_sidebar_widget', 'wp_default_scripts', 
+			'wp_default_styles', 'admin_bar_init', 'add_admin_bar_menus', 'wp_loaded', 'parse_request', 
+			'send_headers', 'parse_query', 'pre_get_posts', 'posts_selection', 'wp', 'template_redirect', 
+			'get_header', 'wp_enqueue_scripts', 'twentyeleven_enqueue_color_scheme', 'wp_head', 'wp_print_styles', 
+			'wp_print_scripts', 'get_search_form', 'loop_start', 'the_post', 'get_template_part_content', 'loop_end', 
+			'get_sidebar', 'dynamic_sidebar', 'get_search_form', 'pre_get_comments', 'wp_meta', 'get_footer', 
+			'get_sidebar', 'twentyeleven_credits', 'wp_footer', 'wp_print_footer_scripts', 'admin_bar_menu', 
+			'wp_before_admin_bar_render', 'wp_after_admin_bar_render', 'shutdown'
+		];
+
+		// Add a measuring action in the beginning and end of each hook.
+		foreach ($hooks as $hook) {
+			add_action( $hook, function() use( $hook ) {
+				$this->start_performance( 'Hooks.' . $hook );
+			}, PHP_INT_MIN);
+
+			add_action( $hook, function() use( $hook ) {
+				$this->save_performance( 'Hooks.' . $hook );
+			}, PHP_INT_MAX);
+
+			add_action( $hook, function() use ( $hook ) {
+				global $wp_filter;
+
+				if ( property_exists( $wp_filter[$hook], 'callbacks' ) ) {
+					foreach ( array_keys( $wp_filter[$hook]->callbacks ) as $priority ) {
+						
+						// The priority has to be decreased by a little and increased by a little so ignore values higher and lower than PHP_INT.
+						if ( $priority > PHP_INT_MIN && $priority < PHP_INT_MAX ) {
+							// Add an action just before and just after each invidual priority so we can measure how much each priority takes.
+							// The priority is deliberately casted as string, otherwise it ruins the sorting order of ksort(*, SORT_NUMERIC).
+							add_action( $hook, function() use( $hook, $priority ) {
+								$this->start_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+							}, strval($priority - 0.001));
+
+							add_action( $hook, function() use( $hook, $priority ) {
+								$this->save_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+							}, strval($priority + 0.001));
+						}
+					}
+				}
+				
+			}, PHP_INT_MIN);
+		}
+	}
+	
+	/**
+	*  Adds performance_per_priority data into slow_hooks data and unsets the aformentioned data.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*/
+	private function combine_slow_hooks_and_performance_per_priority_data() {
+		if ( ! empty( $this->performance ) ) {
+			if ( array_key_exists( 'Slow hook actions', $this->performance ) ) {
+				if ( array_key_exists( 'Hook performance per priority', $this->performance ) ) {
+					foreach ( $this->performance['Hook performance per priority'] as $hook_and_prio => $execution_time ) {
+						// The data looks like: init-10, first part being the hook name and the second one being the priority.
+						$explode = explode( '-', $hook_and_prio );
+						$hook_name = $explode[0];
+						$priority = $explode[1];
+
+						if ( array_key_exists( $hook_name, $this->performance['Slow hook actions'] ) ) {
+							if ( array_key_exists( 'Priority ' . $priority, $this->performance['Slow hook actions'][$hook_name] ) ) {
+								// Add more detailed version of each priority to slow hook actions.
+								$this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority . ' (' . $execution_time . ')'] = $this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority];
+								
+								// Unset the less detailed version.
+								unset( $this->performance['Slow hook actions'][$hook_name]['Priority ' . $priority] );
+							}
+						}
+					}
+
+					unset( $this->performance['Hook performance per priority'] );
+				}
+			}
+		}
+	}
+
+	/**
+	*  Adds slow_hooks data into hooks data and unsets the aformentioned data.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*/
+	private function combine_slow_hooks_and_hooks_data() {
+		if ( ! empty( $this->performance ) ) {
+			if ( array_key_exists( 'Slow hook actions', $this->performance ) ) {
+				// Combines the $this->performance['Hooks'] with $this->performance['Slow hook actions'].
+				foreach ( $this->performance['Slow hook actions'] as $hook_name => $hook_performance_per_priority ) {
+					if ( array_key_exists( $hook_name, $this->performance['Hooks'] ) ) {
+						$hook_total_execution_time = $this->performance['Hooks'][$hook_name];
+
+						// Apply more detailed data of this hook to the array.
+						// The [] + [] is a hack to get the relevant info appear first in an associative array.
+						$this->performance['Hooks'] = [$hook_name . ' (' . $hook_total_execution_time . ')' => $hook_performance_per_priority] + $this->performance['Hooks'];
+
+						// Unset the original less detailed data.
+						unset( $this->performance['Hooks'][$hook_name] );
+					}
+				}
+
+				// Unset the slow hooks as they are no longer needed. They are now combined to $this->performance['Hooks'].
+				unset( $this->performance['Slow hook actions'] );
+			}
+		}
+	}
+
+	/**
+	*  A public method for DustPress Debugger to use to get the performance data.
+	*  This method also analyzes the hook performance data.
+	*
+	*  @type	function
+	*  @date	2425/2/2020
+	*  @since	1.28.2
+	*/
+	public function get_performance_data() {
+		$this->parse_slow_hook_actions();
+		$this->combine_slow_hooks_and_performance_per_priority_data();
+		$this->combine_slow_hooks_and_hooks_data();
+
+		return $this->performance;
+	}
+
+	/**
+	*  Parses the $wp_filter to see what actions are being run in each of the slow hooks.
+	*
+	*  @type	function
+	*  @date	2425/2/2020
+	*  @since	1.28.2
+	*/
+	private function parse_slow_hook_actions() {
+		global $wp_filter;
+
+		if ( array_key_exists( 'Hooks', $this->performance ) ) {
+			foreach ( $this->performance['Hooks'] as $hook_name => $execution_time ) {
+				// Only analyze hooks that took over 0.1s to execute.
+				if ( $execution_time !== '< 0.1s' ) {
+					// Make sure there are hooks to parse.
+					if ( property_exists( $wp_filter[$hook_name], 'callbacks' ) ) {
+						$callback_data = [];
+						
+						foreach ( $wp_filter[$hook_name]->callbacks as $priority => $callbacks ) {
+							// Ignore hooks made by performance measurements itself.
+							if ( stristr( $priority, '.' ) !== false || $priority === PHP_INT_MIN || $priority === PHP_INT_MAX ) {
+								continue;
+							}
+
+							if ( ! empty( $callbacks ) ) {
+								foreach( $callbacks as $callback_key => $callback ) {
+									$tmp_action = false;
+									
+									if ( array_key_exists( 'function', $callback ) ) {
+										// The callback is an array. Usually it means a method within an object (both static and instantiated).
+										if ( is_array( $callback['function'] ) ) {
+											// Object->method() or Object::method().
+											$tmp_action = $this->parse_hook_callback_name( $callback['function'], $callback_key );
+
+											// This usually doesn't happen. It's a backup to catch any rare circumstances.
+											if ( ! $tmp_action ) {
+												foreach ( $callback['function'] as $function ) {
+													if ( ! is_array( $tmp_action ) ) {
+														$tmp_action = [];
+													}
+
+													$tmp_action = $this->parse_hook_callback_name( $function);
+												}
+											}
+										}
+										// The callback is a normal function without an object.
+										else {
+											$tmp_action = $this->parse_hook_callback_name( $callback['function'] );
+										}
+									}
+
+									// Group all actions by their priority.
+									if ( ! empty( $tmp_action ) ) {
+										$priority_key = 'Priority ' . $priority;
+
+										if ( ! array_key_exists( $priority_key, $callback_data ) ) {
+											$callback_data[$priority_key] = [];
+										}
+
+										$callback_data[$priority_key][] = $tmp_action;
+									}
+								}
+							}
+						}
+
+						if ( ! empty( $callback_data ) ) {
+							$this->performance["Slow hook actions"][$hook_name] = $callback_data;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	*  A helper function to convert $wp_filter data into meaningful object and method names.
+	*
+	*  @type	function
+	*  @date	28/2/2020
+	*  @since	1.28.2
+	*  @param	mixed $data
+	*  @param	stirng $callback_key
+	*/
+	private function parse_hook_callback_name( $data, $callback_key = null ) {
+		// Check if the callback is Object->method() or Object::method().
+		if ( is_array( $data ) && count( $data ) === 2 ) {
+			// Object->method().
+			if ( is_object( $data[0] ) && is_string( $data[1] ) ) {
+				return get_class( $data[0] ) . '->' . $data[1]. '()';
+			}
+			// Object::method().
+			else if ( ! empty( $callback_key ) && stristr( $callback_key, '::' ) ) {
+				return $data[0] . '::' . $data[1]. '()';
+			}
+		}
+		else {
+			if ( $data instanceof Closure ) {
+				$reflection = new ReflectionFunction( $data );
+
+				return (string) $reflection;
+			}
+			else if ( is_object( $data ) ) {
+				return 'Class ' . get_class($data);
+			}
+			// The callback is a function.
+			else if ( is_string( $data ) ) {
+				return $data . '()';
+			}
+		}
+
+		return false;
 	}
 }
 
