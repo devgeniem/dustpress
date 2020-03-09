@@ -1,0 +1,4 @@
+{
+    "php-cs-fixer.documentFormattingProvider": false,
+    "php.validate.run": "onType"
+}
