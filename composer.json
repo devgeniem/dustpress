@@ -22,5 +22,8 @@
   "minimum-stability": "dev",
   "autoload": {
     "files": ["dustpress.php"]
+  },
+  "require": {
+    "php": ">=7.1"
   }
 }
