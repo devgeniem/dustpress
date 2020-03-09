@@ -4,7 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [image-helper-data-filter] - 2019-12-03
+## [1.28.2] - 2020-02-28
+
+### Added
+- More details for hook measurements.
+- Added $main for dustpress/data/after_render filter.
+
+## [1.28.1] - 2020-02-25
+
+### Added
+- Automatic performance measuring for hooks.
+
+## [1.28.0] - 2020-02-20
+
+### Added
+- Automatic performance measuring.
+
+## [1.27.1] - 2019-12-13
+
+### Added
+- Added network support for the image helper
+
+## [1.27.0] - 2019-12-03
 
 ### Added
 - A filter for image helper `$image_data`.

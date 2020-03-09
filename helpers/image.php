@@ -23,6 +23,29 @@ class Image extends Helper {
         // Store the parameters.
         $image_data = $this->get_image_data( $this->params );
 
+        // If blog_id we are working on the network.
+        if ( ! empty( $image_data['blog_id'] ) ) {
+
+            switch_to_blog( (int) $image_data['blog_id'] );
+
+            $image_output = $this->get_image_output( $image_data );
+            restore_current_blog();
+        }
+        else {
+            $image_output = $this->get_image_output( $image_data );
+        }
+
+        return $image_output;
+    }
+
+    /**
+     * Get image output.
+     *
+     * @param  array $image_data Get image output.
+     *
+     * @return mixed Image output data, error or empty value on failure.
+     */
+    private function get_image_output( $image_data ) {
         // ID given
         if ( null !== $image_data['id'] ) {
 
@@ -82,9 +105,7 @@ class Image extends Helper {
                             return;
 
                         } else { // Both custom responsive parameters and the id is given.
-
                             return $this->get_image_markup( $image_data );
-
                         }
                     }
                 }
@@ -140,12 +161,13 @@ class Image extends Helper {
 
         // Init the settings array and the img attrs array.
         $image_data = [
-            'id' => null,
-            'src' => null,
-            'size' => null,
-            'srcset' => null,
-            'sizes' => null,
-            'attrs' => [],
+            'id'      => null,
+            'src'     => null,
+            'size'    => null,
+            'srcset'  => null,
+            'sizes'   => null,
+            'attrs'   => [],
+            'blog_id' => null,
         ];
 
         // Store the images ID if it is given.
@@ -181,6 +203,11 @@ class Image extends Helper {
         // If an alt string is given, store it to the meta params.
         if ( isset( $params->alt ) ) {
             $image_data['attrs']['alt'] = $params->alt;
+        }
+
+        // If an alt string is given, store it to the meta params.
+        if ( isset( $params->blogid ) ) {
+            $image_data['blog_id'] = $params->blogid;
         }
 
         $image_data = \apply_filters( 'dustpress/image/image_data', $image_data );
@@ -260,7 +287,7 @@ class Image extends Helper {
         // or fetch the urls and widths using the WP sizes.
         $srcset_array = ( isset( $image_data['srcset'] )
                             ? $image_data['srcset']
-                            : $this->get_wp_image_sizes_array( $image_data['id'] )
+                            : $this->get_wp_image_sizes_array( $image_data )
                         );
 
         // Check that the srcset is given as an array.
@@ -300,7 +327,7 @@ class Image extends Helper {
      *
      * @return array $image_sizes The image sizes
      */
-    private function get_wp_image_sizes_array( $id ) {
+    private function get_wp_image_sizes_array( $image_data ) {
 
         // The registered image sizes.
         global $_wp_additional_image_sizes;
@@ -332,7 +359,7 @@ class Image extends Helper {
         // Loop through the sizes in the array and get the urls and widths from WP.
         foreach ( $image_sizes as $size => $size_options ) {
 
-            $url = wp_get_attachment_image_src( $id, $size )[0];
+            $url   = wp_get_attachment_image_src( $image_data['id'], $size )[0];
             $width = $size_options['width'];
             $entry = $url . ' ' . $width . 'w';
             $srcset_array[] = $entry;
