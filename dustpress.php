@@ -944,6 +944,10 @@ final class DustPress {
     */
 
     public function is_login_page() {
+        if ( empty( $GLOBALS['pagenow'] ) ) {
+            return false;
+        }
+
         return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
     }
 
