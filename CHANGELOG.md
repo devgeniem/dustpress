@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [1.29.2] - 2020-06-16
+
+### Changed
+- A lot of cleaning up of the code base.
 
 ### Fixed
 - Moved saving template paths to the DustPHP instance earlier for compatibility reasons.
