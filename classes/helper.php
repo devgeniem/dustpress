@@ -44,7 +44,7 @@ class Helper {
      * @param \Dust\Evaluate\Bodies     $bodies  Bodies to evaluate.
      * @param \Dust\Evaluate\Parameters $params  Parameters object.
      *
-     * @return \Dust\Evaluate\Chunk
+     * @return \Dust\Evaluate\Chunk|void
      */
     public function __invoke(
         \Dust\Evaluate\Chunk $chunk,
