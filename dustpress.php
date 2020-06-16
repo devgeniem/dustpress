@@ -89,6 +89,9 @@ final class DustPress {
         $this->add_theme_paths();
         $this->add_core_paths();
 
+        // Add the fetched paths to the Dust instance.
+        $this->dust->includedDirectories = $this->get_template_paths( 'partials' );
+
         // Find and include Dust helpers from DustPress plugin
         $paths = [
             __DIR__ . '/helpers',
@@ -814,8 +817,6 @@ final class DustPress {
         else {
             $render_data = null;
         }
-
-        $this->dust->includedDirectories = $this->get_template_paths( 'partials' );
 
         // Create output with wanted format.
         $output = call_user_func_array( $types[$type], array( $render_data, $template, $dust ) );
