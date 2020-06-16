@@ -666,7 +666,7 @@ The argument key `meta_keys` is used to query postmeta. It defaults to  `'null'`
 
 The argument key `'single'` is described in WordPress [documentation](https://codex.wordpress.org/Function_Reference/get_metadata) for `get_metadata()` and it defines the return type of the found meta rows. Postmeta is appended to the queried post object with the key `meta`. Found metadata is returned in an associative array with found meta values mapped by the meta keys. The metadata is  the key `meta` under the value returned by the function.
 
-The required return type can be defined similarly to WordPress' `get_post` function. Set the `output` argument key with one of `'OBJECT'`, `'ARRAY_A'`, or `'ARRAY_N'`, which correspond to a [WP_Post](https://developer.wordpress.org/reference/classes/wp_post/) object, an associative array, or a numeric array, respectively. If no matching post with the passed id is found, `false` is returned.
+The required return type can be defined similarly to WordPress' `get_post` function. Set the `output` argument key with one of `'OBJECT'`, `'ARRAY_A'`, or `'ARRAY_N'`, which correspond to a [WP_Post](https://developer.wordpress.org/reference/classes/wp_post/) object, an associative array, or a numeric array, respectively. If no matching post with the passed id is found, `false` is returned.
 
 ```
 $args = [

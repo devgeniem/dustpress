@@ -15,117 +15,114 @@ use WP_Query;
  */
 class Query {
 
-	private static $post;
-	private static $posts;
-	private static $query;
+    private static $post;
+    private static $posts;
+    private static $query;
 
-	/**
-	 * This function will query single post and its meta.
-	 * The wanted meta keys should be in an array as strings.
-	 * A string 'all' returns all the meta keys and values in an associative array.
-	 * If 'single' is set to true then the functions returns only the first value of the specified meta_key.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	int $id
-	 * @param	array $args
-	 *
+    /**
+     * This function will query single post and its meta.
+     * The wanted meta keys should be in an array as strings.
+     * A string 'all' returns all the meta keys and values in an associative array.
+     * If 'single' is set to true then the functions returns only the first value of the specified meta_key.
+     *
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param int   $id   Post ID.
+     * @param array $args Query arguments.
+     *
      * @return array|object|null Type corresponding to output type on success or null on failure.
-	 */
-	public static function get_post( $id = null, $args = array() ) {
+     * @throws \Exception Prerequisites missing.
+     */
+    public static function get_post( $id = null, $args = [] ) {
 
-		global $post;
+        global $post;
 
-		$defaults = [
-			'meta_keys' => 'null',
-			'single' 	=> false,
-			'output' 	=> 'OBJECT'
-		];
+        $defaults = [
+            'meta_keys' => 'null',
+            'single'    => false,
+            'output'    => 'OBJECT',
+        ];
 
-		$options = array_merge( $defaults, $args );
+        $options = array_merge( $defaults, $args );
 
-		extract( $options );
+        extract( $options );
 
-		// Throw error if we have no post to fetch
-		if ( empty( $post ) && empty( $id ) ) {
-			throw new \Exception( 'DustPress\Query::get_post() requires either global post object existence or defined $id parameter.' );
-		}
-		// Get the post from $id parameter if it's different from the global post object or the global object does not exist.
-		else if ( empty( $post ) || $post->ID !== $id ) {
-			$current_post = get_post( $id );
-		}
-		// Use global post
-		else {
-			$current_post = $post;
-		}
-
-		if ( isset( $current_post ) && is_object( $current_post ) ) {
-			self::get_post_meta( $current_post, $meta_keys, $single );
-		}
-		else {
-		    // Return null.
-		    return $post;
+        // Throw error if we have no post to fetch
+        if ( empty( $post ) && empty( $id ) ) {
+            throw new \Exception(
+                'DustPress\Query::get_post() requires either global post object existence or defined $id parameter.'
+            );
         }
 
-		$current_post->permalink = get_permalink( $current_post->ID );
-		$current_post->image_id  = get_post_thumbnail_id( $current_post->ID );
+        // Get the post from $id parameter if it's different from the global post
+        // object or the global object does not exist.
+        $current_post = empty( $post ) || $post->ID !== $id
+            ? get_post( $id )
+            : $post;
 
-		// Cast the post and return.
-		return self::cast_post_to_type( $current_post, $output );
-	}
+        if ( ! isset( $current_post ) || ! is_object( $current_post ) ) {
+            return $post; // Null, most likely.
+        }
+        self::get_post_meta( $current_post, $meta_keys, $single );
 
-	/**
-	 * This function will query a single post and its meta.
-	 *
-	 * If the args has a key 'recursive' with the value 'true', relational
-	 * post objects are loaded recursively to get the full object.
-	 * Meta data is handled the same way as in get_post.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	int $id
-	 * @param	array $args
-	 *
+        $current_post->permalink = get_permalink( $current_post->ID );
+        $current_post->image_id  = get_post_thumbnail_id( $current_post->ID );
+
+        // Cast the post and return.
+        return self::cast_post_to_type( $current_post, $output );
+    }
+
+    /**
+     * This function will query a single post and its meta.
+     *
+     * If the args has a key 'recursive' with the value 'true', relational
+     * post objects are loaded recursively to get the full object.
+     * Meta data is handled the same way as in get_post.
+     *
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param int   $id   Post ID.
+     * @param array $args Post query arguments.
+     *
      * @return array|object|null Type corresponding to output type on success or null on failure.
-	 */
-	public static function get_acf_post( $id = null, $args = array() ) {
+     * @throws \Exception Prerequisites missing.
+     */
+    public static function get_acf_post( $id = null, $args = [] ) {
 
-		global $post;
+        global $post;
 
-		$defaults = [
-			'meta_keys' 				=> null,
-			'single' 					=> false,
-			'whole_fields' 				=> false,
-			'max_recursion_level' 		=> 0,
-			'current_recursion_level'	=> 0,
-			'output' 					=> 'OBJECT'
-		];
+        $defaults = [
+            'meta_keys'               => null,
+            'single'                  => false,
+            'whole_fields'            => false,
+            'max_recursion_level'     => 0,
+            'current_recursion_level' => 0,
+            'output'                  => 'OBJECT',
+        ];
 
-		$options = array_merge( $defaults, $args );
+        $options = array_merge( $defaults, $args );
 
-// FIXME -> WP func.
-		extract( $options );
+        // FIXME -> WP func.
+        extract( $options );
 
-		// Throw error if we have no post to fetch
-		if ( empty( $post ) && empty( $id ) ) {
-			throw new \Exception( 'DustPress\Query::get_acf_post() requires either global post object existence or defined $id parameter.' );
-		}
-		// Get the post from $id parameter if it's different from the global post object or the global object does not exist.
-		else if ( empty( $post ) || $post->ID !== $id ) {
-			$acfpost = get_post( $id );
-		}
-		// Use global post
-		else {
-			$acfpost = $post;
-		}
+        // Throw error if we have no post to fetch
+        if ( empty( $post ) && empty( $id ) ) {
+            throw new \Exception(
+                'DustPress\Query::get_acf_post() requires either global post object existence or defined $id parameter.'
+            );
+        }
 
-		// No post was found with the given id or the global post is empty.
-		if ( $acfpost === null || ! is_object( $acfpost ) ) {
-		    return null;
+        // Get the post from $id parameter if it's different from the global
+        // post object or the global object does not exist.
+        $acfpost = empty( $post ) || $post->ID !== $id
+            ? get_post( $id )
+            : $post;
+
+        // No post was found with the given id or the global post is empty.
+        if ( $acfpost === null || ! is_object( $acfpost ) ) {
+            return null;
         }
 
         if ( function_exists( 'get_fields' ) ) {
@@ -135,18 +132,21 @@ class Query {
         // Get fields with relational post data as a whole acf object
         if ( $current_recursion_level < $max_recursion_level ) {
 
-            // Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
-            $options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
+            // Let's avoid infinite loops by default by stopping recursion
+            // after one level. You may dig deeper in your view model.
+            $options['current_recursion_level'] = apply_filters(
+                'dustpress/query/current_recursion_level',
+                ++ $current_recursion_level
+            );
 
             if ( ! empty( $acfpost->fields ) && is_array( $acfpost->fields ) ) {
                 foreach ( $acfpost->fields as &$field ) {
                     $field = self::handle_field( $field, $options );
                 }
             }
-        }
-        elseif ( true == $whole_fields ) {
+        } elseif ( true == $whole_fields ) {
             if ( ! empty( $acfpost->fields ) && is_array( $acfpost->fields ) ) {
-                foreach( $acfpost->fields as $name => &$field ) {
+                foreach ( $acfpost->fields as $name => &$field ) {
                     $field = get_field_object( $name, $acfpost->ID, true );
                 }
             }
@@ -165,129 +165,142 @@ class Query {
             }
         }
 
-		return self::cast_post_to_type( $acfpost, $output );
-	}
+        return self::cast_post_to_type( $acfpost, $output );
+    }
 
-	/**
-	 * This is a recursive function that handles nested repeaters etc. in co-operation
-	 * with the get_acf_post function.
-	 *
-	 * @type	function
-	 * @date	16/8/2016
-	 * @since	1.1.5
-	 *
-	 * @param	array|object $field   The current ACF field object.
-	 * @param	object       $options Recurion options.
-	 *
-	 * @return  mixed                 Returns the same type it is given, possibly extended.
-	 */
-	private static function handle_field( $field, $options ) {
-		// No recursion for these post types
-		$ignored_types = [
-			'attachment',
-			'nav_menu_item',
-			'acf-field-group',
-			'acf-field',
-		];
-
-		$ignored_types = apply_filters( 'dustpress/query/ignore_on_recursion', $ignored_types );
-
-		// A direct relation field
-		if ( is_object( $field ) && isset( $field->post_type ) && ! in_array( $field->post_type, $ignored_types ) ) {
-			$field = self::get_acf_post( $field->ID, $options );
-		}
-
-		// A repeater field has relational posts
-		if ( is_array( $field ) && count( $field ) > 0 ) {
-
-			// Follows the nested structure of a repeater
-			foreach ( $field as $idx => &$row ) {
-				// Post in a repeater
-				if ( is_object( $row ) && isset( $row->post_type ) && isset( $row->post_type ) && ! in_array( $row->post_type, $ignored_types ) ) {
-					$row = self::get_acf_post( $row->ID, $options );
-				} else if ( is_object( $row ) ) {
-					$row = self::handle_field( $row, $options );
-				} else if ( is_array ( $row ) ) {
-					$row = self::handle_field( $row, $options );
-				}
-			}
-		}
-
-		return $field;
-	}
-
-	/**
-	 * This function will query all posts and its meta based on given arguments.
-	 * If you want the whole query object, set 'query_object' to 'true'.
-	 * If you are using pagination, set 'no_found_rows' to 'false'. This also makes the function to return the whole query object.
-	 * The wanted meta keys should be in an array as strings.
-	 * A string 'all' returns all the meta keys and values in an associative array.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	array $args     Arguments to override the defaults defined in get_wp_query_defaults.
+    /**
+     * This is a recursive function that handles nested repeaters etc. in co-operation
+     * with the get_acf_post function.
      *
-	 * @return	array/object 	Array of post object with meta data.
-	 */
-	public static function get_posts( $args ) {
+     * @date  2016-08-16
+     * @since 1.1.5
+     *
+     * @param array|object $field   The current ACF field object.
+     * @param array|object $options Recursion options.
+     *
+     * @return mixed Returns the same type it is given, possibly extended.
+     * @throws \Exception Thrown from get_acf_post().
+     */
+    private static function handle_field( $field, $options ) {
+        // No recursion for these post types
+        $ignored_types = [
+            'attachment',
+            'nav_menu_item',
+            'acf-field-group',
+            'acf-field',
+        ];
+
+        $ignored_types = apply_filters(
+            'dustpress/query/ignore_on_recursion',
+            $ignored_types
+        );
+
+        // A direct relation field
+        if (
+            is_object( $field ) &&
+            isset( $field->post_type ) &&
+            ! in_array( $field->post_type, $ignored_types, true )
+        ) {
+            $field = self::get_acf_post( $field->ID, $options );
+        }
+
+        // A repeater field has relational posts
+        if ( is_array( $field ) && count( $field ) > 0 ) {
+
+            // Follows the nested structure of a repeater
+            foreach ( $field as $idx => &$row ) {
+                $is_acf_field  = (
+                    is_object( $row ) &&
+                    isset( $row->post_type ) &&
+                    ! in_array( $row->post_type, $ignored_types, true )
+                );
+                $is_obj_or_arr = ( is_object( $row ) || is_array( $row ) );
+
+                // Post in a repeater
+                if ( $is_acf_field ) {
+                    $row = self::get_acf_post( $row->ID, $options );
+                    continue;
+                }
+
+                if ( $is_obj_or_arr ) {
+                    $row = self::handle_field( $row, $options );
+                }
+            }
+        }
+
+        return $field;
+    }
+
+    /**
+     * This function will query all posts and its meta based on given arguments.
+     * If you want the whole query object, set 'query_object' to 'true'.
+     * If you are using pagination, set 'no_found_rows' to 'false'. This also makes the function to return the whole
+     * query object. The wanted meta keys should be in an array as strings. A string 'all' returns all the meta keys
+     * and values in an associative array.
+     *
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param array $args Arguments to override the defaults defined in get_wp_query_defaults.
+     *
+     * @return array|object|\WP_Query|false Array of post object with meta data.
+     */
+    public static function get_posts( $args ) {
 
         $defaults = self::get_wp_query_defaults();
 
         $options = array_merge( $defaults, $args );
 
-// FIXME -> WP function
+        // FIXME -> WP function
         extract( $options );
 
-		self::$query = new WP_Query( $options );
+        self::$query = new WP_Query( $options );
 
-		// Extend the basic post data with the permalink
-		// and the featured image id if it exists.
-		if (
-		    is_array( self::$query->posts ) &&
+        // Extend the basic post data with the permalink
+        // and the featured image id if it exists.
+        if (
+            is_array( self::$query->posts ) &&
             self::$query->query_vars['fields'] !== 'ids' &&
             count( self::$query->posts ) > 0
         ) {
-			foreach ( self::$query->posts as &$p ) {
+            foreach ( self::$query->posts as &$p ) {
                 $p->permalink = get_permalink( $p->ID );
                 $p->image_id  = get_post_thumbnail_id( $p->ID );
-			}
-		}
+            }
+        }
 
-		// Get meta for posts
-		if ( count( self::$query->posts ) ) {
-			self::get_meta_for_posts( self::$query->posts, $meta_keys, $single );
+        // Get meta for posts
+        if ( count( self::$query->posts ) ) {
+            self::get_meta_for_posts( self::$query->posts, $meta_keys, $single );
 
-			// Reset the global post data just in case
-			wp_reset_postdata();
+            // Reset the global post data just in case
+            wp_reset_postdata();
 
             // Return in the desired format.
-			return self::query_return_value_format( self::$query , $query_object, $no_found_rows );
-		}
+            return self::query_return_value_format( self::$query, $query_object, $no_found_rows );
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * This function queries multiple posts and returns also all the Advanced Custom Fields data set saved in the posts meta.
-	 * Meta data is handled the same way as in the get_posts-function.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param	array $args Arguments to override the defaults defined in get_wp_query_defaults.
+    /**
+     * This function queries multiple posts and returns also all the Advanced Custom Fields data set saved in the posts
+     * meta. Meta data is handled the same way as in the get_posts-function.
      *
-	 * @return	array|boolean Array of posts as an associative array with acf fields and meta data
-	 */
-	public static function get_acf_posts( $args ) {
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param array $args Arguments to override the defaults defined in get_wp_query_defaults.
+     *
+     * @return array|boolean Array of posts as an associative array with acf fields and meta data
+     */
+    public static function get_acf_posts( $args ) {
 
-		// Some redundancy, but we need these.
-		$defaults = self::get_wp_query_defaults();
+        // Some redundancy, but we need these.
+        $defaults = self::get_wp_query_defaults();
 
-		$defaults['max_recursion_level']     = 0;
-		$defaults['current_recursion_level'] = 0;
+        $defaults['max_recursion_level']     = 0;
+        $defaults['current_recursion_level'] = 0;
 
         $options = array_merge( $defaults, $args );
 
@@ -296,55 +309,63 @@ class Query {
         // Perform the basic query first
         self::get_posts( $options );
 
-		// Temporarily set 'query_object' to 'true' for self::get_posts.
+        // Temporarily set 'query_object' to 'true' for self::get_posts.
         // The original value is still stored in $query_object.
-		$args['query_object'] = true;
+        $args['query_object'] = true;
 
         self::get_posts( $args );
 
         // Extend the posts with acf data
-		if ( is_array( self::$query->posts ) ) {
-			// loop through posts and get all acf fields
-			foreach ( self::$query->posts as &$p ) {
+        if ( ! is_array( self::$query->posts ) ) {
+            return false;
+        }
 
-				$p->fields = get_fields( $p->ID );
+        // loop through posts and get all acf fields
+        foreach ( self::$query->posts as &$p ) {
 
-				// Get fields with relational post data as a whole acf object
-				if ( $current_recursion_level < $max_recursion_level ) {
+            $p->fields = get_fields( $p->ID );
 
-					// Let's avoid infinite loops by default by stopping recursion after one level. You may dig deeper in your view model.
-					$options['current_recursion_level'] = apply_filters( 'dustpress/query/current_recursion_level', ++$current_recursion_level );
+            // Get fields with relational post data as a whole acf object
+            if ( $current_recursion_level < $max_recursion_level ) {
 
-					if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
-						foreach ( $p->fields as &$field ) {
-							$field = self::handle_field( $field, $options );
-						}
-					}
-				} elseif ( true == $whole_fields ) {
-					if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
-						foreach( $p->fields as $name => &$field ) {
-							$field = get_field_object($name, $id, true);
-						}
-					}
-				}
+                // Let's avoid infinite loops by default by stopping recursion
+                // after one level. You may dig deeper in your view model.
+                $options['current_recursion_level'] = apply_filters(
+                    'dustpress/query/current_recursion_level',
+                    ++ $current_recursion_level
+                );
 
-				// Add attachment image to post
-                if ( function_exists( 'acf_get_attachment' ) ) {
-                    $attachment_id = get_post_thumbnail_id( $p->ID );
-
-                    if ( $attachment_id ) {
-                        $p->image = acf_get_attachment( $attachment_id );
+                if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
+                    foreach ( $p->fields as &$field ) {
+                        try {
+                            $field = self::handle_field( $field, $options );
+                        }
+                        catch ( \Exception $e ) {
+                            error_log( $e->getMessage );
+                        }
                     }
                 }
-			}
+            } elseif ( true == $whole_fields ) {
+                if ( is_array( $p->fields ) && count( $p->fields ) > 0 ) {
+                    foreach ( $p->fields as $name => &$field ) {
+                        $field = get_field_object( $name, $id, true );
+                    }
+                }
+            }
 
-			// Return in the desired format.
-            return self::query_return_value_format( self::$query, $query_object, $no_found_rows );
-		}
-		else {
-			return false;
-		}
-	}
+            // Add attachment image to post
+            if ( function_exists( 'acf_get_attachment' ) ) {
+                $attachment_id = get_post_thumbnail_id( $p->ID );
+
+                if ( $attachment_id ) {
+                    $p->image = acf_get_attachment( $attachment_id );
+                }
+            }
+        }
+
+        // Return in the desired format.
+        return self::query_return_value_format( self::$query, $query_object, $no_found_rows );
+    }
 
     /**
      * A wrapper for posts query function return value formatting.
@@ -353,25 +374,24 @@ class Query {
      * @param boolean   $query_object  Do we want the whole query object?
      * @param boolean   $no_found_rows Was the query paginated?
      *
-     * @return \WP_Query|array
+     * @return \WP_Query|array|object
      */
     private static function query_return_value_format( $query, $query_object, $no_found_rows ) {
         // Maybe return the whole query object
         if ( $query_object || false === $no_found_rows ) {
             // Return the whole query object, if wanted or the query wants data for pagination.
             return self::parse_query_object( self::$query );
-        } else {
-            // Return only the posts
-            return self::$query->posts;
         }
+
+        // Return only the posts
+        return self::$query->posts;
     }
 
     /**
      * Wraps the WP_Query data into a clean object for DustPHP parsing.
      *
-     * @type	function
-     * @date	17/2/2017
-     * @since	1.5.7
+     * @date  2017-02-17
+     * @since 1.5.7
      *
      * @param object $query The WP_Query object.
      *
@@ -397,114 +417,115 @@ class Query {
         }
 
         // Return the data through possible custom filters.
-        return apply_filters( 'dustpress/query/object', $object, $query );
+        return apply_filters(
+            'dustpress/query/object',
+            $object,
+            $query
+        );
     }
 
-	/**
-	 * Get meta data for a single post.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param  array		&$post    	The queried post.
-	 * @param  array/string $meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
-	 * @param  boolean 		$single 	If true, return only the first value of the specified meta_key.
+    /**
+     * Get meta data for a single post.
      *
-	 * @return array
-	 */
-    private static function get_post_meta( &$post, $meta_keys = NULL, $single = false ) {
+     * @date  2015-03-20
+     * @since 0.0.1
+     *
+     * @param \WP_Post     $post      The queried post.
+     * @param array|string $meta_keys Wanted meta keys or string 'ALL' to fetch all.
+     * @param bool         $single    If true, return only the first value of the specified meta_key.
+     */
+    private static function get_post_meta( &$post, $meta_keys = null, $single = false ) {
 
-		$meta = array();
+        // Get all metadata.
+        if ( $meta_keys === 'all' ) {
+            $post->meta = get_metadata( 'post', $post->ID, '', $single );
 
-		if ( $meta_keys === 'all' ) {
-		    // Get all metadata.
-			$meta = get_metadata( 'post', $post->ID, '', $single );
-		} elseif ( is_array( $meta_keys ) ) {
-		    // Get the wanted metadata by defined keys.
-			foreach ( $meta_keys as $key ) {
-				$meta[$key] = get_metadata( 'post', $post->ID, $key, $single );
-			}
-		}
+            return;
+        }
 
-		$post->meta = $meta;
-	}
+        $meta = [];
+        if ( is_array( $meta_keys ) ) {
+            // Get the wanted metadata by defined keys.
+            foreach ( $meta_keys as $key ) {
+                $meta[ $key ] = get_metadata( 'post', $post->ID, $key, $single );
+            }
+        }
 
-	/**
-	 * Get meta data for multiple posts.
-	 *
-	 * @type	function
-	 * @date	20/3/2015
-	 * @since	0.0.1
-	 *
-	 * @param  array		&$posts    	The queried post.
-	 * @param  array/string $meta_keys 	Wanted meta keys or string 'ALL' to fetch all.
-	 * @param  boolean 		$single 	If true, return only the first value of the specified meta_key.
-	 *
-     * @return array
-	 */
-	private static function get_meta_for_posts( &$posts = [], $meta_keys = NULL, $single ) {
-		if ( $meta_keys === 'all' ) {
-			// Loop through posts and get the meta values
-			foreach ( $posts as &$post ) {
+        $post->meta = $meta;
+    }
+
+    /**
+     * Get meta data for multiple posts.
+     *
+     * @date     20/3/2015
+     * @since    0.0.1
+     *
+     * @param array        $posts     The queried post.
+     * @param array|string $meta_keys Wanted meta keys or string 'ALL' to fetch all.
+     * @param boolean      $single    If true, return only the first value of the specified meta_key.
+     */
+    private static function get_meta_for_posts( &$posts = [], $meta_keys = null, $single = false ) {
+        if ( $meta_keys === 'all' ) {
+            // Loop through posts and get the meta values
+            foreach ( $posts as &$post ) {
                 $post->meta = get_metadata( 'post', $post->ID, '', $single );
-			}
-		} elseif ( is_array( $meta_keys ) ) {
-			// Loop through selected meta keys
-			foreach ( $meta_keys as $key ) {
-				// Loop through posts and get the meta values
-				foreach ( $posts as &$post ) {
-					// Maybe init meta
-					if ( ! isset( $post->meta ) ) $post->meta = [];
-					// Get meta by key and options
-					$post->meta[$key] = get_metadata( 'post', $post->ID, $key, $single );
-				}
-			}
+            }
+            return;
+        }
 
-		}
-	}
+        if ( is_array( $meta_keys ) ) {
+            // Loop through selected meta keys
+            foreach ( $meta_keys as $key ) {
+                // Loop through posts and get the meta values
+                foreach ( $posts as &$post ) {
+                    // Maybe init meta
+                    if ( ! isset( $post->meta ) ) {
+                        $post->meta = [];
+                    }
+                    // Get meta by key and options
+                    $post->meta[ $key ] = get_metadata( 'post', $post->ID, $key, $single );
+                }
+            }
+        }
+    }
 
-	/**
-	 * Used to cast posts to a desired type.
-	 * Defaults to standard WordPress object.
-	 *
-	 * @type	function
-	 * @date	26/1/2016
-	 * @since	0.3.0
+    /**
+     * Used to cast posts to a desired type.
+     * Defaults to standard WordPress object.
      *
-	 * @param  array  $post     WP post object as an array.
-	 * @param  string $type     The desired type.
-	 *
-     * @return array/object
-	 */
-	private static function cast_post_to_type( $post, $type ) {
+     * @date  2016-01-26
+     * @since 0.3.0
+     *
+     * @param array|\WP_Post $post WP post object as an array.
+     * @param string         $type The desired type.
+     *
+     * @return array|object
+     */
+    private static function cast_post_to_type( $post, $type ) {
+        switch ( $type ) {
+            case 'ARRAY_A':
+                return $post->to_array();
+            case 'ARRAY_N':
+                return array_values( $post->to_array() );
+            default:
+                return $post;
+        }
+    }
 
-		if ( $type === 'ARRAY_A' ) {
-			$current_post = $post->to_array();
-		} elseif ( $type === 'ARRAY_N' ) {
-            $current_post = array_values( $post->to_array() );
-		}
-		else {
-			$current_post = $post;
-		}
-
-		return $current_post;
-	}
-
-	/**
-	 * Wrapper for wp queries' defaults.
-	 *
-	 * @return array
-	 */
-	private static function get_wp_query_defaults() {
-		return [
-            'meta_keys' 				=> null,	// Desired keys in an array or 'all' to fetch all
-            'single'					=> true,	// Return only the first value for a meta key
-            'whole_fields' 				=> false,	// Return the entire field object for ACF fields
-            'query_object'				=> false,	// Do not return the whole WP_Query object
-            'no_found_rows' 			=> true, 	// No pagination needed
-            'update_post_meta_cache' 	=> false, 	// No post meta utilized
-            'update_post_term_cache' 	=> false, 	// No taxonomy terms utilized
+    /**
+     * Wrapper for wp queries' defaults.
+     *
+     * @return array
+     */
+    private static function get_wp_query_defaults() {
+        return [
+            'meta_keys'              => null,  // Desired keys in an array or 'all' to fetch all
+            'single'                 => true,  // Return only the first value for a meta key
+            'whole_fields'           => false, // Return the entire field object for ACF fields
+            'query_object'           => false, // Do not return the whole WP_Query object
+            'no_found_rows'          => true,  // No pagination needed
+            'update_post_meta_cache' => false, // No post meta utilized
+            'update_post_term_cache' => false, // No taxonomy terms utilized
         ];
     }
 }
