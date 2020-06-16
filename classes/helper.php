@@ -44,7 +44,7 @@ class Helper {
      * @param \Dust\Evaluate\Bodies     $bodies  Bodies to evaluate.
      * @param \Dust\Evaluate\Parameters $params  Parameters object.
      *
-     * @return \Dust\Evaluate\Chunk
+     * @return \Dust\Evaluate\Chunk|void
      */
     public function __invoke(
         \Dust\Evaluate\Chunk $chunk,
@@ -60,15 +60,14 @@ class Helper {
 
         if ( isset( $this->bodies->dummy ) && method_exists( $this, 'prerun' ) ) {
             $this->prerun();
+            return;
         }
 
-        if ( method_exists( $this, 'init' ) ) {
+        if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'init' ) ) {
             return $this->init();
         }
-        if ( method_exists( $this, 'output' ) ) {
+        if ( ! isset( $this->bodies->dummy ) && method_exists( $this, 'output' ) ) {
             return $this->chunk->write( $this->output() );
         }
-
-        return $this->chunk;
     }
 }
