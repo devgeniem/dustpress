@@ -124,7 +124,8 @@ final class DustPress {
 				add_filter( 'posts_request', function( $request, \WP_Query $query ) {
 					// Target main home query
 					if ( $query->is_main_query() ) {
-						$request = str_replace( '1=1', '0=1', $request );
+                        $request = str_replace( '1=1', '0=1', $request );
+                        $query->query['disable_redipress'] = true;
 					}
 
 					return $request;
