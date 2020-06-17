@@ -139,6 +139,7 @@ final class DustPress {
                     // Target main home query
                     if ( $query->is_main_query() ) {
                         $request = str_replace( '1=1', '0=1', $request );
+                        $query->query['disable_redipress'] = true;
                     }
 
                     return $request;
@@ -1279,7 +1280,7 @@ final class DustPress {
                     $output[ 'data' ] = $instance->data;
                 }
 
-                if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+                if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() && method_exists( '\DustPress\Debugger', 'get_data' ) ) {
                     $output[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
                 }
 
