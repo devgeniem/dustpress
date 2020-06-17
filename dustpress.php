@@ -1242,7 +1242,11 @@ final class DustPress {
 						$response = [ 'success' => $html ];
 					}
 
-					if ( method_exists( '\DustPress\Debugger', 'use_debugger' ) && \DustPress\Debugger::use_debugger() ) {
+					if (
+                        method_exists( '\DustPress\Debugger', 'use_debugger' ) &&
+                        method_exists( '\DustPress\Debugger', 'get_data' ) &&
+                        \DustPress\Debugger::use_debugger()
+                    ) {
 						$response[ 'data' ] = $data;
 						$response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs');
 					}
