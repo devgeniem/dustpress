@@ -1085,7 +1085,7 @@ final class DustPress {
         $request_body = file_get_contents( 'php://input' );
         $json = json_decode( $request_body );
 
-        if ( isset( $_POST['dustpress_data'] ) || ( is_object( $json ) && property_exists( $json, 'dustpress_data' ) ) ) {
+        if ( isset( $_REQUEST['dustpress_data'] ) || ( is_object( $json ) && property_exists( $json, 'dustpress_data' ) ) ) {
             return true;
         }
         else {
@@ -1707,12 +1707,29 @@ final class DustPress {
         if ( isset( $json->dustpress_data ) ) {
             $this->request_data = $json->dustpress_data;
         }
-        elseif ( isset( $_POST['dustpress_data'] ) ) {
-            $this->request_data = (object) $_POST['dustpress_data'];
+        elseif ( isset( $_REQUEST['dustpress_data'] ) ) {
+            $args = [
+                'bypassMainQuery' => FILTER_VALIDATE_BOOLEAN,
+                'partial'         => FILTER_SANITIZE_STRING,
+                'path'            => FILTER_SANITIZE_STRING,
+                'render'          => FILTER_VALIDATE_BOOLEAN,
+                'tidy'            => FILTER_VALIDATE_BOOLEAN,
+                'data'            => FILTER_VALIDATE_BOOLEAN,
+                'token'           => FILTER_SANITIZE_NUMBER_INT,
+                'args'            => [
+                    'flags' => FILTER_REQUIRE_ARRAY,
+                ],
+            ];
 
-            // Parse old data to correct format and assume it to be false if it isn't defined
-            $this->request_data->tidy = ( isset( $this->request_data->tidy ) && $this->request_data->tidy === 'true' ) ? true : false;
-            $this->request_data->render = ( isset( $this->request_data->render ) && $this->request_data->render === 'true' ) ? true : false;
+            if ( $_SERVER['REQUEST_METHOD'] === 'GET' ) {
+                $data                   = $_REQUEST;
+                $args['dustpress_data'] = FILTER_VALIDATE_BOOLEAN;
+            }
+            else {
+                $data = $_REQUEST['dustpress_data'];
+            }
+
+            $this->request_data = (object) \filter_var_array( $data, $args );
         }
         else {
             http_response_code(500);
