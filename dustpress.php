@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.29.3
+Version: 1.29.5
 */
 
 final class DustPress {
@@ -391,14 +391,14 @@ final class DustPress {
         }
 
         if ( is_tax() ) {
-            $term_id = get_queried_object()->term_id;
-            $term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
+
+            $term = get_queried_object();
 
             $hierarchy[ 'is_tax' ] = [
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ),
                 'Taxonomy',
                 'Archive'
             ];
@@ -428,7 +428,7 @@ final class DustPress {
         if ( is_attachment() ) {
             $mime_type = get_post_mime_type( get_the_ID() );
 
-            $hiearchy[ 'is_attachment' ] = [
+            $hierarchy[ 'is_attachment' ] = [
                 function() use ( $mime_type ) {
                     if ( preg_match( '/^image/', $mime_type ) && class_exists( 'Image' ) ) {
                         return 'Image';
@@ -1856,14 +1856,14 @@ final class DustPress {
     private function measure_hooks_performance() {
         // All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
         $hooks = [
-            'load_textdomain', 'after_setup_theme', 'auth_cookie_malformed', 'auth_cookie_valid', 'set_current_user', 
-            'init', 'widgets_init', 'register_sidebar', 'wp_register_sidebar_widget', 'wp_default_scripts', 
-            'wp_default_styles', 'admin_bar_init', 'add_admin_bar_menus', 'wp_loaded', 'parse_request', 
-            'send_headers', 'parse_query', 'pre_get_posts', 'posts_selection', 'wp', 'template_redirect', 
-            'get_header', 'wp_enqueue_scripts', 'twentyeleven_enqueue_color_scheme', 'wp_head', 'wp_print_styles', 
-            'wp_print_scripts', 'get_search_form', 'loop_start', 'the_post', 'get_template_part_content', 'loop_end', 
-            'get_sidebar', 'dynamic_sidebar', 'get_search_form', 'pre_get_comments', 'wp_meta', 'get_footer', 
-            'get_sidebar', 'twentyeleven_credits', 'wp_footer', 'wp_print_footer_scripts', 'admin_bar_menu', 
+            'load_textdomain', 'after_setup_theme', 'auth_cookie_malformed', 'auth_cookie_valid', 'set_current_user',
+            'init', 'widgets_init', 'register_sidebar', 'wp_register_sidebar_widget', 'wp_default_scripts',
+            'wp_default_styles', 'admin_bar_init', 'add_admin_bar_menus', 'wp_loaded', 'parse_request',
+            'send_headers', 'parse_query', 'pre_get_posts', 'posts_selection', 'wp', 'template_redirect',
+            'get_header', 'wp_enqueue_scripts', 'twentyeleven_enqueue_color_scheme', 'wp_head', 'wp_print_styles',
+            'wp_print_scripts', 'get_search_form', 'loop_start', 'the_post', 'get_template_part_content', 'loop_end',
+            'get_sidebar', 'dynamic_sidebar', 'get_search_form', 'pre_get_comments', 'wp_meta', 'get_footer',
+            'get_sidebar', 'twentyeleven_credits', 'wp_footer', 'wp_print_footer_scripts', 'admin_bar_menu',
             'wp_before_admin_bar_render', 'wp_after_admin_bar_render', 'shutdown'
         ];
 
