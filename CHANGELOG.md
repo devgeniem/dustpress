@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 - Fix archive pages for custom taxonomies when filtering with another taxonomy.
+- Fix a variable typo
 
 ## [1.29.4] - 2020-07-02
 
