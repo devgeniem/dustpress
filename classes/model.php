@@ -315,11 +315,15 @@ class Model {
 
         $methods = array_reverse( $methods );
 
+        $perf_monitoring_enabled = dustpress()->performance_enabled ?? false;
+
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
         foreach ( $methods as $class => $class_methods ) {
             foreach ( $class_methods as $name => $m ) {
-                $perf_key = $this->perf_key( $m );
-                dustpress()->start_performance( $perf_key );
+                if ( $perf_monitoring_enabled ) {
+                    $perf_key = $this->perf_key( $m );
+                    dustpress()->start_performance( $perf_key );
+                }
 
                 if ( is_array( $m ) ) {
                     if ( isset( $m[1] ) && is_string( $m[1] ) ) {
@@ -367,7 +371,9 @@ class Model {
                     }
                 }
 
-                dustpress()->save_performance( $perf_key );
+                if ( $perf_monitoring_enabled ) {
+                    dustpress()->save_performance( $perf_key );
+                }
 
                 if ( $this->terminated ) {
                     break 2;
