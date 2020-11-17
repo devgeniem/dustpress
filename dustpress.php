@@ -48,6 +48,14 @@ final class DustPress {
 
     private $autoload_paths;
 
+    /**
+     * Should performance metrics be collected? Defaults to false.
+     * Using DustPress Debugger (while not using WP_CLI) sets this true.
+     *
+     * @var bool
+     */
+    public $performance_enabled = false;
+
     // Runtime performance is stored here.
     // DustPress Debugger will read it (via $this->get_performance_data) after the page has been rendered.
     private $performance = [];
@@ -59,6 +67,7 @@ final class DustPress {
         if ( ! isset( self::$instance ) ) {
             self::$instance = new DustPress();
         }
+
         return self::$instance;
     }
 
@@ -71,9 +80,13 @@ final class DustPress {
     */
 
     protected function __construct() {
-        $this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
-        $this->start_performance( 'DustPress total' );
-        $this->measure_hooks_performance();
+        $this->maybe_enable_performance_metrics();
+
+        if ( $this->performance_enabled ) {
+            $this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
+            $this->start_performance( 'DustPress total' );
+            $this->measure_hooks_performance();
+        }
 
         // Autoload paths will be stored here so the filesystem has to be scanned only once.
         $this->autoload_paths = [];
@@ -164,8 +177,39 @@ final class DustPress {
 
         // Register custom route rewrite tag
         add_action( 'after_setup_theme', [ $this, 'rewrite_tags' ], 20 );
+    }
 
-        return;
+    /**
+     * Should performance tracking be enabled.
+     *
+     * @return bool
+     */
+    public function maybe_enable_performance_metrics() {
+        if ( defined( 'WP_CLI' ) ) {
+            $this->performance_enabled = false;
+
+            return false;
+        }
+
+        // DustPress has probably been initialized before WP_IMPORTING
+        // has been defined. This might make this check useless, but
+        // the default is already false, so it shouldn't matter.
+        if ( defined( 'WP_IMPORTING' ) && WP_IMPORTING ) {
+            $this->performance_enabled = false;
+
+            return false;
+        }
+
+        if (
+            method_exists( '\DustPress\Debugger', 'use_debugger' ) &&
+            \DustPress\Debugger::use_debugger()
+        ) {
+            $this->performance_enabled = true;
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -251,20 +295,37 @@ final class DustPress {
             // We do not throw error if the class does not exist, to ensure that you can still create
             // templates in traditional style if needed.
             if ( class_exists ( $template ) ) {
-                $this->start_performance( 'Models total' );
+                if ( $this->performance_enabled ) {
+                    $this->start_performance( 'Models total' );
+                }
+
                 $this->model = new $template( $custom_route_args );
                 $this->model->fetch_data();
-                $this->save_performance( 'Models total' );
+
+                if ( $this->performance_enabled ) {
+                    $this->save_performance( 'Models total' );
+                }
 
                 do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
-                $this->start_performance( 'Templates total' );
+                if ( $this->performance_enabled ) {
+                    $this->start_performance( 'Templates total' );
+                }
+
                 $template_override = $this->model->get_template();
-                $this->save_performance( 'Templates total' );
 
-                $partial = $template_override ? $template_override : strtolower( $this->camelcase_to_dashed( $template ) );
+                if ( $this->performance_enabled ) {
+                    $this->save_performance( 'Templates total' );
+                }
 
-                $this->start_performance( 'Rendering' );
+                $partial = $template_override
+                    ? $template_override
+                    : strtolower( $this->camelcase_to_dashed( $template ) );
+
+                if ( $this->performance_enabled ) {
+                    $this->start_performance( 'Rendering' );
+                }
+
                 $this->render([
                     'partial' => $partial,
                     'main' => true,
@@ -827,8 +888,10 @@ final class DustPress {
         // Do something with the data after rendering
         apply_filters( 'dustpress/data/after_render', $render_data, $main );
 
-        $this->save_performance( 'Rendering' );
-        $this->save_performance( 'DustPress total' );
+        if ( $this->performance_enabled ) {
+            $this->save_performance( 'Rendering' );
+            $this->save_performance( 'DustPress total' );
+        }
 
         if ( $echo ) {
             if ( empty ( strlen( $output ) ) ) {
@@ -1856,15 +1919,16 @@ final class DustPress {
     private function measure_hooks_performance() {
         // All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
         $hooks = [
-            'load_textdomain', 'after_setup_theme', 'auth_cookie_malformed', 'auth_cookie_valid', 'set_current_user', 
-            'init', 'widgets_init', 'register_sidebar', 'wp_register_sidebar_widget', 'wp_default_scripts', 
-            'wp_default_styles', 'admin_bar_init', 'add_admin_bar_menus', 'wp_loaded', 'parse_request', 
-            'send_headers', 'parse_query', 'pre_get_posts', 'posts_selection', 'wp', 'template_redirect', 
-            'get_header', 'wp_enqueue_scripts', 'twentyeleven_enqueue_color_scheme', 'wp_head', 'wp_print_styles', 
-            'wp_print_scripts', 'get_search_form', 'loop_start', 'the_post', 'get_template_part_content', 'loop_end', 
-            'get_sidebar', 'dynamic_sidebar', 'get_search_form', 'pre_get_comments', 'wp_meta', 'get_footer', 
-            'get_sidebar', 'twentyeleven_credits', 'wp_footer', 'wp_print_footer_scripts', 'admin_bar_menu', 
-            'wp_before_admin_bar_render', 'wp_after_admin_bar_render', 'shutdown'
+            'add_admin_bar_menus', 'admin_bar_init', 'admin_bar_menu', 'after_setup_theme',
+            'auth_cookie_malformed', 'auth_cookie_valid', 'dynamic_sidebar', 'get_footer', 'get_header',
+            'get_search_form', 'get_sidebar', 'get_template_part_content', 'init', 'load_textdomain',
+            'loop_end', 'loop_start', 'parse_query', 'parse_request', 'posts_selection', 'pre_get_comments',
+            'pre_get_posts', 'register_sidebar', 'send_headers', 'set_current_user', 'shutdown',
+            'template_redirect', 'the_post', 'twentyeleven_credits', 'twentyeleven_enqueue_color_scheme',
+            'widgets_init', 'wp', 'wp_after_admin_bar_render', 'wp_before_admin_bar_render',
+            'wp_default_scripts', 'wp_default_styles', 'wp_enqueue_scripts', 'wp_footer', 'wp_head',
+            'wp_loaded', 'wp_meta', 'wp_print_footer_scripts', 'wp_print_scripts', 'wp_print_styles',
+            'wp_register_sidebar_widget',
         ];
 
         // Add a measuring action in the beginning and end of each hook.
@@ -1884,7 +1948,12 @@ final class DustPress {
                     foreach ( array_keys( $wp_filter[$hook]->callbacks ) as $priority ) {
                         // The priority has to be decreased by a little and increased by a little so ignore values higher and lower than PHP_INT.
                         if ( $priority > PHP_INT_MIN && $priority < PHP_INT_MAX ) {
-                            // Add an action just before and just after each invidual priority so we can measure how much each priority takes.
+                            // We shouldn't track performance of our performance tracking hooks
+                            if ( (int) $priority != $priority ) {
+                                continue;
+                            }
+
+                            // Add an action just before and just after each individual priority so we can measure how much each priority takes.
                             // The priority is deliberately casted as string, otherwise it ruins the sorting order of ksort(*, SORT_NUMERIC).
                             add_action( $hook, function() use( $hook, $priority ) {
                                 $this->start_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
