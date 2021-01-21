@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Ability to include custom data and filter the data of the pagination helper.
+- Ability to disable encoding @s helper strings to HTML entities.
+
+### Changed
+- The s helper runs its output through htmlentities function to encode quotes as HTML entities.
 
 ## [1.29.5] - 2020-11-17
 
