@@ -80,13 +80,17 @@ final class DustPress {
     */
 
     protected function __construct() {
-        $this->maybe_enable_performance_metrics();
 
-        if ( $this->performance_enabled ) {
-            $this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
-            $this->start_performance( 'DustPress total' );
-            $this->measure_hooks_performance();
-        }
+        $self = $this;
+
+        add_action( 'init', function() use ( $self ) {
+                $self->maybe_enable_performance_metrics();
+                if ( $self->performance_enabled ) {
+                    $self->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
+                    $self->start_performance( 'DustPress total' );
+                    $self->measure_hooks_performance();
+                }
+        } );
 
         // Autoload paths will be stored here so the filesystem has to be scanned only once.
         $this->autoload_paths = [];
