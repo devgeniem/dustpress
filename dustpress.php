@@ -1885,12 +1885,12 @@ final class DustPress {
 
         $execution_time = microtime( true ) - $start_time;
 
-        // Having all irrelevant times marked as "< 0.1" speeds up the reading of the performance report.
-        if ( $execution_time < 0.1 ) {
-            $execution_time = '< 0.1';
+        // Having all irrelevant times marked as "< 0.02" speeds up the reading of the performance report.
+        if ( $execution_time < 0.02 ) {
+            $execution_time = '< 0.02s';
         }
         else {
-            $execution_time = round( $execution_time, 4 );
+            $execution_time = "[RED]" . round( $execution_time, 4 ) . "s[/RED]";
         }
 
         // The dot syntax can be used to created "groups".
@@ -1906,10 +1906,10 @@ final class DustPress {
                 $function_name .= '()';
             }
 
-            $this->performance[$group_name][$function_name] = $execution_time . 's';
+            $this->performance[$group_name][$function_name] = $execution_time;
         }
         else {
-            $this->performance[$name] = $execution_time . 's';
+            $this->performance[$name] = $execution_time;
         }
     }
 
@@ -2065,8 +2065,8 @@ final class DustPress {
 
         if ( array_key_exists( 'Hooks', $this->performance ) ) {
             foreach ( $this->performance['Hooks'] as $hook_name => $execution_time ) {
-                // Only analyze hooks that took over 0.1s to execute.
-                if ( $execution_time !== '< 0.1s' ) {
+                // Only analyze hooks that took over 0.02s to execute.
+                if ( $execution_time !== '< 0.02s' ) {
                     // Make sure there are hooks to parse.
                     if ( property_exists( $wp_filter[$hook_name], 'callbacks' ) ) {
                         $callback_data = [];
