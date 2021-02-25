@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.31.0] - 2021-02-25
+
+### Added
+- Added highlight color for performance alerts.
+
+### Changed
+- Decreased DustPress-debugger performance alert from 0.1s to 0.02s.
+
 ## [1.30.1] - 2021-02-16
 
 ### Fixed
