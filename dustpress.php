@@ -1685,8 +1685,6 @@ final class DustPress {
             // does the class use the namespace prefix?
             $len = strlen( $prefix );
             if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-                $this->save_dustpress_performance( $performance_measure_id );
-
                 // no, move to the next registered autoloader
                 return;
             }
@@ -1760,8 +1758,6 @@ final class DustPress {
                 if ( strpos( $file, DIRECTORY_SEPARATOR . $filename ) ) {
                     if ( is_readable( $file ) ) {
                         require_once( $file );
-
-                        $this->save_dustpress_performance( $performance_measure_id );
 
                         return;
                     }
