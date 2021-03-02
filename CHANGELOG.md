@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.32.0] - 2021-03-02
 
 ### Added
-- DustPress will not measure it's own performance.
+- DustPress will now measure it's own performance.
 
 ## [1.31.0] - 2021-02-25
 
