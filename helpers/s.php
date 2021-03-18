@@ -1,9 +1,31 @@
 <?php
 namespace DustPress;
 
-class S extends Helper
-{
-    public function output() {
+/**
+ * s helper
+ *
+ * Runs strings through WordPress translate functions and prints them.
+ */
+class S extends Helper {
+	/**
+	 * The output method itself.
+	 *
+	 * @return string
+	 */
+	public function output() {
+		if ( isset( $this->params->no_entities ) ) {
+			return $this->translate();
+		}
+
+		return \htmlentities( $this->translate(), ENT_QUOTES );
+	}
+
+	/**
+	 * The heavy-lifting method.
+	 *
+	 * @return string
+	 */
+    private function translate() {
 		if ( isset( $this->params->s ) ) {
 			if ( isset( $this->params->td ) ) {
 				if ( isset( $this->params->x ) ) {

@@ -47,6 +47,12 @@ class Pagination extends Helper {
         $hash           = $params->hash     ? '#' . $params->hash : '';
         $this->page_var = $params->page_var ? $params->page_var   : 'paged';
 
+        if ( isset( $this->params->data ) ) {
+            $custom_data = $this->params->data;
+        } else {
+            $custom_data = null;
+        }
+
         // Setup strings
         $defaults = [
             'previous' => __( 'Previous', 'dustpress' ),
@@ -185,20 +191,20 @@ class Pagination extends Helper {
         $data->S->start = $strings['start'];
         $data->S->end   = $strings['end'];
 
-        $this->data = $data;
-
-        $this->data = $data;
-
         // Add this data to DustPress debuggers output.
         $debugger_class = __NAMESPACE__ . '\Debugger';
         if ( \class_exists( $debugger_class ) && \method_exists( $debugger_class, 'set_debugger_data' )  ) {
             $debugger_class::set_debugger_data( 'Pagination', $data );
         }
 
+        $data->data = $custom_data;
+
+        $data = apply_filters( "dustpress/pagination/data", $data );
+
         return dustpress()->render(
             [
                 'partial' => 'pagination',
-                'data'    => $this->data,
+                'data'    => $data,
                 'type'    => 'html',
                 'echo'    => false,
             ]

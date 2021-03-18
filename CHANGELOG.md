@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix archive pages for custom taxonomies when filtering with another taxonomy.
 - Fix a variable typo
+## [1.32.0] - 2021-03-02
+
+### Added
+- DustPress will now measure it's own performance.
+
+## [1.31.0] - 2021-02-25
+
+### Added
+- Added highlight color for performance alerts.
+
+### Changed
+- Decreased DustPress-debugger performance alert from 0.1s to 0.02s.
+
+## [1.30.1] - 2021-02-16
+
+### Fixed
+- Possible fatal error caused by measure_hooks_performance.
+
+## [1.30.0] - 2021-01-21
+
+### Added
+- Ability to include custom data and filter the data of the pagination helper.
+- Ability to disable encoding @s helper strings to HTML entities.
+
+### Changed
+- The s helper runs its output through htmlentities function to encode quotes as HTML entities.
 
 ## [1.29.5] - 2020-11-17
 
