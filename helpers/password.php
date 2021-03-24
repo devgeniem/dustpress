@@ -8,8 +8,8 @@ namespace DustPress;
 /**
  * Password protection helper
  *
- * @example {@password}Anything worth password protection, will be replaced with password form.{/password}
- * @example {@password no_form=true}Should be used with one instance where form isn't hidden.{/password}
+ * @example {@password}Anything worth password protection will be replaced with password form.{/password}
+ * @example {@password no_form=true}Should be used with an instance where form isn't hidden.{/password}
  *
  * @package DustPress
  */

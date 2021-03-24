@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [1.33.0] - 2021-03-23
 
+### Added
+- `no_form` parameter to `@password` helper to be used when there's more than one instance of the helper at a page.
+
 ### Changed
 - DustPress.js calls returning JSON now return clear error messages from JSON encoding problems.
 
