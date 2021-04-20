@@ -405,10 +405,8 @@ final class DustPress {
         $hierarchy = [];
 
         if ( is_front_page() ) {
-            $hierarchy = [
-                'is_front_page' => [
-                    'FrontPage'
-                ]
+            $hierarchy[ 'is_front_page' ] = [
+                'FrontPage'
             ];
         }
 
