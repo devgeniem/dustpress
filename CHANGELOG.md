@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.33.2] - 2021-04-23
+
+### Fixed
+- Fix PHP 7.4 notice when using @menu helper with empty or non-assigned menu.
+
 ## [1.33.1] - 2021-04-20
 
 ### Changed
