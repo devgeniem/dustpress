@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.30.0
+Version: 1.33.0
 */
 
 final class DustPress {
@@ -402,11 +402,17 @@ final class DustPress {
             $template = 'default';
         }
 
+        $hierarchy = [];
+
         if ( is_front_page() ) {
-            $hierarchy = [
-                'is_front_page' => [
-                    'FrontPage'
-                ]
+            $hierarchy[ 'is_front_page' ] = [
+                'FrontPage'
+            ];
+        }
+
+        if ( is_search() ) {
+            $hierarchy[ 'is_search' ] = [
+                'Search'
             ];
         }
 
@@ -476,11 +482,6 @@ final class DustPress {
                 'Archive'
             ];
         }
-
-        $hierarchy[ 'is_search' ] = [
-            'Search'
-        ];
-
 
         $hierarchy[ 'is_404' ] = [
             'Error404'
@@ -1276,7 +1277,7 @@ final class DustPress {
         }
 
         if ( ! $token ) {
-            die( json_encode( [ 'error' => 'CSRF token mismatch.' ] ) );
+            $this->send_json( [ 'error' => 'CSRF token mismatch.' ] );
         }
 
         if ( ! defined( 'DOING_AJAX' ) ) {
@@ -1294,7 +1295,7 @@ final class DustPress {
         }
 
         if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff,\/]*$/', $request_data->path ) ) {
-            die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
+            $this->send_json( [ 'error' => 'AJAX call path contains illegal characters.' ] );
         }
 
         // Check if the data we got from the JS side has a function path
@@ -1306,7 +1307,7 @@ final class DustPress {
                     $data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
                 }
                 catch( Exception $e ) {
-                    die( json_encode( [ 'error' => $e->getMessage() ] ) );
+                    $this->send_json( [ 'error' => $e->getMessage() ] );
                 }
 
                 if ( isset( $request_data->partial ) ) {
@@ -1320,7 +1321,7 @@ final class DustPress {
                         $output[ 'data' ] = $data;
                     }
 
-                    die( wp_json_encode( $output ) );
+                    $this->send_json( $output );
                 }
                 else {
                     $html = $this->render( [ 'partial' => $partial, 'data' => $data, 'echo' => false ] );
@@ -1337,18 +1338,18 @@ final class DustPress {
                         $response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs');
                     }
 
-                    die( wp_json_encode( $response ) );
+                    $this->send_json( $response );
                 }
             }
             else {
                 $path = explode( DIRECTORY_SEPARATOR, $request_data->path );
 
                 if ( count( $path ) > 2 ) {
-                    die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
+                    $this->send_json( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] );
                 }
                 else if ( count( $path ) == 2 ) {
                     if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
-                        die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
+                        $this->send_json( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] );
                     }
 
                     $model = $path[0];
@@ -1360,7 +1361,7 @@ final class DustPress {
                     }
                 }
                 else {
-                    die( json_encode( [ 'error' => 'Custom AJAX function key \'' . $request_data->path . '\' was not found.' ] ) );
+                    $this->send_json( [ 'error' => 'Custom AJAX function key \'' . $request_data->path . '\' was not found.' ] );
                 }
             }
         }
@@ -1414,7 +1415,7 @@ final class DustPress {
                     $output[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
                 }
 
-                die( wp_json_encode( $output ) );
+                $this->send_json( $output );
             }
             else {
                 $template_override = $instance->get_template();
@@ -1444,17 +1445,35 @@ final class DustPress {
                     $response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
                 }
 
-                die( wp_json_encode( $response ) );
+                $this->send_json( $response );
             }
         }
         elseif ( empty( $model ) ) {
-            die( wp_json_encode( [ 'error' => 'No model defined.' ] ) );
+            $this->send_json( [ 'error' => 'No model defined.' ] );
         }
         else {
-            die( wp_json_encode( [ 'error' => 'Model \'' . $model . '\' does not exist.' ] ) );
+            $this->send_json( [ 'error' => 'Model \'' . $model . '\' does not exist.' ] );
         }
 
         $this->save_dustpress_performance( $performance_measure_id );
+    }
+
+    /**
+     * This function prints out the given data as JSON or appropriate error message
+     * if something goes wrong.
+     *
+     * @param mixed $data The data to print out.
+     * @return void
+     */
+    public function send_json( $data ) : void {
+        try {
+            $output = wp_json_encode( $data, JSON_THROW_ON_ERROR );
+        }
+        catch( \Exception $e ) {
+            $output = wp_json_encode( [ 'error' => $e->getMessage() ] );
+        }
+
+        die( $output );
     }
 
     /**
