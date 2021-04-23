@@ -402,11 +402,17 @@ final class DustPress {
             $template = 'default';
         }
 
+        $hierarchy = [];
+
         if ( is_front_page() ) {
-            $hierarchy = [
-                'is_front_page' => [
-                    'FrontPage'
-                ]
+            $hierarchy[ 'is_front_page' ] = [
+                'FrontPage'
+            ];
+        }
+
+        if ( is_search() ) {
+            $hierarchy[ 'is_search' ] = [
+                'Search'
             ];
         }
 
@@ -476,11 +482,6 @@ final class DustPress {
                 'Archive'
             ];
         }
-
-        $hierarchy[ 'is_search' ] = [
-            'Search'
-        ];
-
 
         $hierarchy[ 'is_404' ] = [
             'Error404'
