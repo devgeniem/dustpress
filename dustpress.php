@@ -1905,7 +1905,7 @@ final class DustPress {
      * @return void
      */
     private function parse_request_data() {
-        $this->save_dustpress_performance( $performance_measure_id );
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
         $request_body = file_get_contents( 'php://input' );
         $json = json_decode( $request_body );
