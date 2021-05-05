@@ -93,8 +93,8 @@ class Menu extends Helper {
             $menu_data = self::get_menu_data( $menu_id, $parent, $override, true );
         }
 
-        $menu->menu_object = $menu_data['menu_object'];
-        $menu->items = $menu_data['menu_items'];
+        $menu->menu_object = $menu_data['menu_object'] ?? null;
+        $menu->items = $menu_data['menu_items'] ?? [];
         $menu->ul_classes = $ul_classes;
         $menu->ul_id = $ul_id;
         $menu->show_submenu = $show_submenu;
