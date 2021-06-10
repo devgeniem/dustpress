@@ -1740,6 +1740,9 @@ final class DustPress {
             elseif ( $class == 'DustPress\Data' ) {
                 $class = 'classes/data';
             }
+            elseif ( $class == 'DustPress\UserActivateExtend' ) {
+                $class = 'classes/user-activate-extend';
+            }
             else {
                 $class = $this->camelcase_to_dashed( $class, '-' );
             }
