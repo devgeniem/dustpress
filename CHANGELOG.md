@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix archive pages for custom taxonomies when filtering with another taxonomy.
 - Fix a variable typo
+## [1.34.0] - 2021-06-10
+
+### Changed
+- Added the UserActivateExtend class for allowing the functionality to be extended by the theme.
+
+## [1.33.3] - 2021-05-05
+
+### Fixed
+- Fix PHP 7.4 notice when using @menu helper with empty or non-assigned menu.
 
 ## [1.33.1] - 2021-04-20
 
