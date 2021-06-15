@@ -9,12 +9,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix archive pages for custom taxonomies when filtering with another taxonomy.
 - Fix a variable typo
-
-## [1.34.1] - 2021-06-15
-
-### Changed
-- Merged master into taxonomy-archives to fix AJAX bug.
-
 ## [1.34.0] - 2021-06-10
 
 ### Changed
