@@ -458,14 +458,14 @@ final class DustPress {
         }
 
         if ( is_tax() ) {
-            $term_id = get_queried_object()->term_id;
-            $term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
+
+            $term = get_queried_object();
 
             $hierarchy[ 'is_tax' ] = [
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ),
                 'Taxonomy',
                 'Archive'
             ];
@@ -490,7 +490,7 @@ final class DustPress {
         if ( is_attachment() ) {
             $mime_type = get_post_mime_type( get_the_ID() );
 
-            $hiearchy[ 'is_attachment' ] = [
+            $hierarchy[ 'is_attachment' ] = [
                 function() use ( $mime_type ) {
                     if ( preg_match( '/^image/', $mime_type ) && class_exists( 'Image' ) ) {
                         return 'Image';
