@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Released]
+
+## [1.34.3] - 2021-09-30
+- Pagination parameter page_count didn't always return the right value. This update will fix it.
+
 ## [1.34.2] - 2021-08-09
 
 ### Added
