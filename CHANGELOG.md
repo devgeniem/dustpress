@@ -82,6 +82,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Possible fatal error caused by measure_hooks_performance.
+## Unreleased
+
+### Added
+- `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
+- Ability to include custom filters via `dustpress/filters` filter.
 
 ## [1.30.0] - 2021-01-21
 
