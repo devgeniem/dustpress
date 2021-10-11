@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.30.0
+Version: 1.31.0
 */
 
 final class DustPress {
@@ -105,9 +105,10 @@ final class DustPress {
         // Add the fetched paths to the Dust instance.
         $this->dust->includedDirectories = $this->get_template_paths( 'partials' );
 
-        // Find and include Dust helpers from DustPress plugin
+        // Find and include Dust helpers and filters from DustPress plugin
         $paths = [
             __DIR__ . '/helpers',
+            __DIR__ . '/filters',
         ];
 
         foreach( $paths as $path ) {
@@ -850,6 +851,8 @@ final class DustPress {
 
             $dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
+            $dust->filters = apply_filters( 'dustpress/filters', $dust->filters );
+
             // Fetch Dust partial by given name. Throw error if there is something wrong.
             try {
                 $template = $this->get_template( $partial );
@@ -1545,6 +1548,20 @@ final class DustPress {
         $this->disabled = true;
 
         return $param;
+    }
+
+    /**
+    *  This function adds a filter.
+    *
+    *  @type	function
+    *  @date	11/10/2021
+    *  @since	1.31.0
+    *
+    *  @param   mixed $param
+    *  @return	$param
+    */
+    public function add_filter( $name, $instance ) {
+        $this->dust->filters[ $name ] = $instance;
     }
 
     /**
