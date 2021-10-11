@@ -184,6 +184,8 @@ class Pagination extends Helper {
         $data->hash          = $hash;
         $data->page_var      = $this->page_var;
         $data->page_link     = apply_filters( 'dustpress/pagination/page_link', $page_link );
+        $data->page          = $cur_page;
+        $data->page_count    = $page_count;
 
         $data->S        = (object) [];
         $data->S->prev  = $strings['previous'];
