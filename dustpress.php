@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.31.0
+Version: 1.34.3
 */
 
 final class DustPress {
@@ -62,6 +62,7 @@ final class DustPress {
 
     // Multiple microtime(true) values stored here for execution time calculations.
     private $performance_timers = [];
+    private $dustpress_performance_timers = [];
 
     public static function instance() {
         if ( ! isset( self::$instance ) ) {
@@ -80,13 +81,13 @@ final class DustPress {
     */
 
     protected function __construct() {
-        $this->maybe_enable_performance_metrics();
 
-        if ( $this->performance_enabled ) {
-            $this->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
-            $this->start_performance( 'DustPress total' );
-            $this->measure_hooks_performance();
-        }
+        $self = $this;
+
+        $self->maybe_enable_performance_metrics();
+        $self->save_performance( 'Before DustPress', $_SERVER['REQUEST_TIME_FLOAT'] );
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+        $self->measure_hooks_performance();
 
         // Autoload paths will be stored here so the filesystem has to be scanned only once.
         $this->autoload_paths = [];
@@ -105,10 +106,9 @@ final class DustPress {
         // Add the fetched paths to the Dust instance.
         $this->dust->includedDirectories = $this->get_template_paths( 'partials' );
 
-        // Find and include Dust helpers and filters from DustPress plugin
+        // Find and include Dust helpers from DustPress plugin
         $paths = [
             __DIR__ . '/helpers',
-            __DIR__ . '/filters',
         ];
 
         foreach( $paths as $path ) {
@@ -123,13 +123,13 @@ final class DustPress {
 
         // Add create_instance to right action hook if we are not on the admin side
         if ( $this->want_autoload() ) {
-            add_filter( 'template_include', [ $this, 'create_instance' ] );
+            add_filter( 'template_include', [ $this, 'create_instance' ], 10, 1 );
 
             // If we are on wp-activate.php hook into activate_header
             if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
                 $this->activate = true;
                 // Run create_instance for use partial and model
-                add_action( 'activate_header', [ $this, 'create_instance' ] );
+                add_action( 'activate_header', [ $this, 'create_instance' ], 10, 1 );
                 // Kill original wp-activate.php execution
                 add_action( 'activate_header', function() {
                     die();
@@ -178,6 +178,8 @@ final class DustPress {
 
         // Register custom route rewrite tag
         add_action( 'after_setup_theme', [ $this, 'rewrite_tags' ], 20 );
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -201,10 +203,7 @@ final class DustPress {
             return false;
         }
 
-        if (
-            method_exists( '\DustPress\Debugger', 'use_debugger' ) &&
-            \DustPress\Debugger::use_debugger()
-        ) {
+        if ( $this->debugger_is_active() ) {
             $this->performance_enabled = true;
 
             return true;
@@ -221,11 +220,15 @@ final class DustPress {
     *  @since	1.13.1
     */
     public function rewrite_tags() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         // Register custom route rewrite tag
         add_rewrite_tag( '%dustpress_custom_route%', '([^\/]+)' );
         add_rewrite_tag( '%dustpress_custom_route_route%', '(.+)' );
         add_rewrite_tag( '%dustpress_custom_route_parameters%', '(.+)' );
         add_rewrite_tag( '%dustpress_custom_route_render%', '(.+)' );
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -235,7 +238,9 @@ final class DustPress {
     *  @date	19/3/2015
     *  @since	0.0.1
     */
-    public function create_instance() {
+    public function create_instance( $template_original = null, $only_data = false, $wanted_template = null ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $post, $wp_query;
 
         // Initialize an array for debugging.
@@ -261,7 +266,7 @@ final class DustPress {
 
 
             // Get current template name tidied up a bit.
-            $template = $this->get_template_filename( $debugs );
+            $template = $wanted_template ?? $this->get_template_filename( $debugs );
         }
         else {
             // Use user-activate.php and user-activate.dust to replace wp-activate.php
@@ -296,46 +301,41 @@ final class DustPress {
             // We do not throw error if the class does not exist, to ensure that you can still create
             // templates in traditional style if needed.
             if ( class_exists ( $template ) ) {
-                if ( $this->performance_enabled ) {
-                    $this->start_performance( 'Models total' );
-                }
+                $this->start_performance( 'Models total' );
 
                 $this->model = new $template( $custom_route_args );
                 $this->model->fetch_data();
 
-                if ( $this->performance_enabled ) {
-                    $this->save_performance( 'Models total' );
+                if ( $only_data ) {
+                    $this->model->data['WP'] = $this->populate_data_collection();
+
+                    return $this->model->data;
                 }
+
+                $this->save_performance( 'Models total' );
 
                 do_action( 'dustpress/model_list', array_keys( (array) $this->model->get_submodels() ) );
 
-                if ( $this->performance_enabled ) {
-                    $this->start_performance( 'Templates total' );
-                }
+                $this->start_performance( 'Templates total' );
 
                 $template_override = $this->model->get_template();
 
-                if ( $this->performance_enabled ) {
-                    $this->save_performance( 'Templates total' );
-                }
+                $this->save_performance( 'Templates total' );
 
                 $partial = $template_override
                     ? $template_override
                     : strtolower( $this->camelcase_to_dashed( $template ) );
 
-                if ( $this->performance_enabled ) {
-                    $this->start_performance( 'Rendering' );
-                }
-
                 $this->render([
                     'partial' => $partial,
                     'main' => true,
-                    'type' => $type ?? 'default'
+                    'type' => $type ?? 'default',
                 ]);
             }
             else {
-                http_response_code(500);
-                die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
+                return $template_original;
+                //http_response_code(500);
+                //die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
             }
         }
     }
@@ -350,6 +350,8 @@ final class DustPress {
      *  @return	string|boolean
      */
     public function get_custom_route() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $wp_query;
 
         $custom_route = $wp_query->get( 'dustpress_custom_route' );
@@ -362,6 +364,8 @@ final class DustPress {
                 ];
             }
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
 
         return false;
     }
@@ -376,6 +380,8 @@ final class DustPress {
     *  @return	string
     */
     private function get_template_filename( &$debugs = array() ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $post;
 
         if ( is_object( $post ) && isset( $post->ID ) ) {
@@ -403,11 +409,17 @@ final class DustPress {
             $template = 'default';
         }
 
+        $hierarchy = [];
+
         if ( is_front_page() ) {
-            $hierarchy = [
-                'is_front_page' => [
-                    'FrontPage'
-                ]
+            $hierarchy[ 'is_front_page' ] = [
+                'FrontPage'
+            ];
+        }
+
+        if ( is_search() ) {
+            $hierarchy[ 'is_search' ] = [
+                'Search'
             ];
         }
 
@@ -453,14 +465,14 @@ final class DustPress {
         }
 
         if ( is_tax() ) {
-            $term_id = get_queried_object()->term_id;
-            $term = get_term_by( 'id', $term_id, get_query_var( 'taxonomy' ) );
+
+            $term = get_queried_object();
 
             $hierarchy[ 'is_tax' ] = [
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ), '_' ),
-                'Taxonomy' . $this->dashed_to_camelcase( get_query_var( 'taxonomy' ) ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ) . $this->dashed_to_camelcase( $term->slug ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ),
+                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ),
                 'Taxonomy',
                 'Archive'
             ];
@@ -478,11 +490,6 @@ final class DustPress {
             ];
         }
 
-        $hierarchy[ 'is_search' ] = [
-            'Search'
-        ];
-
-
         $hierarchy[ 'is_404' ] = [
             'Error404'
         ];
@@ -490,7 +497,7 @@ final class DustPress {
         if ( is_attachment() ) {
             $mime_type = get_post_mime_type( get_the_ID() );
 
-            $hiearchy[ 'is_attachment' ] = [
+            $hierarchy[ 'is_attachment' ] = [
                 function() use ( $mime_type ) {
                     if ( preg_match( '/^image/', $mime_type ) && class_exists( 'Image' ) ) {
                         return 'Image';
@@ -604,14 +611,14 @@ final class DustPress {
                     if ( is_integer( $key ) ) {
                         if ( is_string( $value ) ) {
                             $debugs[] = $value;
-                            if ( class_exists( $value ) ) {
+                            if ( class_exists( $value ) || locate_template( $value . ' .php', false ) ) {
                                 return $value;
                             }
                         }
                         else if ( is_callable( $value ) ) {
                             $value = call_user_func( $value );
                             $debugs[] = $value;
-                            if( is_string( $value ) && class_exists( $value ) ) {
+                            if( is_string( $value ) && class_exists( $value ) || locate_template( $value . '.php', false ) . '.php' ) {
                                 return $value;
                             }
                         }
@@ -620,7 +627,7 @@ final class DustPress {
                         if ( class_exists( $key ) ) {
                             if( is_string( $value ) ) {
                                 $debugs[] = $value;
-                                if ( class_exists( $value ) ) {
+                                if ( class_exists( $value ) || locate_template( $value . '.php', false ) ) {
                                     return $value;
                                 }
                             }
@@ -634,7 +641,7 @@ final class DustPress {
                         if ( true === call_user_func( $key ) ) {
                             if( is_string( $value ) ) {
                                 $debugs[] = $value;
-                                if ( class_exists( $value ) ) {
+                                if ( class_exists( $value ) || locate_template( $value . '.php', false ) ) {
                                     return $value;
                                 }
                             }
@@ -649,6 +656,9 @@ final class DustPress {
         }
 
         $debugs[] = 'Index';
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
         return 'Index';
     }
 
@@ -660,6 +670,8 @@ final class DustPress {
     *  @since	0.0.1
     */
     private function populate_data_collection() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $wp_data = array();
 
         // Insert Wordpress blog info data to collection
@@ -729,7 +741,11 @@ final class DustPress {
         $wp_data['body_class'] = get_body_class();
 
         // Return collection after filters
-        return apply_filters( 'dustpress/data/wp', $wp_data );
+        $apply_filters = apply_filters( 'dustpress/data/wp', $wp_data );
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $apply_filters;
     }
 
     /**
@@ -743,6 +759,8 @@ final class DustPress {
     *  @return	bool
     */
     public function render( $args = array() ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $dustpress;
         global $hash;
 
@@ -851,8 +869,6 @@ final class DustPress {
 
             $dust->helpers = apply_filters( 'dustpress/helpers', $dust->helpers );
 
-            $dust->filters = apply_filters( 'dustpress/filters', $dust->filters );
-
             // Fetch Dust partial by given name. Throw error if there is something wrong.
             try {
                 $template = $this->get_template( $partial );
@@ -888,13 +904,16 @@ final class DustPress {
         // Filter output
         $output = apply_filters( 'dustpress/output', $output, $options );
 
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        if ( $main ) {
+            # A bit hacky but create_instance performance has to be ended here, because
+            # debugger fetches the data on dustpress/data/after_render filter.
+            $this->save_dustpress_performance( 'create_instance--0' );
+        }
+
         // Do something with the data after rendering
         apply_filters( 'dustpress/data/after_render', $render_data, $main );
-
-        if ( $this->performance_enabled ) {
-            $this->save_performance( 'Rendering' );
-            $this->save_performance( 'DustPress total' );
-        }
 
         if ( $echo ) {
             if ( empty ( strlen( $output ) ) ) {
@@ -928,15 +947,22 @@ final class DustPress {
     *  @return	$template (string)
     */
     private function get_template( $partial ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         // Check if we have received an absolute path.
-        if ( file_exists( $partial ) )
+        if ( file_exists( $partial ) ) {
+            $this->save_dustpress_performance( $performance_measure_id );
+
             return $partial;
+        }
         else {
             $templatefile =  $partial . '.dust';
 
             $templates = $this->get_templates();
 
             if ( isset( $templates[ $templatefile ] ) ) {
+                $this->save_dustpress_performance( $performance_measure_id );
+
                 return $templates[ $templatefile ];
             }
 
@@ -944,6 +970,8 @@ final class DustPress {
             $templates = $this->get_templates( true );
 
             if ( isset( $templates[ $templatefile ] ) ) {
+                $this->save_dustpress_performance( $performance_measure_id );
+
                 return $templates[ $templatefile ];
             }
 
@@ -961,6 +989,8 @@ final class DustPress {
     */
 
     public function init_settings() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $this->settings = [
             'cache' => false,
             'debug_data_block_name' => 'Debug',
@@ -983,6 +1013,8 @@ final class DustPress {
         // A hook to prevent DustPress error to appear when generating robots.txt
         add_action( 'do_robotstxt', array( $this, 'disable' ), 1, 1 );
 
+        $this->save_dustpress_performance( $performance_measure_id );
+
         return null;
     }
 
@@ -997,7 +1029,13 @@ final class DustPress {
     */
 
     public function get_setting( $key ) {
-        return apply_filters( 'dustpress/settings/' . $key, isset( $this->settings[ $key ] ) ? $this->settings[ $key ] : null );
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
+        $apply_filters = apply_filters( 'dustpress/settings/' . $key, isset( $this->settings[ $key ] ) ? $this->settings[ $key ] : null );
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $apply_filters;
     }
 
     /**
@@ -1011,11 +1049,18 @@ final class DustPress {
     */
 
     public function is_login_page() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         if ( empty( $GLOBALS['pagenow'] ) ) {
-            return false;
+            $is_login_page = false;
+        }
+        else {
+            $is_login_page = in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
         }
 
-        return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $is_login_page;
     }
 
     /**
@@ -1031,13 +1076,19 @@ final class DustPress {
     *  @return	(string)
     */
     public function camelcase_to_dashed( $string, $char = '-' ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         preg_match_all( '!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $string, $matches );
         $results = $matches[0];
         foreach ( $results as &$match ) {
             $match = $match == strtoupper( $match ) ? strtolower( $match ) : lcfirst( $match );
         }
 
-         return implode( $char, $results );
+         $return_value = implode( $char, $results );
+
+         $this->save_dustpress_performance( $performance_measure_id );
+
+         return $return_value;
     }
 
     /**
@@ -1053,8 +1104,12 @@ final class DustPress {
     *  @return	(string)
     */
     public function dashed_to_camelcase( $string, $char = '-' ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $string = str_replace( $char, ' ', $string );
         $string = str_replace( ' ', '', ucwords( $string ) );
+
+        $this->save_dustpress_performance( $performance_measure_id );
 
         return $string;
     }
@@ -1148,15 +1203,21 @@ final class DustPress {
     *  @return	(boolean)
     */
     private function is_dustpress_ajax() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $request_body = file_get_contents( 'php://input' );
         $json = json_decode( $request_body );
 
         if ( isset( $_REQUEST['dustpress_data'] ) || ( is_object( $json ) && property_exists( $json, 'dustpress_data' ) ) ) {
-            return true;
+            $return_value = true;
         }
         else {
-            return false;
+            $return_value = false;
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $return_value;
     }
 
     /**
@@ -1172,7 +1233,11 @@ final class DustPress {
      * @return  void
      */
     public function register_ajax_function( $key, $callable ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $this->ajax_functions[ $key ] = $callable;
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1186,7 +1251,13 @@ final class DustPress {
      * @return (boolean)
      */
     public function ajax_function_exists( $key ) {
-        return isset( $this->ajax_functions[ $key ] );
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
+        $return_value = isset( $this->ajax_functions[ $key ] );
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $return_value;
     }
 
     /**
@@ -1197,6 +1268,8 @@ final class DustPress {
     *  @since	0.3.0
     */
     public function create_ajax_instance() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $post;
 
         $model = false;
@@ -1211,7 +1284,7 @@ final class DustPress {
         }
 
         if ( ! $token ) {
-            die( json_encode( [ 'error' => 'CSRF token mismatch.' ] ) );
+            $this->send_json( [ 'error' => 'CSRF token mismatch.' ] );
         }
 
         if ( ! defined( 'DOING_AJAX' ) ) {
@@ -1229,7 +1302,7 @@ final class DustPress {
         }
 
         if ( ! preg_match( '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff,\/]*$/', $request_data->path ) ) {
-            die( json_encode( [ 'error' => 'AJAX call path contains illegal characters.' ] ) );
+            $this->send_json( [ 'error' => 'AJAX call path contains illegal characters.' ] );
         }
 
         // Check if the data we got from the JS side has a function path
@@ -1241,7 +1314,7 @@ final class DustPress {
                     $data = call_user_func_array( $this->ajax_functions[ $request_data->path ], [ $args ] );
                 }
                 catch( Exception $e ) {
-                    die( json_encode( [ 'error' => $e->getMessage() ] ) );
+                    $this->send_json( [ 'error' => $e->getMessage() ] );
                 }
 
                 if ( isset( $request_data->partial ) ) {
@@ -1255,7 +1328,7 @@ final class DustPress {
                         $output[ 'data' ] = $data;
                     }
 
-                    die( wp_json_encode( $output ) );
+                    $this->send_json( $output );
                 }
                 else {
                     $html = $this->render( [ 'partial' => $partial, 'data' => $data, 'echo' => false ] );
@@ -1272,18 +1345,18 @@ final class DustPress {
                         $response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs');
                     }
 
-                    die( wp_json_encode( $response ) );
+                    $this->send_json( $response );
                 }
             }
             else {
                 $path = explode( DIRECTORY_SEPARATOR, $request_data->path );
 
                 if ( count( $path ) > 2 ) {
-                    die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
+                    $this->send_json( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] );
                 }
                 else if ( count( $path ) == 2 ) {
                     if ( strlen( $path[0] ) == 0 || strlen( $path[1] ) == 0 ) {
-                        die( json_encode( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] ) );
+                        $this->send_json( [ 'error' => 'AJAX call did not have a proper function path defined (syntax: model/function).' ] );
                     }
 
                     $model = $path[0];
@@ -1295,7 +1368,7 @@ final class DustPress {
                     }
                 }
                 else {
-                    die( json_encode( [ 'error' => 'Custom AJAX function key \'' . $request_data->path . '\' was not found.' ] ) );
+                    $this->send_json( [ 'error' => 'Custom AJAX function key \'' . $request_data->path . '\' was not found.' ] );
                 }
             }
         }
@@ -1349,7 +1422,7 @@ final class DustPress {
                     $output[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
                 }
 
-                die( wp_json_encode( $output ) );
+                $this->send_json( $output );
             }
             else {
                 $template_override = $instance->get_template();
@@ -1379,15 +1452,35 @@ final class DustPress {
                     $response[ 'debug' ] = \DustPress\Debugger::get_data( 'Debugs' );
                 }
 
-                die( wp_json_encode( $response ) );
+                $this->send_json( $response );
             }
         }
         elseif ( empty( $model ) ) {
-            die( wp_json_encode( [ 'error' => 'No model defined.' ] ) );
+            $this->send_json( [ 'error' => 'No model defined.' ] );
         }
         else {
-            die( wp_json_encode( [ 'error' => 'Model \'' . $model . '\' does not exist.' ] ) );
+            $this->send_json( [ 'error' => 'Model \'' . $model . '\' does not exist.' ] );
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
+    }
+
+    /**
+     * This function prints out the given data as JSON or appropriate error message
+     * if something goes wrong.
+     *
+     * @param mixed $data The data to print out.
+     * @return void
+     */
+    public function send_json( $data ) : void {
+        try {
+            $output = wp_json_encode( $data, JSON_THROW_ON_ERROR );
+        }
+        catch( \Exception $e ) {
+            $output = wp_json_encode( [ 'error' => $e->getMessage() ] );
+        }
+
+        die( $output );
     }
 
     /**
@@ -1403,6 +1496,8 @@ final class DustPress {
     *  @return	$helpers (array|string)
     */
     public function prerender( $partial, $already = [] ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $filename = $this->get_prerender_file( $partial );
 
         if ( $filename == false ) return;
@@ -1410,6 +1505,8 @@ final class DustPress {
         $file = file_get_contents( $filename );
 
         if ( in_array( $file, $already) ) {
+            $this->save_dustpress_performance( $performance_measure_id );
+
             return;
         }
 
@@ -1438,11 +1535,15 @@ final class DustPress {
         }
 
         if ( is_array( $helpers ) ) {
-            return array_unique( $helpers );
+            $return_value = array_unique( $helpers );
         }
         else {
-            return [];
+            $return_value = [];
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $return_value;
     }
 
     /**
@@ -1456,14 +1557,20 @@ final class DustPress {
     *  @return	$file (string)
     */
     public function get_prerender_file( $partial ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $templatefile =  $partial . '.dust';
 
         $templates = $this->get_templates();
 
+        $return_value = false;
         if ( isset( $templates[ $templatefile ] ) ) {
-            return $templates[ $templatefile ];
+            $return_value = $templates[ $templatefile ];
         }
-        return false;
+
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $return_value;
     }
 
     /**
@@ -1476,6 +1583,8 @@ final class DustPress {
     *  @param   array|string $helpers
     */
     public function prerun_helpers( $helpers ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         if ( is_array( $helpers ) ) {
             $dummyEvaluator = new Dust\Evaluate\Evaluator( $this->dust );
             $dummyChunk = new Dust\Evaluate\Chunk( $dummyEvaluator );
@@ -1493,6 +1602,8 @@ final class DustPress {
                 }
             }
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1506,6 +1617,8 @@ final class DustPress {
     *  @return	array
     */
     public function get_templates( $force = false ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         if ( empty( $this->templates ) || $force ) {
             if ( ! defined( 'DUSTPRESS_DISABLE_TEMPLATE_CACHE' ) || ( ! method_exists( '\DustPress\Debugger', 'use_debugger' ) && ! \DustPress\Debugger::use_debugger() ) ) {
                 $this->templates = wp_cache_get( 'dustpress/templates' );
@@ -1531,6 +1644,8 @@ final class DustPress {
             }
         }
 
+        $this->save_dustpress_performance( $performance_measure_id );
+
         return $this->templates;
     }
 
@@ -1545,23 +1660,15 @@ final class DustPress {
     *  @return	$param
     */
     public function disable( $param = null ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $this->disabled = true;
 
-        return $param;
-    }
+        $return_value = $param;
 
-    /**
-    *  This function adds a filter.
-    *
-    *  @type	function
-    *  @date	11/10/2021
-    *  @since	1.31.0
-    *
-    *  @param   mixed $param
-    *  @return	$param
-    */
-    public function add_filter( $name, $instance ) {
-        $this->dust->filters[ $name ] = $instance;
+        $this->save_dustpress_performance( $performance_measure_id );
+
+        return $return_value;
     }
 
     /**
@@ -1575,7 +1682,11 @@ final class DustPress {
     *  @return	$param
     */
     public function add_helper( $name, $instance ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $this->dust->helpers[ $name ] = $instance;
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1586,6 +1697,8 @@ final class DustPress {
      *  @since  0.04.0
      */
     private function register_autoloaders() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         // Autoload DustPHP classes
         spl_autoload_register( function ( $class ) {
 
@@ -1634,6 +1747,9 @@ final class DustPress {
             elseif ( $class == 'DustPress\Data' ) {
                 $class = 'classes/data';
             }
+            elseif ( $class == 'DustPress\UserActivateExtend' ) {
+                $class = 'classes/user-activate-extend';
+            }
             else {
                 $class = $this->camelcase_to_dashed( $class, '-' );
             }
@@ -1677,6 +1793,8 @@ final class DustPress {
                 }
             }
         });
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1690,9 +1808,13 @@ final class DustPress {
      *  @return array  list of paths to look in
      */
     private function get_template_paths( $append ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $tag = $append ? 'dustpress/' . $append : '';
 
         $return = apply_filters( $tag, [] );
+
+        $this->save_dustpress_performance( $performance_measure_id );
 
         return $return;
     }
@@ -1707,6 +1829,8 @@ final class DustPress {
      * @return void
      */
     private function add_theme_paths() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         foreach ( [ 'models', 'partials' ] as $target ) {
             add_filter( 'dustpress/' . $target, function( $paths ) use ( $target ) {
                 // Set paths for where to look for partials and models
@@ -1726,6 +1850,8 @@ final class DustPress {
                 return $paths;
             }, 1000, 1 );
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1738,6 +1864,8 @@ final class DustPress {
      * @return void
      */
     private function add_core_paths() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         foreach ( [ 'models', 'partials' ] as $target ) {
             add_filter( 'dustpress/' . $target, function( $paths ) use ( $target ) {
                 $paths[] = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $target;
@@ -1745,6 +1873,8 @@ final class DustPress {
                 return $paths;
             }, 1, 1 );
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1760,6 +1890,8 @@ final class DustPress {
      * @return void
      */
     public function register_custom_route( $route, $template, $render = 'default' ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $this->custom_routes[ $template ] = $route;
 
         add_action( 'init', function() use ( $route, $template, $render ) {
@@ -1769,6 +1901,8 @@ final class DustPress {
                 'top'
             );
         }, 30);
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1781,6 +1915,8 @@ final class DustPress {
      * @return void
      */
     private function parse_request_data() {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         $request_body = file_get_contents( 'php://input' );
         $json = json_decode( $request_body );
 
@@ -1815,6 +1951,8 @@ final class DustPress {
             http_response_code(500);
             die( json_encode( [ 'error' => 'Something went wrong. There was no dustpress_data present at the request.' ] ) );
         }
+
+        $this->save_dustpress_performance( $performance_measure_id );
     }
 
     /**
@@ -1827,6 +1965,8 @@ final class DustPress {
      * @return void
      */
     public function error404( \DustPress\Model $model ) {
+        $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
+
         global $wp_query;
 
         // Terminate the parent model's execution.
@@ -1847,6 +1987,9 @@ final class DustPress {
                 // Set the newly fetched data to the global data to be rendered.
                 $model->data[ $new_model ] = $instance->fetch_data();
                 \status_header( 404 );
+
+                $this->save_dustpress_performance( $performance_measure_id );
+
                 return;
             }
             else {
@@ -1860,6 +2003,30 @@ final class DustPress {
     }
 
     /**
+    *  Checks if dustpress-debugger is active.
+    *
+    *  @type	function
+    *  @date	26/2/2021
+    *  @since	1.32.0
+    */
+    private function debugger_is_active() {
+        if (
+            (
+                is_user_logged_in() &&
+                current_user_can( 'manage_options' ) &&
+                get_the_author_meta( 'dustpress_debugger', get_current_user_id() )
+            ) ||
+            (
+                defined( 'DUSTPRESS_DEBUGGER_ALWAYS_ON' ) &&
+                \DUSTPRESS_DEBUGGER_ALWAYS_ON === true
+            ) ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
     *  Starts performance time measuring.
     *
     *  @type	function
@@ -1869,7 +2036,9 @@ final class DustPress {
     *  @param	string $name
     */
     public function start_performance( $name ) {
-        $this->performance_timers[$name] = microtime( true );
+        if ( $this->performance_enabled ) {
+            $this->performance_timers[$name] = microtime( true );
+        }
     }
 
     /**
@@ -1884,45 +2053,94 @@ final class DustPress {
     *  @param   	integer $start_time
     */
     public function save_performance( $name, $start_time = false ) {
-        if ( ! $start_time ) {
-            if ( ! empty( $this->performance_timers[$name] ) ) {
-                $start_time = $this->performance_timers[$name];
+        if ( $this->performance_enabled ) {
+            if ( ! $start_time ) {
+                if ( ! empty( $this->performance_timers[$name] ) ) {
+                    $start_time = $this->performance_timers[$name];
 
-                unset( $this->performance_timers[$name] );
-            }
-        }
-
-        if ( ! $start_time ) {
-            return false;
-        }
-
-        $execution_time = microtime( true ) - $start_time;
-
-        // Having all irrelevant times marked as "< 0.1" speeds up the reading of the performance report.
-        if ( $execution_time < 0.1 ) {
-            $execution_time = '< 0.1';
-        }
-        else {
-            $execution_time = round( $execution_time, 4 );
-        }
-
-        // The dot syntax can be used to created "groups".
-        // Models.myFunction() becomes [Models][myFunction()].
-        if ( stristr( $name, '.' ) ) {
-            // Converts the name from [\"ArchiveEvent\",\"ResultCount\"]" to ArchiveEvent->ResultCount().
-            $name_explode = explode( '.', str_replace(['[', ']', '\\', '"'], '', $name ) );
-            $group_name = $name_explode[0];
-            $function_name = str_replace( ',', '->', $name_explode[1]);
-
-            // Hooks are not functions so do not append them with a ().
-            if ( stristr( $group_name, 'hook' ) === false ) {
-                $function_name .= '()';
+                    unset( $this->performance_timers[$name] );
+                }
             }
 
-            $this->performance[$group_name][$function_name] = $execution_time . 's';
+            if ( ! $start_time ) {
+                return false;
+            }
+
+            $execution_time = $this->clean_execution_time( microtime( true ) - $start_time );
+
+            // The dot syntax can be used to created "groups".
+            // Models.myFunction() becomes [Models][myFunction()].
+            if ( stristr( $name, '.' ) ) {
+                // Converts the name from [\"ArchiveEvent\",\"ResultCount\"]" to ArchiveEvent->ResultCount().
+                $name_explode = explode( '.', str_replace(['[', ']', '\\', '"'], '', $name ) );
+                $group_name = $name_explode[0];
+                $function_name = str_replace( ',', '->', $name_explode[1]);
+
+                // Hooks are not functions so do not append them with a ().
+                if ( stristr( $group_name, 'hook' ) === false ) {
+                    $function_name .= '()';
+                }
+
+                $this->performance[$group_name][$function_name] = $execution_time;
+            }
+            else {
+                $this->performance[$name] = $execution_time;
+            }
         }
-        else {
-            $this->performance[$name] = $execution_time . 's';
+    }
+
+    /**
+    *  Starts performance time measuring for DustPress.
+    *
+    *  @type	function
+    *  @date	26/2/2021
+    *  @since	1.32.0
+    *
+    *  @param	string $function_name
+    */
+    public function start_dustpress_performance( $function_name ) {
+        $measure_id = false;
+
+        if ( $this->performance_enabled ) {
+            if ( ! array_key_exists( $function_name, $this->dustpress_performance_timers ) ) {
+                $this->dustpress_performance_timers[$function_name] = [];
+            }
+
+            $measure_id = $function_name.'--'.count($this->dustpress_performance_timers[$function_name]);
+
+            $this->dustpress_performance_timers[$function_name][] = microtime( true );
+        }
+
+        return $measure_id;
+    }
+
+    /**
+    *  Starts performance time measuring for DustPress.
+    *
+    *  @type	function
+    *  @date	26/2/2021
+    *  @since	1.32.0
+    *
+    *  @param	string $function_name
+    */
+    public function save_dustpress_performance( $measure_id ) {
+        if ( $this->performance_enabled ) {
+            $measure_explode = explode( '--', $measure_id );
+
+            if ( empty( $measure_explode ) ) {
+                return false;
+            }
+
+            $function_name = $measure_explode[0];
+            $measure_nth = $measure_explode[1];
+
+            if ( empty( $this->dustpress_performance_timers[$function_name][$measure_nth] ) ) {
+                return false;
+            }
+
+            $execution_time = microtime( true ) - $this->dustpress_performance_timers[$function_name][$measure_nth];
+
+            $this->performance['DustPress'][$function_name][] = $execution_time;
         }
     }
 
@@ -1934,55 +2152,57 @@ final class DustPress {
     *  @since	1.28.2
     */
     private function measure_hooks_performance() {
-        // All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
-        $hooks = [
-            'add_admin_bar_menus', 'admin_bar_init', 'admin_bar_menu', 'after_setup_theme',
-            'auth_cookie_malformed', 'auth_cookie_valid', 'dynamic_sidebar', 'get_footer', 'get_header',
-            'get_search_form', 'get_sidebar', 'get_template_part_content', 'init', 'load_textdomain',
-            'loop_end', 'loop_start', 'parse_query', 'parse_request', 'posts_selection', 'pre_get_comments',
-            'pre_get_posts', 'register_sidebar', 'send_headers', 'set_current_user', 'shutdown',
-            'template_redirect', 'the_post', 'twentyeleven_credits', 'twentyeleven_enqueue_color_scheme',
-            'widgets_init', 'wp', 'wp_after_admin_bar_render', 'wp_before_admin_bar_render',
-            'wp_default_scripts', 'wp_default_styles', 'wp_enqueue_scripts', 'wp_footer', 'wp_head',
-            'wp_loaded', 'wp_meta', 'wp_print_footer_scripts', 'wp_print_scripts', 'wp_print_styles',
-            'wp_register_sidebar_widget',
-        ];
+        if ( $this->performance_enabled ) {
+            // All hooks from https://codex.wordpress.org/Plugin_API/Action_Reference.
+            $hooks = [
+                'add_admin_bar_menus', 'admin_bar_init', 'admin_bar_menu', 'after_setup_theme',
+                'auth_cookie_malformed', 'auth_cookie_valid', 'dynamic_sidebar', 'get_footer', 'get_header',
+                'get_search_form', 'get_sidebar', 'get_template_part_content', 'init', 'load_textdomain',
+                'loop_end', 'loop_start', 'parse_query', 'parse_request', 'posts_selection', 'pre_get_comments',
+                'pre_get_posts', 'register_sidebar', 'send_headers', 'set_current_user', 'shutdown',
+                'template_redirect', 'the_post', 'twentyeleven_credits', 'twentyeleven_enqueue_color_scheme',
+                'widgets_init', 'wp', 'wp_after_admin_bar_render', 'wp_before_admin_bar_render',
+                'wp_default_scripts', 'wp_default_styles', 'wp_enqueue_scripts', 'wp_footer', 'wp_head',
+                'wp_loaded', 'wp_meta', 'wp_print_footer_scripts', 'wp_print_scripts', 'wp_print_styles',
+                'wp_register_sidebar_widget',
+            ];
 
-        // Add a measuring action in the beginning and end of each hook.
-        foreach ($hooks as $hook) {
-            add_action( $hook, function() use( $hook ) {
-                $this->start_performance( 'Hooks.' . $hook );
-            }, PHP_INT_MIN);
+            // Add a measuring action in the beginning and end of each hook.
+            foreach ($hooks as $hook) {
+                add_action( $hook, function() use( $hook ) {
+                    $this->start_performance( 'Hooks.' . $hook );
+                }, PHP_INT_MIN);
 
-            add_action( $hook, function() use( $hook ) {
-                $this->save_performance( 'Hooks.' . $hook );
-            }, PHP_INT_MAX);
+                add_action( $hook, function() use( $hook ) {
+                    $this->save_performance( 'Hooks.' . $hook );
+                }, PHP_INT_MAX);
 
-            add_action( $hook, function() use ( $hook ) {
-                global $wp_filter;
+                add_action( $hook, function() use ( $hook ) {
+                    global $wp_filter;
 
-                if ( property_exists( $wp_filter[$hook], 'callbacks' ) ) {
-                    foreach ( array_keys( $wp_filter[$hook]->callbacks ) as $priority ) {
-                        // The priority has to be decreased by a little and increased by a little so ignore values higher and lower than PHP_INT.
-                        if ( $priority > PHP_INT_MIN && $priority < PHP_INT_MAX ) {
-                            // We shouldn't track performance of our performance tracking hooks
-                            if ( (int) $priority != $priority ) {
-                                continue;
+                    if ( property_exists( $wp_filter[$hook], 'callbacks' ) ) {
+                        foreach ( array_keys( $wp_filter[$hook]->callbacks ) as $priority ) {
+                            // The priority has to be decreased by a little and increased by a little so ignore values higher and lower than PHP_INT.
+                            if ( $priority > PHP_INT_MIN && $priority < PHP_INT_MAX ) {
+                                // We shouldn't track performance of our performance tracking hooks
+                                if ( (int) $priority != $priority ) {
+                                    continue;
+                                }
+
+                                // Add an action just before and just after each individual priority so we can measure how much each priority takes.
+                                // The priority is deliberately casted as string, otherwise it ruins the sorting order of ksort(*, SORT_NUMERIC).
+                                add_action( $hook, function() use( $hook, $priority ) {
+                                    $this->start_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+                                }, strval($priority - 0.001));
+
+                                add_action( $hook, function() use( $hook, $priority ) {
+                                    $this->save_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
+                                }, strval($priority + 0.001));
                             }
-
-                            // Add an action just before and just after each individual priority so we can measure how much each priority takes.
-                            // The priority is deliberately casted as string, otherwise it ruins the sorting order of ksort(*, SORT_NUMERIC).
-                            add_action( $hook, function() use( $hook, $priority ) {
-                                $this->start_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
-                            }, strval($priority - 0.001));
-
-                            add_action( $hook, function() use( $hook, $priority ) {
-                                $this->save_performance( 'Hook performance per priority.' . $hook . '-' . $priority );
-                            }, strval($priority + 0.001));
                         }
                     }
-                }
-            }, PHP_INT_MIN);
+                }, PHP_INT_MIN);
+            }
         }
     }
 
@@ -2055,22 +2275,85 @@ final class DustPress {
     *  This method also analyzes the hook performance data.
     *
     *  @type	function
-    *  @date	2425/2/2020
+    *  @date	25/2/2020
     *  @since	1.28.2
     */
     public function get_performance_data() {
-        $this->parse_slow_hook_actions();
-        $this->combine_slow_hooks_and_performance_per_priority_data();
-        $this->combine_slow_hooks_and_hooks_data();
+        if ( $this->performance_enabled ) {
+            $this->parse_slow_hook_actions();
+            $this->combine_slow_hooks_and_performance_per_priority_data();
+            $this->combine_slow_hooks_and_hooks_data();
+            $this->clean_dustpress_performance_data();
+        }
 
         return $this->performance;
+    }
+
+    /**
+    *  A public method for DustPress Debugger to use to get the dustpress performance data.
+    *  This method also analyzes the dustpress performance data.
+    *
+    *  @type	function
+    *  @date	25/2/2020
+    *  @since	1.32.0
+    */
+    private function clean_dustpress_performance_data() {
+        if ( ! empty( $this->performance['DustPress'] ) ) {
+            $total_dustpress_execution_time = 0;
+            foreach ( $this->performance['DustPress'] as $function_name => $execution_times ) {
+                $function_name .= '()';
+
+                # This includes render time so substract them from this one
+                # to prevent double calculation.
+                if ( $function_name == 'create_instance()' ) {
+                    $execution_times[0] -= array_sum( $this->performance['DustPress']['render'] );
+                }
+
+                if ( count( $execution_times ) == 1 ) {
+                    $this->performance['DustPressCleaned'][$function_name] = $this->clean_execution_time( array_sum( $execution_times ) );
+                }
+                else {
+                    # The main render includes all other renders, so they are substracted from it
+                    # to prevent double calculation
+                    if ( $function_name == 'render()' ) {
+                        $execution_times[count( $execution_times ) - 1] = end( $execution_times ) - array_sum( array_slice( $execution_times, 0, -1 ) );
+                    }
+
+                    $execution_times_cleaned = array_map( [$this, 'clean_execution_time'], $execution_times );
+                    $this->performance['DustPressCleaned'][$function_name . ' = ' . $this->clean_execution_time( array_sum( $execution_times ) ) . ', ' . count( $execution_times ) .'x'] = $execution_times_cleaned;
+                }
+
+                $total_dustpress_execution_time += array_sum( $execution_times );
+            }
+
+            # Add total execution time to DustPress key.
+            $this->performance['DustPress (' . $this->clean_execution_time( $total_dustpress_execution_time ) . ')'] = $this->performance['DustPressCleaned'];
+
+            # The original values are stored in: $this->performance['DustPress']
+            # The cleaned values are stored in: $this->performance['DustPressCleaned']
+            # The final values are stored in: $this->performance['DustPress (totalruntime)]
+            # The first two are no longer needed.
+            unset( $this->performance['DustPress'], $this->performance['DustPressCleaned'] );
+        }
+    }
+
+    /**
+    *  Cleans and colorizes execution times.
+    *
+    *  @type	function
+    *  @date	25/2/2020
+    *  @since	1.32.0
+    */
+    private function clean_execution_time( $execution_time ) {
+        // Having all irrelevant times marked as "< 0.02" speeds up the reading of the performance report.
+        return ( $execution_time < 0.02) ? '[GREEN]< 0.02s[/GREEN]' : '[RED]' . round( $execution_time, 4 ) . 's[/RED]';
     }
 
     /**
     *  Parses the $wp_filter to see what actions are being run in each of the slow hooks.
     *
     *  @type	function
-    *  @date	2425/2/2020
+    *  @date	25/2/2020
     *  @since	1.28.2
     */
     private function parse_slow_hook_actions() {
@@ -2078,8 +2361,8 @@ final class DustPress {
 
         if ( array_key_exists( 'Hooks', $this->performance ) ) {
             foreach ( $this->performance['Hooks'] as $hook_name => $execution_time ) {
-                // Only analyze hooks that took over 0.1s to execute.
-                if ( $execution_time !== '< 0.1s' ) {
+                // Only analyze hooks that took over 0.02s to execute.
+                if ( $execution_time !== '< 0.02s' ) {
                     // Make sure there are hooks to parse.
                     if ( property_exists( $wp_filter[$hook_name], 'callbacks' ) ) {
                         $callback_data = [];
