@@ -332,10 +332,12 @@ final class DustPress {
                     'type' => $type ?? 'default',
                 ]);
             }
-            else {
+            elseif ( $this->get_setting( 'enable_legacy_templates' ) ) {
                 return $template_original;
-                //http_response_code(500);
-                //die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
+            }
+            else {
+                http_response_code(500);
+                die( 'DustPress error: No suitable model found. One of these is required: '. implode( ', ', $debugs ) );
             }
         }
     }
@@ -611,14 +613,14 @@ final class DustPress {
                     if ( is_integer( $key ) ) {
                         if ( is_string( $value ) ) {
                             $debugs[] = $value;
-                            if ( class_exists( $value ) || locate_template( $value . ' .php', false ) ) {
+                            if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
                                 return $value;
                             }
                         }
                         else if ( is_callable( $value ) ) {
                             $value = call_user_func( $value );
                             $debugs[] = $value;
-                            if( is_string( $value ) && class_exists( $value ) || locate_template( $value . '.php', false ) . '.php' ) {
+                            if( is_string( $value ) && class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
                                 return $value;
                             }
                         }
@@ -627,7 +629,7 @@ final class DustPress {
                         if ( class_exists( $key ) ) {
                             if( is_string( $value ) ) {
                                 $debugs[] = $value;
-                                if ( class_exists( $value ) || locate_template( $value . '.php', false ) ) {
+                                if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
                                     return $value;
                                 }
                             }
@@ -641,7 +643,7 @@ final class DustPress {
                         if ( true === call_user_func( $key ) ) {
                             if( is_string( $value ) ) {
                                 $debugs[] = $value;
-                                if ( class_exists( $value ) || locate_template( $value . '.php', false ) ) {
+                                if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
                                     return $value;
                                 }
                             }
@@ -944,7 +946,7 @@ final class DustPress {
     *  @since	0.0.1
     *
     *  @param	string $partial
-    *  @return	$template (string)
+    *  @return	string $template
     */
     private function get_template( $partial ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -992,11 +994,12 @@ final class DustPress {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
         $this->settings = [
-            'cache' => false,
-            'debug_data_block_name' => 'Debug',
-            'rendered_expire_time' => 7*60*60*24,
-            'json_url' => false,
-            'json_headers' => false,
+            'cache'                   => getenv( 'DUSTPRESS_CACHE' ) ?: false,
+            'debug_data_block_name'   => getenv( 'DUSTPRESS_DEBUG_DATA_BLOCK_NAME' ) ?: 'Debug',
+            'rendered_expire_time'    => getenv( 'DUSTPRESS_RENDERED_EXPIRE_TIME' ) ?: 7*60*60*24,
+            'json_url'                => getenv( 'DUSTPRESS_JSON_URL' ) ?: false,
+            'json_headers'            => getenv( 'DUSTPRESS_JSON_HEADERS' ) ?: false,
+            'enable_legacy_templates' => getenv( 'DUSTPRESS_ENABLE_LEGACY_TEMPLATES' ) ?: false,
         ];
 
         // loop through the settings and execute possible filters from functions
@@ -1073,7 +1076,7 @@ final class DustPress {
     *
     *  @param	string $string
     *  @param   string $char
-    *  @return	(string)
+    *  @return	string
     */
     public function camelcase_to_dashed( $string, $char = '-' ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -1084,11 +1087,11 @@ final class DustPress {
             $match = $match == strtoupper( $match ) ? strtolower( $match ) : lcfirst( $match );
         }
 
-         $return_value = implode( $char, $results );
+        $return_value = implode( $char, $results );
 
-         $this->save_dustpress_performance( $performance_measure_id );
+        $this->save_dustpress_performance( $performance_measure_id );
 
-         return $return_value;
+        return $return_value;
     }
 
     /**
@@ -1101,7 +1104,7 @@ final class DustPress {
     *
     *  @param	string $string
     *  @param   string $char
-    *  @return	(string)
+    *  @return	string
     */
     public function dashed_to_camelcase( $string, $char = '-' ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -1121,7 +1124,7 @@ final class DustPress {
     *  @date	10/8/2015
     *  @since	0.2.0
     *
-    *  @return	(boolean)
+    *  @return	boolean
     */
     private function want_autoload() {
         $conditions = [
@@ -1200,7 +1203,7 @@ final class DustPress {
     *  @date	17/12/2015
     *  @since	0.3.0
     *
-    *  @return	(boolean)
+    *  @return	boolean
     */
     private function is_dustpress_ajax() {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -1248,7 +1251,7 @@ final class DustPress {
      * @since  1.6.9
      *
      * @param  string $key
-     * @return (boolean)
+     * @return boolean
      */
     public function ajax_function_exists( $key ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -1492,8 +1495,8 @@ final class DustPress {
     *  @since	0.3.0
     *
     *  @param   string $partial
-    *  @param   $already (array|string) (optional)
-    *  @return	$helpers (array|string)
+    *  @param   array|string $already
+    *  @return	array|string $helpers
     */
     public function prerender( $partial, $already = [] ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -1554,7 +1557,7 @@ final class DustPress {
     *  @since	0.3.0
     *
     *  @param   string $partial
-    *  @return	$file (string)
+    *  @return	string $file
     */
     public function get_prerender_file( $partial ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
@@ -2430,7 +2433,7 @@ final class DustPress {
     *  @date	28/2/2020
     *  @since	1.28.2
     *  @param	mixed $data
-    *  @param	stirng $callback_key
+    *  @param	string $callback_key
     */
     private function parse_hook_callback_name( $data, $callback_key = null ) {
         // Check if the callback is Object->method() or Object::method().
