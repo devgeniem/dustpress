@@ -102,6 +102,7 @@ final class DustPress {
 
         $this->add_theme_paths();
         $this->add_core_paths();
+        $this->get_query_template();
 
         // Add the fetched paths to the Dust instance.
         $this->dust->includedDirectories = $this->get_template_paths( 'partials' );
@@ -123,7 +124,7 @@ final class DustPress {
 
         // Add create_instance to right action hook if we are not on the admin side
         if ( $this->want_autoload() ) {
-            add_filter( 'template_include', [ $this, 'create_instance' ], 10, 1 );
+            add_filter( 'template_include', [ $this, 'create_instance' ], 1000, 1 );
 
             // If we are on wp-activate.php hook into activate_header
             if ( strpos( $_SERVER['REQUEST_URI'], 'wp-activate.php' ) !== false ) {
@@ -141,7 +142,7 @@ final class DustPress {
 
             // Optimize the run if we don't want to run the main WP_Query at all.
             if ( ( is_object( $this->request_data ) && ! empty( $this->request_data->bypassMainQuery ) ) ||
-                 ( is_array( $this->request_data ) && ! empty( $this->request_data['bypassMainQuery'] ) ) ) {
+                ( is_array( $this->request_data ) && ! empty( $this->request_data['bypassMainQuery'] ) ) ) {
 
                 // DustPress.js request is never 404.
                 add_filter( 'status_header', function( $status, $header ) {
@@ -266,7 +267,7 @@ final class DustPress {
 
 
             // Get current template name tidied up a bit.
-            $template = $wanted_template ?? $this->get_template_filename( $debugs );
+            $template = $wanted_template ?? $this->get_template_filename( $template_original, $debugs );
         }
         else {
             // Use user-activate.php and user-activate.dust to replace wp-activate.php
@@ -331,6 +332,8 @@ final class DustPress {
                     'main' => true,
                     'type' => $type ?? 'default',
                 ]);
+
+                return false;
             }
             elseif ( $this->get_setting( 'enable_legacy_templates' ) ) {
                 return $template_original;
@@ -373,6 +376,65 @@ final class DustPress {
     }
 
     /**
+     * Filter our wanted model directories into WP's model-locating function.
+     *
+     * @type   function
+     * @date   14/10/2021
+     * @since  2.0.0
+     *
+     * @return void
+     */
+    public function get_query_template() {
+        $query_hooks = [
+            '404',
+            'archive',
+            'attachment',
+            'author',
+            'category',
+            'date',
+            'embed',
+            'frontpage',
+            'home',
+            'index',
+            'page',
+            'paged',
+            'privacypolicy',
+            'search',
+            'single',
+            'singular',
+            'tag',
+            'taxonomy',
+        ];
+
+        foreach ( $query_hooks as $hook ) {
+            add_filter( "{$hook}_template_hierarchy", function( $templates ) use ( $hook ) {
+                $candidates = [];
+
+                foreach ( $templates as $template ) {
+                    foreach ( $this->get_template_paths( 'models' ) as $path ) {
+                        $paths[] = $path;
+
+                        foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
+                            $length = strlen( $template );
+
+                            if ( substr_compare( $file->getPathname(), $template, -$length ) === 0 ) {
+                                $path_name = $file->getPathname();
+
+                                $path_name = str_replace( STYLESHEETPATH, '', $path_name );
+                                $path_name = str_replace( TEMPLATEPATH, '', $path_name );
+
+                                $candidates[] = $path_name;
+                            }
+                        }
+                    }
+                }
+
+                return $candidates;
+            });
+        }
+    }
+
+    /**
     *  This function gets current template's filename and returns without extension or WP-template prefixes such as page- or single-.
     *
     *  @type	function
@@ -381,287 +443,22 @@ final class DustPress {
     *
     *  @return	string
     */
-    private function get_template_filename( &$debugs = array() ) {
+    private function get_template_filename( $template_original = null, &$debugs = array() ) {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
-        global $post;
+        //strip out .php
+        $file = pathinfo( $template_original );
 
-        if ( is_object( $post ) && isset( $post->ID ) ) {
-            $page_template = get_post_meta( $post->ID, '_wp_page_template', true );
-
-            if ( $page_template ) {
-                $array = explode( DIRECTORY_SEPARATOR, $page_template );
-
-                $template = array_pop( $array );
-
-                // strip out .php
-                $template = str_replace( '.php', '', $template );
-
-                // strip out page-, single-
-                $template = str_replace( 'page-', '', $template );
-                $template = str_replace( 'single-', '', $template );
-
-                if ( $template == 'default' ) $template = 'page';
-            }
-            else {
-                $template = 'default';
-            }
-        }
-        else {
-            $template = 'default';
-        }
-
-        $hierarchy = [];
-
-        if ( is_front_page() ) {
-            $hierarchy[ 'is_front_page' ] = [
-                'FrontPage'
-            ];
-        }
-
-        if ( is_search() ) {
-            $hierarchy[ 'is_search' ] = [
-                'Search'
-            ];
-        }
-
-        if ( is_home() ) {
-            $hierarchy['is_home'] = [
-                'Home'
-            ];
-        }
-
-        if ( is_page() ) {
-            $hierarchy[ 'is_page' ] = [
-                'Page' . $this->dashed_to_camelcase( $template, '_' ),
-                'Page' . $this->dashed_to_camelcase( $template ),
-                'Page' . $this->dashed_to_camelcase( $post->post_name, '_' ),
-                'Page' . $this->dashed_to_camelcase( $post->post_name ),
-                'Page' . $post->ID,
-                'Page'
-            ];
-        }
-
-        if ( is_category() ) {
-            $cat = get_category( get_query_var( 'cat' ) );
-
-            $hierarchy[ 'is_category' ] = [
-                'Category' . $this->dashed_to_camelcase( $cat->slug, '_' ),
-                'Category' . $this->dashed_to_camelcase( $cat->slug ),
-                'Category' . $cat->term_id,
-                'Category',
-                'Archive'
-            ];
-        }
-
-        if ( is_tag() ) {
-            $term_id = get_queried_object()->term_id;
-            $term = get_term_by( 'id', $term_id, 'post_tag' );
-
-            $hierarchy[ 'is_tag' ] = [
-                'Tag' . $this->dashed_to_camelcase( $term->slug. '_' ),
-                'Tag' . $this->dashed_to_camelcase( $term->slug ),
-                'Tag',
-                'Archive'
-            ];
-        }
-
-        if ( is_tax() ) {
-
-            $term = get_queried_object();
-
-            $hierarchy[ 'is_tax' ] = [
-                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ) . $this->dashed_to_camelcase( $term->slug ),
-                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy, '_' ),
-                'Taxonomy' . $this->dashed_to_camelcase( $term->taxonomy ),
-                'Taxonomy',
-                'Archive'
-            ];
-        }
-
-        if ( is_author() ) {
-            $author = get_user_by( 'slug', get_query_var( 'author_name' ) );
-
-            $hierarchy[ 'is_author' ] = [
-                'Author' . $this->dashed_to_camelcase( $author->user_nicename, '_' ),
-                'Author' . $this->dashed_to_camelcase( $author->user_nicename ),
-                'Author' . $author->ID,
-                'Author',
-                'Archive'
-            ];
-        }
-
-        $hierarchy[ 'is_404' ] = [
-            'Error404'
-        ];
-
-        if ( is_attachment() ) {
-            $mime_type = get_post_mime_type( get_the_ID() );
-
-            $hierarchy[ 'is_attachment' ] = [
-                function() use ( $mime_type ) {
-                    if ( preg_match( '/^image/', $mime_type ) && class_exists( 'Image' ) ) {
-                        return 'Image';
-                    }
-                    else {
-                        return false;
-                    }
-                },
-                function() use ( $mime_type ) {
-                    if ( preg_match( '/^video/', $mime_type ) && class_exists( 'Video' ) ) {
-                        return 'Video';
-                    }
-                    else {
-                        return false;
-                    }
-                },
-                function() use ( $mime_type ) {
-                    if ( preg_match( '/^application/', $mime_type ) && class_exists( 'Application' ) ) {
-                        return 'Application';
-                    }
-                    else {
-                        return false;
-                    }
-                },
-                function() use ( $mime_type ) {
-                    if ( $mime_type == 'text/plain' ) {
-                        if ( class_exists( 'Text' ) ) {
-                            return 'Text';
-                        }
-                        else if ( class_exists( 'Plain' ) ) {
-                            return 'Plain';
-                        }
-                        else if ( class_exists( 'TextPlain' ) ) {
-                            return 'TextPlain';
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                    else {
-                        return false;
-                    }
-                },
-                'Attachment',
-                'SingleAttachment',
-                'Single'
-            ];
-        }
-
-        if ( is_single() ) {
-            $type = get_post_type();
-
-            $hierarchy[ 'is_single' ] = [
-                'Single' . $this->dashed_to_camelcase( $template, '_' ),
-                'Single' . $this->dashed_to_camelcase( $template ),
-                'Single' . $this->dashed_to_camelcase( $type, '_' ),
-                'Single' . $this->dashed_to_camelcase( $type ),
-                'Single'
-            ];
-        }
-
-        if ( is_archive() ) {
-            // Double check just to keep the function structure.
-            $hierarchy[ 'is_archive' ] = [
-                function() {
-                    $post_types = get_post_types();
-
-                    foreach ( $post_types as $type ) {
-                        if ( is_post_type_archive( $type ) ) {
-                            if ( class_exists( 'Archive' . $this->dashed_to_camelcase( $type ) ) ) {
-                                return 'Archive' . $this->dashed_to_camelcase( $type );
-                            }
-                            else if ( class_exists( 'Archive' ) ) {
-                                return 'Archive';
-                            }
-                            else {
-                                return false;
-                            }
-                        }
-                    }
-
-                    return false;
-                }
-            ];
-        }
-
-        if ( is_date() ) {
-
-            // Double check just to keep the function structure.
-            $hierarchy[ 'is_date' ] = [
-                function() {
-                    if ( class_exists( 'Date' ) ) {
-                        return 'Date';
-                    }
-                    else if ( class_exists( 'Archive' ) ) {
-                        return 'Archive';
-                    }
-                    else {
-                        return false;
-                    }
-                }
-            ];
-        }
-
-        // I don't think you really want to do this.
-        $hierarchy = apply_filters( 'dustpress/template_hierarchy', $hierarchy );
-
-        foreach( $hierarchy as $level => $keys ) {
-            if ( true === call_user_func ( $level ) ) {
-                foreach( $keys as $key => $value ) {
-                    if ( is_integer( $key ) ) {
-                        if ( is_string( $value ) ) {
-                            $debugs[] = $value;
-                            if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
-                                return $value;
-                            }
-                        }
-                        else if ( is_callable( $value ) ) {
-                            $value = call_user_func( $value );
-                            $debugs[] = $value;
-                            if( is_string( $value ) && class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
-                                return $value;
-                            }
-                        }
-                    }
-                    else if ( is_string( $key ) ) {
-                        if ( class_exists( $key ) ) {
-                            if( is_string( $value ) ) {
-                                $debugs[] = $value;
-                                if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
-                                    return $value;
-                                }
-                            }
-                            else if ( is_callable( $value ) ) {
-                                $debugs[] = $value;
-                                return call_user_func( $value );
-                            }
-                        }
-                    }
-                    else if ( true === $key or is_callable( $key ) ) {
-                        if ( true === call_user_func( $key ) ) {
-                            if( is_string( $value ) ) {
-                                $debugs[] = $value;
-                                if ( class_exists( $value ) || ( $this->get_setting( 'enable_legacy_templates' ) && locate_template( $value . ' .php', false ) ) ) {
-                                    return $value;
-                                }
-                            }
-                            else if ( is_callable( $value ) ) {
-                                $debugs[] = $value;
-                                return call_user_func( $value );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $debugs[] = 'Index';
+        $class = $this->dashed_to_camelcase( $file['filename'] );
 
         $this->save_dustpress_performance( $performance_measure_id );
 
-        return 'Index';
+        // Ensure that the class exists
+        if ( class_exists( $class ) ) {
+            return $class;
+        }
+
+        return $template_original;
     }
 
     /**
@@ -994,12 +791,12 @@ final class DustPress {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
         $this->settings = [
-            'cache'                   => getenv( 'DUSTPRESS_CACHE' ) ?: false,
-            'debug_data_block_name'   => getenv( 'DUSTPRESS_DEBUG_DATA_BLOCK_NAME' ) ?: 'Debug',
-            'rendered_expire_time'    => getenv( 'DUSTPRESS_RENDERED_EXPIRE_TIME' ) ?: 7*60*60*24,
-            'json_url'                => getenv( 'DUSTPRESS_JSON_URL' ) ?: false,
-            'json_headers'            => getenv( 'DUSTPRESS_JSON_HEADERS' ) ?: false,
-            'enable_legacy_templates' => getenv( 'DUSTPRESS_ENABLE_LEGACY_TEMPLATES' ) ?: false,
+            'cache'                   => constant( 'DUSTPRESS_CACHE' ) ?: false,
+            'debug_data_block_name'   => constant( 'DUSTPRESS_DEBUG_DATA_BLOCK_NAME' ) ?: 'Debug',
+            'rendered_expire_time'    => constant( 'DUSTPRESS_RENDERED_EXPIRE_TIME' ) ?: 7*60*60*24,
+            'json_url'                => constant( 'DUSTPRESS_JSON_URL' ) ?: false,
+            'json_headers'            => constant( 'DUSTPRESS_JSON_HEADERS' ) ?: false,
+            'enable_legacy_templates' => constant( 'DUSTPRESS_ENABLE_LEGACY_TEMPLATES' ) ?: false,
         ];
 
         // loop through the settings and execute possible filters from functions
