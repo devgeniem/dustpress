@@ -292,6 +292,10 @@ class Menu extends Helper {
             $return = ( $item->object_id == $term_id && 'taxonomy' == $item->type )
                       ||  ( $item->object_id == $override );
         }
+        elseif ( \is_archive() ) {
+            $return = ( 'post_type_archive' == $item->type && \is_post_type_archive( $item->object ) )
+                      || ( $item->object_id == $override );
+        }
         else {
             $return = ( \get_the_ID() == $item->object_id
                         &&  'post_type' == $item->type )
