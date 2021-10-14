@@ -32,5 +32,8 @@
   "require": {
     "php": ">=7.3",
     "ext-json": "*"
+  },
+  "conflict": {
+    "devgeniem/dustpress-debugger": "<1.7.0"
   }
 }

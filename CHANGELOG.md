@@ -4,11 +4,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
 
 ### Added
 - `wp_kses_post` (`|kses`), `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
-- Ability to include custom filters via `dustpress/filters` filter.
+- Ability to include custom DustPHP filters via `dustpress/filters` filter.
+- Ability to use WordPress native templates mixed with Dust templates, and a new setting `enable_legacy_templates` to enable that feature.
+
+### Changed
+- DustPress to use WordPress native router to decide the model to view instead of our own hard-coded hierarchy function.
+
+## [Released]
+
+## [1.34.3] - 2021-09-30
+- Pagination parameter page_count didn't always return the right value. This update will fix it.
+
+## [1.34.2] - 2021-08-09
+
+### Added
+- Added pagination parameters `page` and `page_count`. These can be used inside pagination.dust
+
+## [1.34.1] - 2021-06-22
+
+### Fixed
+- Fix archive pages for custom taxonomies when filtering with another taxonomy.
+- Fix a variable typo
+## [1.34.0] - 2021-06-10
+
+### Changed
+- Added the UserActivateExtend class for allowing the functionality to be extended by the theme.
+
+## [1.33.3] - 2021-05-05
+
+### Fixed
+- Fix PHP 7.4 notice when using @menu helper with empty or non-assigned menu.
+
+## [1.33.1] - 2021-04-20
+
+### Changed
+- Search template to precede home template to fix hierarchy problem with Polylang searching.
+
+## [1.33.0] - 2021-03-23
+
+### Added
+- `no_form` parameter to `@password` helper to be used when there's more than one instance of the helper at a page.
+
+### Changed
+- DustPress.js calls returning JSON now return clear error messages from JSON encoding problems.
+
+## [1.32.0] - 2021-03-02
+
+### Added
+- DustPress will now measure it's own performance.
+
+## [1.31.0] - 2021-02-25
+
+### Added
+- Added highlight color for performance alerts.
+
+### Changed
+- Decreased DustPress-debugger performance alert from 0.1s to 0.02s.
+
+## [1.30.1] - 2021-02-16
+
+### Fixed
+- Possible fatal error caused by measure_hooks_performance.
 
 ## [1.30.0] - 2021-01-21
 

@@ -6,7 +6,7 @@ Description: Dust.js templating system for WordPress
 Author: Miika Arponen & Ville Siltala / Geniem Oy
 Author URI: http://www.geniem.com
 License: GPLv3
-Version: 1.34.3
+Version: 2.0.0-beta
 */
 
 final class DustPress {
@@ -423,6 +423,14 @@ final class DustPress {
                                 $path_name = str_replace( STYLESHEETPATH, '', $path_name );
                                 $path_name = str_replace( TEMPLATEPATH, '', $path_name );
 
+                                if ( ! $this->get_setting( 'enable_legacy_templates' ) ) {
+                                    $class = $this->dashed_to_camelcase( $file->getFilename() );
+
+                                    if ( ! class_exists( $class ) ) {
+                                        continue;
+                                    }
+                                }
+
                                 $candidates[] = $path_name;
                             }
                         }
@@ -458,6 +466,7 @@ final class DustPress {
             return $class;
         }
 
+        // Continue with the original if it doesn't
         return $template_original;
     }
 
@@ -791,12 +800,12 @@ final class DustPress {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
         $this->settings = [
-            'cache'                   => constant( 'DUSTPRESS_CACHE' ) ?: false,
-            'debug_data_block_name'   => constant( 'DUSTPRESS_DEBUG_DATA_BLOCK_NAME' ) ?: 'Debug',
-            'rendered_expire_time'    => constant( 'DUSTPRESS_RENDERED_EXPIRE_TIME' ) ?: 7*60*60*24,
-            'json_url'                => constant( 'DUSTPRESS_JSON_URL' ) ?: false,
-            'json_headers'            => constant( 'DUSTPRESS_JSON_HEADERS' ) ?: false,
-            'enable_legacy_templates' => constant( 'DUSTPRESS_ENABLE_LEGACY_TEMPLATES' ) ?: false,
+            'cache'                   => defined( 'DUSTPRESS_CACHE' ) ? DUSTPRESS_CACHE : false,
+            'debug_data_block_name'   => defined( 'DUSTPRESS_DEBUG_DATA_BLOCK_NAME' ) ? DUSTPRESS_DEBUG_DATA_BLOCK_NAME : 'Debug',
+            'rendered_expire_time'    => defined( 'DUSTPRESS_RENDERED_EXPIRE_TIME' ) ? DUSTPRESS_RENDERED_EXPIRE_TIME : 7*60*60*24,
+            'json_url'                => defined( 'DUSTPRESS_JSON_URL' ) ? DUSTPRESS_JSON_URL : false,
+            'json_headers'            => defined( 'DUSTPRESS_JSON_HEADERS' ) ? DUSTPRESS_JSON_HEADERS : false,
+            'enable_legacy_templates' => defined( 'DUSTPRESS_ENABLE_LEGACY_TEMPLATES' ) ? DUSTPRESS_ENABLE_LEGACY_TEMPLATES : false,
         ];
 
         // loop through the settings and execute possible filters from functions
