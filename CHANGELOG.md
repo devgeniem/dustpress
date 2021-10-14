@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.34.4] - 2021-10-14
+- Fix template usage for CPT posts. Also allow page templates to use any name, as intended in WP.
 
 ## [Released]
 

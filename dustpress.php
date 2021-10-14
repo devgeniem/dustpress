@@ -424,6 +424,7 @@ final class DustPress {
 
         if ( is_page() ) {
             $hierarchy[ 'is_page' ] = [
+                $this->dashed_to_camelcase( $template ),
                 'Page' . $this->dashed_to_camelcase( $template, '_' ),
                 'Page' . $this->dashed_to_camelcase( $template ),
                 'Page' . $this->dashed_to_camelcase( $post->post_name, '_' ),
@@ -544,6 +545,7 @@ final class DustPress {
             $type = get_post_type();
 
             $hierarchy[ 'is_single' ] = [
+                $this->dashed_to_camelcase( $template ),
                 'Single' . $this->dashed_to_camelcase( $template, '_' ),
                 'Single' . $this->dashed_to_camelcase( $template ),
                 'Single' . $this->dashed_to_camelcase( $type, '_' ),
