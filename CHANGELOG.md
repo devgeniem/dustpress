@@ -6,8 +6,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [Released]
+
+## [1.34.4] - 2021-10-14
+
 ### Fixed
 - Fix current menu item check on archive pages.
+
+## [1.34.3] - 2021-09-30
+
+### Fixed
+- Pagination parameter page_count didn't always return the right value.
+
+## [1.34.2] - 2021-08-09
+
+### Added
+- Added pagination parameters `page` and `page_count`. These can be used inside pagination.dust
+
+## [1.34.1] - 2021-06-22
+
+### Fixed
+- Fix archive pages for custom taxonomies when filtering with another taxonomy.
+- Fix a variable typo
+
+## [1.34.0] - 2021-06-10
+
+### Changed
+- Added the UserActivateExtend class for allowing the functionality to be extended by the theme.
 
 ## [1.33.3] - 2021-05-05
 
