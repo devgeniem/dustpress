@@ -409,8 +409,11 @@ final class DustPress {
 
         // Loop through the hooks and add all
         foreach ( $query_hooks as $hook ) {
-            add_filter( "{$hook}_template_hierarchy", function( $templates ) {
+            add_filter( "{$hook}_template_hierarchy", function( $templates ) use ( $hook ) {
                 $candidates = [];
+
+                // Add a filter to customize the potential model/template candidates
+                $templates = \apply_filters( 'dustpress/template_candidates', $templates, $hook );
 
                 // Loop through the potential template names for the view
                 foreach ( $templates as $template ) {
