@@ -385,6 +385,7 @@ final class DustPress {
      * @return void
      */
     public function get_query_template() {
+        // List of ***_template_hierarchy filters to add
         $query_hooks = [
             '404',
             'archive',
@@ -406,23 +407,29 @@ final class DustPress {
             'taxonomy',
         ];
 
+        // Loop through the hooks and add all
         foreach ( $query_hooks as $hook ) {
-            add_filter( "{$hook}_template_hierarchy", function( $templates ) use ( $hook ) {
+            add_filter( "{$hook}_template_hierarchy", function( $templates ) {
                 $candidates = [];
 
+                // Loop through the potential template names for the view
                 foreach ( $templates as $template ) {
+                    // Loop through all given model locations
                     foreach ( $this->get_template_paths( 'models' ) as $path ) {
                         $paths[] = $path;
 
+                        // Loop through all files inside the directory
                         foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS ) ) as $file ) {
                             $length = strlen( $template );
 
+                            // Check if the file matches
                             if ( substr_compare( $file->getPathname(), $template, -$length ) === 0 ) {
                                 $path_name = $file->getPathname();
 
                                 $path_name = str_replace( STYLESHEETPATH, '', $path_name );
                                 $path_name = str_replace( TEMPLATEPATH, '', $path_name );
 
+                                // If we don't want to fall back to the legacy templates, check if appropriate model exists
                                 if ( ! $this->get_setting( 'enable_legacy_templates' ) ) {
                                     $class = $this->dashed_to_camelcase( $file->getFilename() );
 
@@ -431,6 +438,7 @@ final class DustPress {
                                     }
                                 }
 
+                                // Add the file to the returned template candidate list
                                 $candidates[] = $path_name;
                             }
                         }
