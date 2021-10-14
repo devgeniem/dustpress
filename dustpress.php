@@ -424,9 +424,9 @@ final class DustPress {
 
         if ( is_page() ) {
             $hierarchy[ 'is_page' ] = [
-                $this->dashed_to_camelcase( $template ),
                 'Page' . $this->dashed_to_camelcase( $template, '_' ),
                 'Page' . $this->dashed_to_camelcase( $template ),
+                $this->dashed_to_camelcase( $template ),
                 'Page' . $this->dashed_to_camelcase( $post->post_name, '_' ),
                 'Page' . $this->dashed_to_camelcase( $post->post_name ),
                 'Page' . $post->ID,
@@ -547,9 +547,9 @@ final class DustPress {
             $hierarchy[ 'is_single' ] = [
                 'Single' . $this->dashed_to_camelcase( $template, '_' ),
                 'Single' . $this->dashed_to_camelcase( $template ),
+                $this->dashed_to_camelcase( $template ),
                 'Single' . $this->dashed_to_camelcase( $type, '_' ),
                 'Single' . $this->dashed_to_camelcase( $type ),
-                $this->dashed_to_camelcase( $template ),
                 'Single'
             ];
         }
