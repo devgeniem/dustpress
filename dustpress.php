@@ -547,9 +547,9 @@ final class DustPress {
             $hierarchy[ 'is_single' ] = [
                 'Single' . $this->dashed_to_camelcase( $template, '_' ),
                 'Single' . $this->dashed_to_camelcase( $template ),
-                $this->dashed_to_camelcase( $template ),
                 'Single' . $this->dashed_to_camelcase( $type, '_' ),
                 'Single' . $this->dashed_to_camelcase( $type ),
+                $this->dashed_to_camelcase( $template ),
                 'Single'
             ];
         }
