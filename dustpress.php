@@ -79,7 +79,6 @@ final class DustPress {
     *  @date	10/8/2015
     *  @since	0.2.0
     */
-
     protected function __construct() {
 
         $self = $this;
