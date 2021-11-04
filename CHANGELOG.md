@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-# Unreleased
-
-## [terminated-hotfix] - 2021-11-04
+## [1.35.0] - 2021-11-04
 
 ### Fixed
 - A bug where model termination would not work immediately if `terminate()` was called in constructor.
