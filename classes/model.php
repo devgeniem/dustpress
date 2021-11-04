@@ -320,6 +320,10 @@ class Model {
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
         foreach ( $methods as $class => $class_methods ) {
             foreach ( $class_methods as $name => $m ) {
+                if ( $this->terminated ) {
+                    break 2;
+                }
+
                 if ( $perf_monitoring_enabled ) {
                     $perf_key = $this->perf_key( $m );
                     dustpress()->start_performance( $perf_key );
@@ -374,10 +378,6 @@ class Model {
                 if ( $perf_monitoring_enabled ) {
                     dustpress()->save_performance( $perf_key );
                 }
-
-                if ( $this->terminated ) {
-                    break 2;
-                }
             }
 
             unset( $class_methods );
@@ -386,6 +386,10 @@ class Model {
         // If there are private methods to run, run them too.
         if ( is_array( $private_methods ) && count( $private_methods ) > 0 ) {
             foreach ( $private_methods as $method ) {
+                if ( $this->terminated ) {
+                    break;
+                }
+
                 $data = $this->run_restricted( $method );
 
                 if ( is_null( $data ) ) {
