@@ -320,6 +320,10 @@ class Model {
         // Loop through all public methods and run the ones we wanted to deliver the data to the views.
         foreach ( $methods as $class => $class_methods ) {
             foreach ( $class_methods as $name => $m ) {
+                if ( $this->terminated ) {
+                    break 2;
+                }
+
                 if ( $perf_monitoring_enabled ) {
                     $perf_key = $this->perf_key( $m );
                     dustpress()->start_performance( $perf_key );
@@ -373,10 +377,6 @@ class Model {
 
                 if ( $perf_monitoring_enabled ) {
                     dustpress()->save_performance( $perf_key );
-                }
-
-                if ( $this->terminated ) {
-                    break 2;
                 }
             }
 
