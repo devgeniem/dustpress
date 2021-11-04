@@ -13,13 +13,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - DustPress to use WordPress native router to decide the model to view instead of our own hard-coded hierarchy function.
+## [1.35.0] - 2021-11-04
+
+### Fixed
+- A bug where model termination would not work immediately if `terminate()` was called in constructor.
+- Template usage for CPT posts. Also allow page templates to use any name, as intended in WP.
 
 # Released
 
 ## [1.34.4] - 2021-10-14
 
 ### Fixed
-- Fix current menu item check on archive pages.
+- Current menu item check on archive pages.
 
 ## [1.34.3] - 2021-09-30
 
@@ -29,23 +34,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.34.2] - 2021-08-09
 
 ### Added
-- Added pagination parameters `page` and `page_count`. These can be used inside pagination.dust
+- Pagination parameters `page` and `page_count`. These can be used inside pagination.dust
 
 ## [1.34.1] - 2021-06-22
 
 ### Fixed
-- Fix archive pages for custom taxonomies when filtering with another taxonomy.
-- Fix a variable typo
+- Archive pages for custom taxonomies when filtering with another taxonomy.
+- A variable typo
 
 ## [1.34.0] - 2021-06-10
 
-### Changed
-- Added the UserActivateExtend class for allowing the functionality to be extended by the theme.
+### Added
+- The UserActivateExtend class for allowing the functionality to be extended by the theme.
 
 ## [1.33.3] - 2021-05-05
 
 ### Fixed
-- Fix PHP 7.4 notice when using @menu helper with empty or non-assigned menu.
+- PHP 7.4 notice when using @menu helper with empty or non-assigned menu.
 
 ## [1.33.1] - 2021-04-20
 
@@ -68,7 +73,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.31.0] - 2021-02-25
 
 ### Added
-- Added highlight color for performance alerts.
+- Highlight color for performance alerts.
 
 ### Changed
 - Decreased DustPress-debugger performance alert from 0.1s to 0.02s.
