@@ -386,6 +386,10 @@ class Model {
         // If there are private methods to run, run them too.
         if ( is_array( $private_methods ) && count( $private_methods ) > 0 ) {
             foreach ( $private_methods as $method ) {
+                if ( $this->terminated ) {
+                    break;
+                }
+
                 $data = $this->run_restricted( $method );
 
                 if ( is_null( $data ) ) {
