@@ -434,7 +434,10 @@ final class DustPress {
 
                                 // If we don't want to fall back to the legacy templates, check if appropriate model exists
                                 if ( ! $this->get_setting( 'enable_legacy_templates' ) ) {
-                                    $class = $this->dashed_to_camelcase( $file->getFilename() );
+
+                                    // File name without extension.
+                                    $file_name = str_replace( '.php', '', $file->getFilename() );
+                                    $class     = $this->dashed_to_camelcase( $file_name );
 
                                     if ( ! class_exists( $class ) ) {
                                         continue;
@@ -2183,6 +2186,12 @@ final class DustPress {
             foreach ( $this->performance['Hooks'] as $hook_name => $execution_time ) {
                 // Only analyze hooks that took over 0.02s to execute.
                 if ( $execution_time !== '< 0.02s' ) {
+
+                    // Fail fast.
+                    if ( empty( $wp_filter[$hook_name] ) ) {
+                        continue;
+                    }
+
                     // Make sure there are hooks to parse.
                     if ( property_exists( $wp_filter[$hook_name], 'callbacks' ) ) {
                         $callback_data = [];
