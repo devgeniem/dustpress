@@ -777,7 +777,7 @@ composer require devgeniem/dustpress-debugger
 
 We have also created a handy DustPress.js library for using the DustPress Model methods on the front end.
 
-Get the debugger from [Geniem Github](https://github.com/devgeniem/dustpress-js) or install it with Composer:
+Get the DustPress.js from [Geniem Github](https://github.com/devgeniem/dustpress-js) or install it with Composer:
 ```
 composer require devgeniem/dustpress-js
 ```
