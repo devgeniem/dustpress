@@ -1,55 +1,58 @@
 <!DOCTYPE html>
 <html>
-<head>
-    {@wphead /}
-</head>
-<body>
-    {#UserActivate}
 
-    <div id="signup-content" class="widecolumn">
-        <div class="wp-activate-container">
+    <head>
+        {@wphead /}
+    </head>
 
-            {! Print the title !}
-            <h2> {@s s=Print.title /} </h2>
+    <body>
+        {#UserActivate}
 
-            {@eq key=State value="account-active-no-mail" }
-                <div id="signup-welcome">
-                    <p><span class="h3"> {@s s="Username:" /} </span> {User.username}</p>
-                    <p><span class="h3"> {@s s="Password:" /} </span> {User.password}</p>
+            <div id="signup-content" class="widecolumn">
+                <div class="wp-activate-container">
+
+                    {! Print the title !}
+                    <h2> {@s s=Print.title /} </h2>
+
+                    {@eq key=State value="account-active-no-mail" }
+                        <div id="signup-welcome">
+                            <p><span class="h3"> {@s s="Username:" /} </span> {User.username}</p>
+                            <p><span class="h3"> {@s s="Password:" /} </span> {User.password}</p>
+                        </div>
+                    {/eq}
+
+                    {! Print message if we have it !}
+                    {?Print.message}
+                        <p>{Print.message|kses}</p>
+                    {/Print.message}
+
+                    {! Print error if we have it !}
+                    {?Print.error}
+                        <p>{Print.error|kses}</p>
+                    {/Print.error}
+
+                    {! If no key set, print form to ask for it !}
+                    {@eq key=State value="no-key" }
+                        <form name="activateform" id="activateform" method="post" action="{Print.wp-activate-link}">
+                            <p>
+                                <label for="key">{@s s="Activation Key:" /}</label>
+                                <br /><input type="text" name="key" id="key" value="" size="50" />
+                            </p>
+                            <p class="submit">
+                                <input id="submit" type="submit" name="Submit" class="submit" value="{@s s="Activate" /}" />
+                            </p>
+                        </form>
+                    {/eq}
+
                 </div>
-            {/eq}
+            </div>
 
-            {! Print message if we have it !}
-            {?Print.message}
-                <p> {@s s=Print.message /} </p>
-            {/Print.message}
+            <script type="text/javascript">
+                var key_input = document.getElementById('key');
+                key_input && key_input.focus();
+            </script>
+        {/UserActivate}
 
-            {! Print error if we have it !}
-            {?Print.error}
-                <p> {@s s=Print.error /} </p>
-            {/Print.error}
-
-            {! If no key set, print form to ask for it !}
-            {@eq key=State value="no-key" }
-                <form name="activateform" id="activateform" method="post" action="{Print.wp-activate-link}">
-                    <p>
-                        <label for="key">{@s s="Activation Key:" /}</label>
-                        <br /><input type="text" name="key" id="key" value="" size="50" />
-                    </p>
-                    <p class="submit">
-                        <input id="submit" type="submit" name="Submit" class="submit" value="{@s s="Activate" /}" />
-                    </p>
-                </form>
-            {/eq}
-
-        </div>
-    </div>
-
-    <script type="text/javascript">
-        var key_input = document.getElementById('key');
-        key_input && key_input.focus();
-    </script>
-    {/UserActivate}
-    {@wpfooter /}
-</body>
+        {@wpfooter /}
+    </body>
 </html>
