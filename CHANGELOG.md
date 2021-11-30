@@ -6,12 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-## [user-activate-hotfix] - 2021-11-19
+## [1.36.0] - 2021-11-30
+
 ### Fixed
-- Fixed rendering bugs in `user-activate.dust`.
-## [esc-filters] - 2021-11-04
+- Fixed rendering bug in `user-activate.dust`.
+
 ### Added
-- `wp_kses_post` (`|kses`), `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
+- Escaping filters: `wp_kses_post` (`|kses`), `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
 - Ability to include custom filters via `dustpress/filters` filter.
 
 ## [1.35.0] - 2021-11-04
