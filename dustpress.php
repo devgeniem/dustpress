@@ -417,6 +417,10 @@ final class DustPress {
 
                 // Loop through the potential template names for the view
                 foreach ( $templates as $template ) {
+
+                    // Compare whole template name not just the end of it.
+                    $template = '/' . $template;
+
                     // Loop through all given model locations
                     foreach ( $this->get_template_paths( 'models' ) as $path ) {
                         $paths[] = $path;
