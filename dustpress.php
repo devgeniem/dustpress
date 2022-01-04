@@ -265,7 +265,6 @@ final class DustPress {
                 setup_postdata( $post );
             }
 
-
             // Get current template name tidied up a bit.
             $template = $wanted_template ?? $this->get_template_filename( $template_original, $debugs );
         }
@@ -409,7 +408,8 @@ final class DustPress {
 
         // Loop through the hooks and add all
         foreach ( $query_hooks as $hook ) {
-            add_filter( "{$hook}_template_hierarchy", function( $templates ) use ( $hook ) {
+
+            \add_filter( "{$hook}_template_hierarchy", function( $templates ) use ( $hook ) {
                 $candidates = [];
 
                 // Add a filter to customize the potential model/template candidates
@@ -417,6 +417,11 @@ final class DustPress {
 
                 // Loop through the potential template names for the view
                 foreach ( $templates as $template ) {
+
+                    // If 404 map template to error404 class name can't start with a number.
+                    if ( $template === '404.php' ) {
+                        $template = 'error404.php';
+                    }
 
                     // Compare whole template name not just the end of it.
                     $template = '/' . $template;
