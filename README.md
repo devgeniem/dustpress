@@ -791,3 +791,16 @@ DustPress offers a way to override WordPress' default templates that otherwise a
 At the moment it's possible to modify:
 
 - wp-activate.php ([docs](https://github.com/devgeniem/dustpress/blob/master/docs/customize-wp/user-activate.md))
+
+# Escaping filters
+- wp_kses_post (|kses)
+- esc_attr (|attr)
+- esc_html (|html)
+- esc_url (|url)
+
+Example usage:
+```dust
+<a href="{permalink|url}"></a>
+```
+## Add custom filters
+- You can add custom filters via `dustpress/filters` filter.
