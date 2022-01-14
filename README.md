@@ -53,6 +53,8 @@
     - [title](#title)
     - [wpfooter](#wpfooter)
     - [wphead](#wphead)
+  - [Escaping filters](#escaping-filters)
+    - [Add custom filters](#add-custom-filters)
   - [Other functionality](#other-functionality)
     - [do_not_render](#do_not_render)
     - [json output](#json-output)
@@ -71,8 +73,6 @@
   - [DustPress.js](#dustpressjs)
   - [Comments helper](#comments-helper)
 - [Overriding default templates](#overriding-default-templates)
-- [Escaping filters](#escaping-filters)
-  - [Add custom filters](#add-custom-filters)
 
 ## Description
 
@@ -642,6 +642,23 @@ Example:
 {@wphead /}
 ```
 
+## Escaping filters
+- `kses`
+  - Uses WordPress function `wp_kses_post()`
+- `attr`
+  - Uses WordPress function `esc_attr()`
+- `html`
+  - Uses WordPress function `esc_html()`
+- `url`
+  - Uses WordPress function `esc_url()`
+
+Example usage:
+```dust
+<a href="{permalink|url}">Link text</a>
+```
+### Add custom filters
+- You can add custom filters via `dustpress/filters` filter.
+
 ## Other functionality
 
 ### do_not_render
@@ -856,20 +873,3 @@ DustPress offers a way to override WordPress' default templates that otherwise a
 At the moment it's possible to modify:
 
 - wp-activate.php ([docs](https://github.com/devgeniem/dustpress/blob/master/docs/customize-wp/user-activate.md))
-
-# Escaping filters
-- `kses`
-  - Uses WordPress function `wp_kses_post()`
-- `attr`
-  - Uses WordPress function `esc_attr()`
-- `html`
-  - Uses WordPress function `esc_html()`
-- `url`
-  - Uses WordPress function `esc_url()`
-
-Example usage:
-```dust
-<a href="{permalink|url}">Link text</a>
-```
-## Add custom filters
-- You can add custom filters via `dustpress/filters` filter.
