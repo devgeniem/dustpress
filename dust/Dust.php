@@ -4,7 +4,7 @@ namespace Dust
     use Dust\Evaluate\Evaluator;
     use Dust\Parse\Parser;
 
-    class Dust implements \Serializable
+    class Dust
     {
         const FILE_EXTENSION = '.dust';
 
@@ -271,5 +271,4 @@ namespace Dust
         }
 
     }
-
 }

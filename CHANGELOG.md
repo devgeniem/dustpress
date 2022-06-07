@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+- Removed deprecated `implements \Serializable` (php 8.1) from dust/Dust.php.
+
+## [1.36.0] - 2021-11-30
+
+### Fixed
+- Fixed rendering bug in `user-activate.dust`.
+
+### Added
+- Escaping filters: `wp_kses_post` (`|kses`), `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
+- Ability to include custom filters via `dustpress/filters` filter.
+
+## [1.35.0] - 2021-11-04
+
 ### Fixed
 - A compatibility issue with PHP 8.1 and return types in dust/Evaluate/Bodies
 
