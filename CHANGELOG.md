@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Changed
+- Changed function is_dustpress_ajax from private to public.
+
 ## Released
 ## [1.36.1] - 2022-06-07
 

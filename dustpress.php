@@ -1199,7 +1199,7 @@ final class DustPress {
     *
     *  @return	(boolean)
     */
-    private function is_dustpress_ajax() {
+    public function is_dustpress_ajax() {
         $performance_measure_id = $this->start_dustpress_performance( __FUNCTION__ );
 
         $request_body = file_get_contents( 'php://input' );
