@@ -6,10 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-### Changed
-- Changed function is_dustpress_ajax from private to public.
-
 ## Released
+
+## [1.36.2] - 2023-01-11
+
+### Changed
+- Function `is_dustpress_ajax` from private to public.
+
+### Fixed
+- A compatibility issue with PHP 8.1 on `get_templates()`
+
 ## [1.36.1] - 2022-06-07
 
 ### Fixed
@@ -18,7 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.36.0] - 2021-11-30
 
 ### Fixed
-- Fixed rendering bug in `user-activate.dust`.
+- Rendering bug in `user-activate.dust`.
 
 ### Added
 - Escaping filters: `wp_kses_post` (`|kses`), `esc_attr` (`|attr`), `esc_html` (`|html`) and `esc_url` (`|url`) filters added.
