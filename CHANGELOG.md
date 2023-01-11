@@ -8,13 +8,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Released
 
-## [1.36.2] - 2023-01-11
-
-### Changed
-- Function `is_dustpress_ajax` from private to public.
+## [1.36.3] - 2023-01-11
 
 ### Fixed
 - A compatibility issue with PHP 8.1 on `get_templates()`
+
+## [1.36.2] - 2022-11-30
+
+### Changed
+- Function `is_dustpress_ajax` from private to public.
 
 ## [1.36.1] - 2022-06-07
 
