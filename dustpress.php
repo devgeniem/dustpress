@@ -1941,8 +1941,8 @@ final class DustPress {
         elseif ( isset( $_REQUEST['dustpress_data'] ) ) {
             $args = [
                 'bypassMainQuery' => FILTER_VALIDATE_BOOLEAN,
-                'partial'         => FILTER_SANITIZE_STRING,
-                'path'            => FILTER_SANITIZE_STRING,
+                'partial'         => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+                'path'            => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
                 'render'          => FILTER_VALIDATE_BOOLEAN,
                 'tidy'            => FILTER_VALIDATE_BOOLEAN,
                 'data'            => FILTER_VALIDATE_BOOLEAN,
