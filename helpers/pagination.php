@@ -212,7 +212,9 @@ class Pagination extends Helper {
      * @return string
      */
     public function build_page_link() {
-        $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_STRING );
+
+        $query_string = htmlspecialchars( $_SERVER['QUERY_STRING'] );
+
         $page_link    = '?';
         // User passed get parameters
         if ( $query_string ) {
