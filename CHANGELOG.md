@@ -4,7 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [data-collection-permalink] - 2019-10-1
+## Unreleased
+
+### Fixed
+- A compatibility issue with PHP 8.1 and return types in dust/Evaluate/Bodies
+
+## Released
+
+## [1.36.3] - 2023-01-11
+
+### Fixed
+- A compatibility issue with PHP 8.1 on `get_templates()`
+
+## [1.36.2] - 2022-11-30
+
+### Changed
+- Function `is_dustpress_ajax` from private to public.
+
+## [1.36.1] - 2022-06-07
+
+### Fixed
+- Removed deprecated `implements \Serializable` (php 8.1) from dust/Dust.php.
+
+## [1.36.0] - 2021-11-30
 
 ### Fixed
 - Fixes permalink data on WP object in archive views.
