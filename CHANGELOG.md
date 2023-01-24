@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Released
 
+## [1.36.4] - 2023-01-24
+
+### Fixed
+- PHP 8.1 fix: Dust PHP syntax errors.
+- PHP 8.1 fix: FILTER_SANITIZE_STRING fixes.
+
 ## [1.36.3] - 2023-01-11
 
 ### Fixed
