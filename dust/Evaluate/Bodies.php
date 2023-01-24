@@ -28,16 +28,16 @@ namespace Dust\Evaluate
          *
          * @return bool
          */
-        public function offsetExists($offset) {
+        public function offsetExists($offset) : bool {
             return $this[ $offset ] != NULL;
         }
 
         /**
          * @param mixed $offset
          *
-         * @return null
+         * @return mixed
          */
-        public function offsetGet($offset) {
+        public function offsetGet($offset) : mixed {
             for($i = 0; $i < count($this->section->bodies); $i++)
             {
                 if($this->section->bodies[ $i ]->key == $offset)
@@ -55,7 +55,7 @@ namespace Dust\Evaluate
          *
          * @throws \Dust\Evaluate\EvaluateException
          */
-        public function offsetSet($offset, $value) {
+        public function offsetSet($offset, $value) : void {
             throw new EvaluateException($this->section, 'Unsupported set on bodies');
         }
 
@@ -64,7 +64,7 @@ namespace Dust\Evaluate
          *
          * @throws \Dust\Evaluate\EvaluateException
          */
-        public function offsetUnset($offset) {
+        public function offsetUnset($offset) : void {
             throw new EvaluateException($this->section, 'Unsupported unset on bodies');
         }
 
