@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [pagination-query-string-filter]
 ### Fixed
-- A compatibility issue with PHP 8.1 and return types in dust/Evaluate/Bodies
+- Changed pagination query_string filter to `filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_URL );`. `htmlspecialchars()` caused a problem with `&` characters and pagination partials.
 
 ## Released
 
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - PHP 8.1 fix: Dust PHP syntax errors.
 - PHP 8.1 fix: FILTER_SANITIZE_STRING fixes.
+- A compatibility issue with PHP 8.1 and return types in dust/Evaluate/Bodies
 
 ## [1.36.3] - 2023-01-11
 

@@ -221,11 +221,12 @@ class Pagination extends Helper {
      */
     public function build_page_link() {
 
-        $query_string = htmlspecialchars( $_SERVER['QUERY_STRING'] );
-
+        $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_URL );
         $page_link    = '?';
-        // User passed get parameters
+
+        // User passed get parameters.
         if ( $query_string ) {
+
             // A page queried.
             if ( strpos( $query_string, $this->page_var ) !== false ) {
                 $idx = 1;
