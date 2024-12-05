@@ -37,7 +37,8 @@ namespace Dust\Evaluate
          *
          * @return mixed
          */
-        public function offsetGet($offset) : mixed {
+        #[\ReturnTypeWillChange]
+        public function offsetGet($offset) {
             for($i = 0; $i < count($this->section->bodies); $i++)
             {
                 if($this->section->bodies[ $i ]->key == $offset)
@@ -70,4 +71,3 @@ namespace Dust\Evaluate
 
     }
 }
-
