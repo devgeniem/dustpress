@@ -562,7 +562,10 @@ final class DustPress {
 
                     foreach ( $post_types as $type ) {
                         if ( is_post_type_archive( $type ) ) {
-                            if ( class_exists( 'Archive' . $this->dashed_to_camelcase( $type ) ) ) {
+                            if ( class_exists( 'Archive' . $this->dashed_to_camelcase( $type, '_' ) ) ) {
+                                return 'Archive' . $this->dashed_to_camelcase( $type, '_' );
+                            }
+                            else if ( class_exists( 'Archive' . $this->dashed_to_camelcase( $type ) ) ) {
                                 return 'Archive' . $this->dashed_to_camelcase( $type );
                             }
                             else if ( class_exists( 'Archive' ) ) {
