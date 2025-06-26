@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Released
 
+## [1.36.5] - 2025-06-26
+
+### Added
+
+- Method to determine if a menu link is external to be used for assitive purposes.
+
 ## [1.36.5] - 2023-03-08
 ### Changed
 - Changed pagination query_string filter to filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_URL );. htmlspecialchars() caused problems with & characters and pagination partials.
