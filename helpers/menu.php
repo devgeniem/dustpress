@@ -222,6 +222,10 @@ class Menu extends Helper {
      * @return [type]
      */
     private static function build_menu( $menu_items, $parent = 0, $type = 'page', $override = null ) {
+        // $domain = $_SERVER['SERVER_NAME'];
+        // SERVER_NAME didn't jive with Docker localhost so fingers crossed this works on GCP
+        $domain = $_SERVER['HTTP_HOST'];
+
         $temp_items = [];
 
         if ( empty( $type ) ) {
@@ -272,6 +276,26 @@ class Menu extends Helper {
                     $item->classes[] = 'menu-item-' . $item->object_id;
 
                     $temp_items[] = $item;
+
+                    // Determine if URL is external or not.
+                    // Ideally useful for adding external icon into links as the
+                    // "open in new tab/window" option in Wordpress menus is
+                    // evidently hidden by default, plus removes the need for
+                    // URL management.
+                    // - https://stackoverflow.com/a/58289351
+                    $url = $item->url;
+
+                    $internal = (
+                      false !== stripos($url, '//' . $domain) ||
+                      (
+                        0 !== strpos($url, '//') &&
+                        0 === strpos($url, '/')
+                      )
+                    );
+
+                    if (! $internal):
+                      $item->linkExternal = true;
+                    endif;
                 }
             }
         }
