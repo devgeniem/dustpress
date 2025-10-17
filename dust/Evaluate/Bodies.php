@@ -16,6 +16,12 @@ namespace Dust\Evaluate
         public $block;
 
         /**
+         * Dummy property for DustPress helper prerun
+         * @var bool
+         */
+        public $dummy;
+        
+        /**
          * @param \Dust\Ast\Section $section
          */
         public function __construct(Ast\Section $section) {
