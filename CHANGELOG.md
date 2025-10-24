@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+- Fix: Creation of dynamic property error in Dust\Evaluate\Bodies::$dummy (deprecated since PHP 8.2)
+
 ## Released
 
 ## [1.36.7] - 2025-06-26
