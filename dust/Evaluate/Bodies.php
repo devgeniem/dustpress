@@ -3,6 +3,7 @@ namespace Dust\Evaluate
 {
     use Dust\Ast;
 
+    #[\AllowDynamicProperties]
     class Bodies implements \ArrayAccess
     {
         /**
